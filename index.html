@@ -141,8 +141,10 @@
       </div>
       <div class="card">
         <h3>A cloned voice, as a microphone</h3>
-        <p>Voice on its own, or paired with video. Noise cancellation is on by default and clears the room out
-          of your mic. On a Mac a free silent speaker called BlackHole carries it to your call app.</p>
+        <p>Voice on its own, or paired with video. The avatar always hears you the moment you open your mouth;
+          the app learns how your room sounds while you are quiet and holds that room noise back from the
+          microphone your callers use, so a fan or a television never reaches the call. On a Mac a free silent
+          speaker called BlackHole carries it to your call app.</p>
       </div>
       <div class="card">
         <h3>Landscape or tall</h3>
@@ -168,10 +170,11 @@
     <div class="grid">
       <div class="card">
         <h3>Windows 10 or 11</h3>
-        <p><code>StreamLive-Setup-1.6.4.exe</code><br>
-          Double-click it, accept the security prompt, let it finish. The camera and the microphone are both in
-          place when it closes — nothing else to install.</p>
-        <p><a class="btn primary" href="https://github.com/richlifetechnologies-lang/stream-live-releases/releases/download/v1.6.4/StreamLive-Setup-1.6.4.exe">Download for Windows</a></p>
+        <p><code>StreamLive-Setup-1.8.0.exe</code><br>
+          Double-click it and accept the security prompt. Part way through it asks to add one free audio
+          driver — press <b>Yes</b>. When it finishes, <b>restart the computer</b>: the microphone does not
+          work until you do. Nothing else to download.</p>
+        <p><a class="btn primary" href="https://github.com/richlifetechnologies-lang/stream-live-releases/releases/download/v1.8.0/StreamLive-Setup-1.8.0.exe">Download for Windows</a></p>
       </div>
       <div class="card">
         <h3>Mac with an Apple chip</h3>
@@ -206,8 +209,10 @@
       <li><b>Pick a look and a voice.</b> Choose a style, then a face or voice reference. Video, voice, or both
         together.</li>
       <li><b>Select it in your app.</b> In the call or streaming app, choose <code>Stream Live Camera</code> and
-        <code>Stream Live Microphone</code> — on a Mac they are named <code>OBS Virtual Camera</code> and
-        <code>BlackHole 2ch</code> — then press Start in Stream Live. Your own camera stays off-air.</li>
+        <code>Stream Live Microphone</code> — on Windows the audio one may be listed as <code>CABLE Input</code>
+        or <code>VB-Audio Virtual Cable</code>, which is the same device — on a Mac they are named
+        <code>OBS Virtual Camera</code> and <code>BlackHole 2ch</code>. Then press Start in Stream Live. Your own
+        camera stays off-air.</li>
     </ol>
     <div class="note" style="margin-top:22px">
       <b>On a Mac?</b> The short version of this page is the
@@ -222,32 +227,41 @@
     <p class="kicker">Mac install</p>
     <h2>Getting Stream Live onto a Mac</h2>
     <p class="sub">Five steps, about three minutes. Do them in order; steps 1 and 2 are one-time, and steps 4
-      and 5 are what make a call app see the AI picture and hear the AI voice.</p>
+      and 5 are what make a call app see the AI picture and hear your voice.</p>
     <ol class="steps">
       <li><b>Move the app into Applications.</b> Double-click the <code>.dmg</code> you downloaded, drag
         <i>Stream Live</i> onto <i>Applications</i>, then eject the disk. Keep it in Applications — running it
         from the Downloads folder is what makes later updates fail.</li>
-      <li><b>Approve it the first time.</b> Stream Live is not signed with a paid Apple developer certificate,
-        so macOS blocks the very first launch. Open it once, then go to <b>System Settings → Privacy &amp;
-        Security</b>, scroll to Security and click <b>“Open Anyway”</b> beside “Stream Live was blocked”. Enter
-        your password and launch it again — it stays approved. If <i>Open Anyway</i> never appears, right-click
-        the app in Applications and choose <i>Open</i>; as a last resort run this in Terminal:
-        <code>xattr -dr com.apple.quarantine "/Applications/Stream Live.app"</code></li>
+      <li><b>Clear the “damaged” warning, once.</b> Stream Live is not signed with a paid Apple developer
+        certificate, so the first launch can say <i>“Stream Live is damaged and can’t be opened”</i>. That is
+        the missing signature talking, <b>not</b> a broken download — the file you got is complete. Two things
+        to do: finish step 1 so the app really is in <i>Applications</i>, then open <b>Terminal</b>
+        (<code>Cmd + Space</code>, type <i>Terminal</i>, press Return) and paste this line, then press
+        Return:<br>
+        <code>xattr -dr com.apple.quarantine "/Applications/Stream Live.app"</code><br>
+        Launch Stream Live normally after that — it stays cleared and you never do this again. If Terminal
+        answers <code>No such file</code>, the app is not in <i>Applications</i> yet, so go back to step 1. If
+        it asks for permission, run the same line with <code>sudo</code> in front of it and type your Mac login
+        password — nothing appears on screen while you type it, which is normal.</li>
       <li><b>Allow the camera and the microphone.</b> In <b>System Settings → Privacy &amp; Security</b>, switch
         <i>Stream Live</i> on under both <b>Camera</b> and <b>Microphone</b>. Without them the preview stays
         black and no voice is cloned.</li>
       <li><b>Install the two free helpers.</b> They do the job the Windows installer does with bundled drivers:
         one carries sound, one carries video.
         <ul class="plain" style="margin-top:10px">
-          <li><a href="https://existential.audio/blackhole/" target="_blank" rel="noreferrer">BlackHole 2ch</a> —
-            a silent virtual speaker; the AI voice goes in here. After installing it, <b>log out and back in</b>,
-            and it appears under System Settings → Sound and in the app’s “Audio out” list.</li>
+          <li><a href="https://existential.audio/downloads/BlackHole2ch-0.7.1.pkg" download>BlackHole 2ch</a> —
+            a silent virtual speaker; your voice goes in here. <b>Clicking it downloads the installer
+            straight into your Downloads folder</b>. It is free software and that link asks you for nothing —
+            no sign-up, no email, no payment page. After installing it, <b>log out and back in</b>,
+            and it appears under System Settings → Sound and in the app’s “Audio out” list. If the link ever
+            fails, <a href="#contact">message us on Telegram</a> and we will send you the file.</li>
           <li><a href="https://obsproject.com/" target="_blank" rel="noreferrer">OBS Studio</a> — turns the
             Stream Live window into a webcam.</li>
         </ul>
       </li>
       <li><b>Put the AI feed into your call.</b> On the stream screen, open the <b>OBS</b> window and turn
-        <b>Stream Live Microphone</b> on, so the cloned voice moves to BlackHole 2ch. Then:
+        <b>Stream Live Microphone</b> on, so your voice moves to BlackHole 2ch — or the
+        <b>cloned voice</b> on the tabs where cloning is switched on. Then:
         <ol style="margin:10px 0 0; padding-left:20px; color:var(--muted)">
           <li>In OBS: <b>Sources → + → Window Capture</b> → pick “Stream Live OBS”.</li>
           <li>In OBS: <b>Controls → Start Virtual Camera</b>.</li>
@@ -257,14 +271,15 @@
       </li>
     </ol>
     <div class="note" style="margin-top:22px">
-      <b>Want to be heard next to the AI voice?</b> Open <i>Audio MIDI Setup</i>, create a
-      <b>Multi-Output Device</b> that combines your own microphone with BlackHole 2ch, and pick that as the
-      call app’s input. OBS carries picture only, which is why the call app takes its microphone from
+      <b>Wear headphones.</b> Your voice now travels through BlackHole 2ch while your real microphone is still
+      open, so loudspeakers send the call straight back into it and everyone hears echo. Do <b>not</b> add your
+      own microphone as a second input in the call app either — your voice is already on that device, and two
+      copies of it arrive as echo. OBS carries picture only, which is why the call app takes its microphone from
       BlackHole rather than from OBS.
     </div>
     <p class="sub" style="margin:18px 0 0">macOS only accepts a system webcam from software Apple has approved
       with a special entitlement, so on a Mac the picture always travels through OBS. Everything else — the
-      styles, portrait mode, noise cancellation, your minute balance — works the same as on Windows.</p>
+      styles, portrait mode, the automatic microphone, your minute balance — works the same as on Windows.</p>
   </div>
 </section>
 
@@ -292,14 +307,32 @@
     <ul class="plain">
       <li>Packages and prices are listed in the app under <b>Plans</b>, and your remaining time under
         <b>Minutes</b>.</li>
-      <li>Pay for a package, then send the reference from the same screen — the app shows the payment and
-        contact details to use.</li>
-      <li>An administrator adds the minutes to your account, and the app shows the new balance without you
-        restarting it.</li>
-      <li>Time does not expire, and one account can be used on more than one computer.</li>
+      <li>Pay by card or mobile money and the minutes go into your account on their own — no message to send,
+        nobody to wait for. They never expire.</li>
+      <li>Or pay the administrator directly with MoMo or Bitcoin, then send them the reference from the same
+        screen; they add the minutes themselves.</li>
+      <li>One account can be used on more than one computer.</li>
     </ul>
+    <div class="cta" style="margin-top:22px">
+      <a class="btn primary" id="buy" href="checkout/" hidden>Buy minutes</a>
+    </div>
   </div>
 </section>
+<script>
+// The buy door only appears while the seller actually has online payment switched on,
+// so a closed till can never leave a dead button on the page.
+(async function () {
+  try {
+    const res = await fetch("https://onhanfathvfkkliayvrn.supabase.co/functions/v1/paystack-checkout");
+    const data = await res.json();
+    if (data && data.enabled === true && Array.isArray(data.packages) && data.packages.length) {
+      const cheapest = Math.min.apply(null, data.packages.map(p => Number(p.price_ghp) || 0));
+      document.getElementById("buy").textContent = "Buy minutes from GH₵" + (cheapest / 100).toFixed(2);
+      document.getElementById("buy").hidden = false;
+    }
+  } catch (e) { /* no payment door today */ }
+})();
+</script>
 
 <section id="help">
   <div class="wrap">
