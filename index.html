@@ -3,21 +3,27 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Stream Live — an AI camera for OBS, Zoom, Teams and calls</title>
+<title>Stream Live — a live AI camera and voice for OBS, Zoom, Teams and calls</title>
 <meta name="description" content="Stream Live puts a photoreal AI presenter and a cloned voice on your webcam, as a camera and microphone any app can see. Windows and macOS. One free minute on every new account." />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='58' fill='%230a1026'/%3E%3Ctext x='128' y='172' font-size='120' text-anchor='middle' fill='%233ec6ff' font-family='sans-serif'%3ES%3C/text%3E%3C/svg%3E" />
+<link rel="icon" href="assets/mark.png" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet" />
 <style>
   :root {
     --ink: #060a18;
     --panel: #0a1026;
+    --panel-2: #101838;
     --line: #1b2444;
     --text: #e8eefc;
     --muted: #94a3c8;
     --cyan: #3ec6ff;
     --blue: #1b3ff2;
     --violet: #8b2ff5;
+    --grad: linear-gradient(120deg, var(--cyan), var(--blue) 52%, var(--violet));
+    --r: 18px;
   }
   * { box-sizing: border-box }
+  html { scroll-behavior: smooth }
   body {
     margin: 0;
     background: var(--ink);
@@ -26,104 +32,270 @@
     -webkit-font-smoothing: antialiased;
   }
   a { color: var(--cyan) }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 22px }
-  header.site {
-    position: sticky; top: 0; z-index: 5;
-    background: rgba(6,10,24,.86); backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--line);
-  }
-  .bar { display: flex; align-items: center; gap: 14px; height: 60px }
-  .mark { width: 30px; height: 30px; border-radius: 8px; flex: none;
-          background: linear-gradient(135deg, var(--cyan), var(--blue) 55%, var(--violet)); }
-  .wordmark { font-weight: 700; letter-spacing: .18em; text-transform: uppercase; font-size: 14px }
-  nav { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap }
-  nav a { color: var(--muted); text-decoration: none; font-size: 14px }
-  nav a:hover { color: var(--text) }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px }
+  section, .hero { scroll-margin-top: 76px }
 
-  .hero {
-    position: relative; overflow: hidden;
-    padding: 88px 0 76px;
-    background:
-      radial-gradient(900px 460px at 12% -10%, rgba(62,198,255,.20), transparent 60%),
-      radial-gradient(760px 420px at 88% 8%, rgba(139,47,245,.18), transparent 62%),
-      linear-gradient(180deg, #0a1026, #060a18 70%);
+  /* ── header: brand left, page links centre, one obvious door right ───────── */
+  header.site {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(6,10,24,.82); backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--line);
   }
-  h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.08; margin: 0 0 16px; letter-spacing: -.02em }
-  h1 em { font-style: normal; color: var(--cyan) }
-  .lede { font-size: clamp(17px, 2.2vw, 21px); color: var(--muted); max-width: 640px; margin: 0 0 30px }
+  .bar { display: flex; align-items: center; gap: 14px; min-height: 66px }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--text) }
+  .brand img { width: 34px; height: 30px; object-fit: contain; display: block }
+  .wordmark { font-family: Orbitron, system-ui, sans-serif; font-weight: 800; letter-spacing: .14em;
+              text-transform: uppercase; font-size: 15px }
+  .wordmark span { color: var(--cyan) }
+  nav { margin-left: auto; display: flex; gap: 22px; flex-wrap: wrap }
+  nav a { color: var(--muted); text-decoration: none; font-size: 14.5px; font-weight: 550 }
+  nav a:hover { color: var(--text) }
+  .burger { display: none; margin-left: auto; width: 42px; height: 38px; border-radius: 10px;
+            border: 1px solid var(--line); background: var(--panel); color: var(--text);
+            font-size: 18px; line-height: 1; cursor: pointer }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+         padding: 14px 24px; border-radius: 999px; font-weight: 700; text-decoration: none;
+         font-size: 15.5px; letter-spacing: .01em; white-space: nowrap }
+  .btn.primary { background: var(--grad); color: #04101f; box-shadow: 0 10px 30px rgba(62,198,255,.22) }
+  .btn.ghost { border: 1px solid var(--line); color: var(--text); background: rgba(16,24,56,.5) }
+  .btn:hover { filter: brightness(1.1) }
+  .btn.sm { padding: 10px 18px; font-size: 14px }
+  .btn.block { width: 100% }
+
+  /* ── hero: the picture first, then the claim ────────────────────────────── */
+  .hero { padding: 0 0 72px }
+  .hero-media { position: relative; height: clamp(288px, 46vw, 560px); overflow: hidden }
+  .hero-media img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 44%; display: block }
+  .hero-media::after { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(6,10,24,.42) 0%, rgba(6,10,24,.06) 34%, var(--ink) 99%) }
+  .hero-media::before { content: ""; position: absolute; inset: 0; z-index: 1;
+    background: radial-gradient(70% 90% at 78% 40%, rgba(139,47,245,.16), transparent 62%) }
+
+  .chips { position: relative; z-index: 2; display: flex; flex-wrap: wrap; gap: 10px;
+           margin: -30px 0 30px; padding: 0; list-style: none }
+  .chips li { display: inline-flex; align-items: center; gap: 9px;
+              border: 1px solid var(--line); border-radius: 999px; padding: 9px 17px;
+              background: rgba(10,16,38,.9); backdrop-filter: blur(8px);
+              font-size: 14px; font-weight: 600; color: var(--text);
+              box-shadow: 0 8px 24px rgba(4,8,20,.5) }
+  .chips li i { width: 9px; height: 9px; border-radius: 50%; flex: none }
+  .chips li:nth-child(1) i { background: var(--cyan); box-shadow: 0 0 12px var(--cyan) }
+  .chips li:nth-child(2) i { background: var(--violet); box-shadow: 0 0 12px var(--violet) }
+  .chips li:nth-child(3) i { background: var(--blue); box-shadow: 0 0 12px var(--blue) }
+
+  h1 { font-size: clamp(42px, 8.4vw, 88px); line-height: .96; margin: 0 0 22px;
+       letter-spacing: -.035em; font-weight: 800 }
+  .strap { font-family: Orbitron, system-ui, sans-serif; font-size: clamp(13px, 1.6vw, 16px);
+           font-weight: 600; letter-spacing: .02em; color: var(--cyan); margin: 0 0 14px }
+  h1 .g { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent }
+  .lede { font-size: clamp(17px, 2.1vw, 21px); color: var(--muted); max-width: 690px; margin: 0 0 22px }
+  .modes { font-size: 15px; color: var(--muted); margin: 0 0 28px }
+  .modes b { color: var(--text); font-weight: 650 }
   .cta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center }
-  .btn { display: inline-block; padding: 13px 22px; border-radius: 10px; font-weight: 650;
-         text-decoration: none; font-size: 15px }
-  .btn.primary { background: linear-gradient(135deg, var(--cyan), var(--blue) 60%, var(--violet));
-                color: #061021; }
-  .btn.ghost { border: 1px solid var(--line); color: var(--text) }
-  .btn:hover { filter: brightness(1.12) }
-  .free { margin-top: 16px; font-size: 14px; color: var(--muted) }
+  .free { margin: 20px 0 0; font-size: 14.5px; color: var(--muted) }
   .free b { color: var(--text); font-weight: 650 }
 
-  section { padding: 62px 0; border-bottom: 1px solid var(--line) }
-  h2 { font-size: clamp(22px, 3.4vw, 30px); margin: 0 0 8px; letter-spacing: -.01em }
-  .kicker { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--cyan); margin: 0 0 14px }
-  .sub { color: var(--muted); margin: 0 0 32px; max-width: 660px }
-  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(238px, 1fr)) }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px }
-  .card h3 { margin: 0 0 6px; font-size: 17px }
-  .card p { margin: 0; color: var(--muted); font-size: 15px }
+  /* ── bands ──────────────────────────────────────────────────────────────── */
+  section { padding: 76px 0; border-bottom: 1px solid var(--line) }
+  section.tint { background:
+      radial-gradient(760px 380px at 8% 0%, rgba(62,198,255,.10), transparent 62%),
+      radial-gradient(680px 360px at 92% 12%, rgba(139,47,245,.10), transparent 62%),
+      linear-gradient(180deg, var(--panel), var(--ink) 78%) }
+  h2 { font-size: clamp(28px, 4.4vw, 42px); line-height: 1.08; margin: 0 0 12px;
+       letter-spacing: -.025em; font-weight: 800 }
+  h3 { font-size: 18px; margin: 0 0 8px; letter-spacing: -.01em }
+  .kicker { font-family: Orbitron, system-ui, sans-serif; font-size: 11.5px; letter-spacing: .22em;
+            text-transform: uppercase; color: var(--cyan); margin: 0 0 16px }
+  .sub { color: var(--muted); margin: 0 0 34px; max-width: 700px; font-size: 17px }
+  .split { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center }
+  .shot { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
+          box-shadow: 0 26px 60px rgba(3,7,18,.6) }
+  .shot img { display: block; width: 100%; height: auto }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) }
+  .card { background: linear-gradient(180deg, var(--panel-2), var(--panel));
+          border: 1px solid var(--line); border-radius: var(--r); padding: 24px;
+          transition: border-color .2s, transform .2s }
+  .card:hover { border-color: rgba(62,198,255,.42); transform: translateY(-2px) }
+  .card p { margin: 0; color: var(--muted); font-size: 15.5px }
+  .card .tag { display: inline-block; font-family: Orbitron, system-ui, sans-serif; font-size: 10.5px;
+               letter-spacing: .16em; text-transform: uppercase; color: var(--cyan); margin-bottom: 12px }
+  .card.rec { border-color: rgba(62,198,255,.5); box-shadow: 0 0 0 1px rgba(62,198,255,.18), 0 22px 50px rgba(4,10,26,.6) }
+
+  /* Direct children only: a step that holds its own inner list must not hand that list
+     the step badge and card, or the page numbers to 10 while saying "five steps". */
   ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 0; display: grid; gap: 14px }
-  ol.steps li { counter-increment: s; background: var(--panel); border: 1px solid var(--line);
-                border-radius: 14px; padding: 18px 20px 18px 62px; position: relative; color: var(--muted) }
-  ol.steps li b { color: var(--text) }
-  ol.steps li::before { content: counter(s); position: absolute; left: 18px; top: 16px;
-    width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
-    font-weight: 700; font-size: 14px; color: #061021;
-    background: linear-gradient(135deg, var(--cyan), var(--violet)); }
-  .chips { display: flex; flex-wrap: wrap; gap: 9px; margin: 0 0 26px; padding: 0; list-style: none }
-  .chips li { border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px;
-              font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted) }
+  ol.steps > li { counter-increment: s; background: rgba(10,16,38,.72); border: 1px solid var(--line);
+                border-radius: 16px; padding: 18px 20px 18px 62px; position: relative; color: var(--muted) }
+  ol.steps > li b { color: var(--text) }
+  ol.steps > li::before { content: counter(s); position: absolute; left: 18px; top: 16px;
+    width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+    font-weight: 800; font-size: 14px; color: #04101f; background: var(--grad) }
   .note { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--cyan);
-          border-radius: 12px; padding: 18px 20px; color: var(--muted); margin: 0 0 16px }
+          border-radius: 14px; padding: 18px 20px; color: var(--muted); margin: 0 0 16px }
   .note b { color: var(--text) }
   ul.plain { margin: 0; padding-left: 20px; color: var(--muted) }
   ul.plain li { margin-bottom: 8px }
-  footer { padding: 40px 0 54px; color: var(--muted); font-size: 14px }
-  footer .bar { height: auto }
-  code { background: #101838; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 13px }
+  .pills { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 30px; padding: 0; list-style: none }
+  .pills li { border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px;
+              font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+              background: rgba(16,24,56,.5) }
+  code { background: #101838; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 13px;
+         overflow-wrap: anywhere }
+  /* A long path or address must never widen the page on a small phone. */
+  ol.steps li, ul.plain li, .ticks li, .note, .body, footer a, .card p { overflow-wrap: anywhere }
+  /* Grid children size to their content by default, so one wide word in a card blows the
+     column past the screen. Let them shrink instead. */
+  .split > *, .grid > *, .fcols > * { min-width: 0 }
+
+  /* minutes, as one clear card rather than a price list */
+  .plan { background: linear-gradient(180deg, var(--panel-2), var(--panel));
+          border: 1px solid rgba(62,198,255,.34); border-radius: 22px; padding: 28px;
+          box-shadow: 0 26px 60px rgba(3,7,18,.55) }
+  .plan .price { font-size: clamp(34px, 5vw, 46px); font-weight: 800; letter-spacing: -.03em; margin: 2px 0 4px }
+  .plan .price small { font-size: 16px; font-weight: 600; color: var(--muted); letter-spacing: 0 }
+  .ticks { list-style: none; margin: 18px 0 22px; padding: 0; display: grid; gap: 11px }
+  .ticks li { position: relative; padding-left: 30px; color: var(--muted) }
+  .ticks li b { color: var(--text) }
+  .ticks li::before { content: "✓"; position: absolute; left: 0; top: -1px; width: 20px; height: 20px;
+    border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800;
+    color: #04101f; background: var(--grad) }
+
+  /* questions */
+  details { border: 1px solid var(--line); border-radius: 16px; background: rgba(10,16,38,.6);
+            margin-bottom: 10px; overflow: hidden }
+  details summary { list-style: none; cursor: pointer; padding: 18px 52px 18px 20px; position: relative;
+                    font-weight: 650; font-size: 16.5px }
+  details summary::-webkit-details-marker { display: none }
+  details summary::after { content: "+"; position: absolute; right: 20px; top: 50%; translate: 0 -50%;
+    width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+    border: 1px solid var(--line); color: var(--cyan); font-weight: 700; font-size: 17px }
+  details[open] summary::after { content: "–" }
+  details .body { padding: 0 20px 20px; color: var(--muted); font-size: 15.5px }
+  details .body p { margin: 0 0 10px }
+  details .body ol { margin: 0 0 10px; padding-left: 20px }
+
+  .final { text-align: center; padding: 84px 0 }
+  .final h2 { font-size: clamp(30px, 5.4vw, 52px) }
+  .final .sub { margin: 0 auto 28px }
+  .final .cta { justify-content: center }
+
+  footer { padding: 54px 0 46px; color: var(--muted); font-size: 14.5px; background: var(--panel) }
+  .fcols { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 30px }
+  footer h4 { margin: 0 0 12px; font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
+              color: var(--text); font-family: Orbitron, system-ui, sans-serif }
+  footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px }
+  footer a { color: var(--muted); text-decoration: none }
+  footer a:hover { color: var(--cyan) }
+  footer .tagline { max-width: 340px; margin: 14px 0 0 }
+  footer .fine { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13.5px }
+
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; gap: 26px }
+    .fcols { grid-template-columns: 1fr 1fr }
+    nav { display: none; position: absolute; left: 0; right: 0; top: 66px; flex-direction: column;
+          gap: 0; background: rgba(6,10,24,.98); border-bottom: 1px solid var(--line); padding: 6px 22px 14px }
+    nav.open { display: flex }
+    nav a { padding: 12px 0; border-bottom: 1px solid rgba(27,36,68,.6); font-size: 16px }
+    .burger { display: block }
+    .bar .btn.primary { margin-left: auto }
+    .hero-media img { object-position: 66% 40% }
+  }
+  @media (max-width: 620px) {
+    section { padding: 58px 0 }
+    .chips { margin-top: -22px }
+    /* A phone cannot show a wide scene by slicing it without cutting somebody in half,
+       so the whole picture scales down instead. */
+    .hero-media { height: auto }
+    .hero-media img { height: auto; object-fit: contain }
+    .hero-media::after { background: linear-gradient(180deg, rgba(6,10,24,.3) 0%, rgba(6,10,24,0) 42%, var(--ink) 99%) }
+    .chips li { font-size: 13px; padding: 8px 13px }
+    .fcols { grid-template-columns: 1fr }
+    .btn { width: 100%; white-space: normal; text-align: center; padding: 14px 16px }
+    .cta { flex-direction: column; align-items: stretch }
+    /* A phone has room for the brand and the menu, not a second copy of the download door. */
+    .bar > .btn.primary { display: none }
+  }
 </style>
 </head>
 <body>
 
 <header class="site">
   <div class="wrap bar">
-    <span class="mark" aria-hidden="true"></span>
-    <span class="wordmark">Stream Live</span>
-    <nav>
-      <a href="#get">Download</a>
+    <a class="brand" href="#top" aria-label="Stream Live, back to the top">
+      <img src="assets/mark.png" alt="" />
+      <span class="wordmark">Stream <span>Live</span></span>
+    </a>
+    <button class="burger" id="burger" aria-label="Menu" aria-expanded="false">☰</button>
+    <nav id="menu">
       <a href="#how">How it works</a>
+      <a href="#get">Download</a>
       <a href="#mac">Mac install</a>
       <a href="#looks">Looks</a>
       <a href="#time">Minutes</a>
       <a href="#help">Help</a>
       <a href="#contact">Contact</a>
     </nav>
+    <a class="btn primary sm" href="#get" style="margin-left:14px">Download</a>
   </div>
 </header>
 
-<div class="hero">
+<div class="hero" id="top">
+  <div class="hero-media">
+    <img src="assets/hero.jpg" alt="A plain webcam picture on the left becoming a lit, polished AI presenter on the right" />
+  </div>
   <div class="wrap">
-    <h1>Your camera, <em>rebuilt</em> while you talk.</h1>
-    <p class="lede">Stream Live turns your webcam into a live AI presenter and your microphone into a
-      clean cloned voice, then hands both to OBS, Zoom, Teams, Chrome or WhatsApp as if they were a
-      camera and a mic. Nothing to render, nothing to upload: what you say is what goes out.</p>
+    <ul class="chips">
+      <li><i></i>Live AI camera</li>
+      <li><i></i>Voice cloning</li>
+      <li><i></i>Any call app</li>
+    </ul>
+    <p class="strap">Your camera, rebuilt while you talk.</p>
+    <h1>Live avatar.<br />and voice.<br /><span class="g">In your call.</span></h1>
+    <p class="lede">Stream Live turns your webcam into a live AI presenter and your microphone into a clean
+      cloned voice, then hands both to OBS, Zoom, Teams, Chrome or WhatsApp as if they were a camera and a
+      mic. Nothing to render, nothing to upload: what you say is what goes out.</p>
+    <p class="modes">Three ways to run it — <b>video and voice together</b>, <b>voice only</b>, or the
+      <b>AI picture with your own voice</b>. Pick one in the app, press Start.</p>
     <div class="cta" id="download">
-      <a class="btn primary" href="#contact">Get the installer</a>
-      <a class="btn ghost" href="#get">Which file do I need?</a>
+      <a class="btn primary" href="#get">Download Stream Live</a>
       <a class="btn ghost" href="#how">See how it works</a>
     </div>
     <p class="free"><b>One free minute of video</b> on every new account, on the computer you install it on.
       No card, no trial period to cancel.</p>
   </div>
 </div>
+
+<section class="tint" id="how">
+  <div class="wrap split">
+    <div>
+      <p class="kicker">How it works</p>
+      <h2>Three moves, then you are live</h2>
+      <p class="sub" style="margin-bottom:24px">Pick a look, press Start, and choose Stream Live as the
+        camera in whatever app you are already using.</p>
+      <ol class="steps">
+        <li><b>Install and sign up.</b> Run the installer, open Stream Live, create an account in the app. It
+          works the moment it is created.</li>
+        <li><b>Pick a look and a voice.</b> Choose a style, then a face or voice reference. Video, voice, or both
+          together.</li>
+        <li><b>Select it in your app.</b> In the call or streaming app, choose <code>Stream Live Camera</code> and
+          <code>Stream Live Microphone</code> — on Windows the audio one may be listed as <code>CABLE Input</code>
+          or <code>VB-Audio Virtual Cable</code>, which is the same device — on a Mac they are named
+          <code>OBS Virtual Camera</code> and <code>BlackHole 2ch</code>. Then press Start in Stream Live. Your own
+          camera stays off-air.</li>
+      </ol>
+      <div class="note" style="margin-top:22px">
+        <b>On a Mac?</b> The short version of this page is the
+        <a href="#mac">Mac install walk-through</a>: approve the app once, allow camera and microphone, add the
+        two free helpers, then point OBS at the Stream Live window.
+      </div>
+    </div>
+    <div class="shot">
+      <img src="assets/call.jpg" alt="A video call with three ordinary camera tiles and one glowing tile carrying the AI presenter" />
+    </div>
+  </div>
+</section>
 
 <section>
   <div class="wrap">
@@ -133,6 +305,7 @@
       before. Point anything at them — a stream, a meeting, a browser call.</p>
     <div class="grid">
       <div class="card">
+        <span class="tag">Camera</span>
         <h3>An AI picture, as a camera</h3>
         <p>On Windows the installer adds <code>Stream Live Camera</code> and any app can select it: OBS, Zoom,
           Teams, Google Meet, WhatsApp Web. On a Mac the picture goes out through OBS instead — one free
@@ -140,6 +313,7 @@
           <a href="#mac">Mac install</a>.</p>
       </div>
       <div class="card">
+        <span class="tag">Microphone</span>
         <h3>A cloned voice, as a microphone</h3>
         <p>Voice on its own, or paired with video. The avatar always hears you the moment you open your mouth;
           the app learns how your room sounds while you are quiet and holds that room noise back from the
@@ -147,11 +321,13 @@
           speaker called BlackHole carries it to your call app.</p>
       </div>
       <div class="card">
+        <span class="tag">Framing</span>
         <h3>Landscape or tall</h3>
         <p>Full frame for OBS scenes, or an exact 9:16 portrait window for phone-shaped video — calls and
           captures both receive it tall.</p>
       </div>
       <div class="card">
+        <span class="tag">Systems</span>
         <h3>Windows and macOS</h3>
         <p>Windows 10 and 11 get both devices straight from the installer, nothing else to fetch. A Mac
           installs the same way and then needs the two free helpers, because Apple only lets an app it has
@@ -168,29 +344,32 @@
     <p class="sub">Pick the one that matches your computer and the download starts. If you would rather a
       person check your machine with you first, <a href="#contact">message on Telegram</a> instead — same file.</p>
     <div class="grid">
-      <div class="card">
+      <div class="card rec">
+        <span class="tag">Most machines</span>
         <h3>Windows 10 or 11</h3>
-        <p><code data-for="dl-win">StreamLive-Setup-1.8.10.exe</code><br>
+        <p><code data-for="dl-win">StreamLive-Setup-1.8.10.exe</code><br />
           Double-click it and accept the security prompt. Part way through it asks to add one free audio
           driver — press <b>Yes</b>. When it finishes, <b>restart the computer</b>: the microphone does not
           work until you do. Nothing else to download.</p>
-        <p><a class="btn primary" id="dl-win" data-name="StreamLive-Setup-{v}.exe" href="https://github.com/richlifetechnologies-lang/stream-live/releases/download/v1.8.10/StreamLive-Setup-1.8.10.exe">Download for Windows</a></p>
+        <p style="margin-top:18px"><a class="btn primary block" id="dl-win" data-name="StreamLive-Setup-{v}.exe" href="https://github.com/richlifetechnologies-lang/stream-live/releases/download/v1.8.10/StreamLive-Setup-1.8.10.exe">Download for Windows</a></p>
       </div>
       <div class="card">
+        <span class="tag">M1 to M4 chips</span>
         <h3>Mac with an Apple chip</h3>
-        <p><code data-for="dl-arm">StreamLive-1.8.10-arm64.dmg</code><br>
+        <p><code data-for="dl-arm">StreamLive-1.8.10-arm64.dmg</code><br />
           For M1, M2, M3 and M4 Macs. Installs like any other Mac app, then follows the
           <a href="#mac">five steps below</a> so a call app can see it.</p>
-        <p><a class="btn primary" id="dl-arm" data-name="StreamLive-{v}-arm64.dmg" href="https://github.com/richlifetechnologies-lang/stream-live/releases/download/v1.8.10/StreamLive-1.8.10-arm64.dmg">Download for Apple Mac</a></p>
+        <p style="margin-top:18px"><a class="btn ghost block" id="dl-arm" data-name="StreamLive-{v}-arm64.dmg" href="https://github.com/richlifetechnologies-lang/stream-live/releases/download/v1.8.10/StreamLive-1.8.10-arm64.dmg">Download for Apple Mac</a></p>
       </div>
       <div class="card">
+        <span class="tag">Intel Macs</span>
         <h3>Mac with an Intel chip</h3>
-        <p><code data-for="dl-x64">StreamLive-1.8.10-x64.dmg</code><br>
+        <p><code data-for="dl-x64">StreamLive-1.8.10-x64.dmg</code><br />
           For Intel Macs from 2020 and earlier. Same five steps as the Apple-chip disk.</p>
-        <p><a class="btn primary" id="dl-x64" data-name="StreamLive-{v}-x64.dmg" href="https://github.com/richlifetechnologies-lang/stream-live/releases/download/v1.8.10/StreamLive-1.8.10-x64.dmg">Download for Intel Mac</a></p>
+        <p style="margin-top:18px"><a class="btn ghost block" id="dl-x64" data-name="StreamLive-{v}-x64.dmg" href="https://github.com/richlifetechnologies-lang/stream-live/releases/download/v1.8.10/StreamLive-1.8.10-x64.dmg">Download for Intel Mac</a></p>
       </div>
     </div>
-    <div class="note" style="margin-top:20px">
+    <div class="note" style="margin-top:22px">
       <b>Not sure which Mac you have?</b> Click the Apple menu → <i>About This Mac</i>. If it says
       <b>Chip: Apple M…</b>, take the <code>arm64</code> disk. If it says <b>Processor: Intel…</b>, take the
       <code>x64</code> one. Either way the app updates itself from inside, so this is the last time you
@@ -199,25 +378,52 @@
   </div>
 </section>
 
-<section id="how">
+<section id="looks">
   <div class="wrap">
-    <p class="kicker">How it works</p>
-    <h2>Three moves, then you are live</h2>
-    <ol class="steps">
-      <li><b>Install and sign up.</b> Run the installer, open Stream Live, create an account in the app. It
-        works the moment it is created.</li>
-      <li><b>Pick a look and a voice.</b> Choose a style, then a face or voice reference. Video, voice, or both
-        together.</li>
-      <li><b>Select it in your app.</b> In the call or streaming app, choose <code>Stream Live Camera</code> and
-        <code>Stream Live Microphone</code> — on Windows the audio one may be listed as <code>CABLE Input</code>
-        or <code>VB-Audio Virtual Cable</code>, which is the same device — on a Mac they are named
-        <code>OBS Virtual Camera</code> and <code>BlackHole 2ch</code>. Then press Start in Stream Live. Your own
-        camera stays off-air.</li>
-    </ol>
-    <div class="note" style="margin-top:22px">
-      <b>On a Mac?</b> The short version of this page is the
-      <a href="#mac">Mac install walk-through</a>: approve the app once, allow camera and microphone, add the
-      two free helpers, then point OBS at the Stream Live window.
+    <p class="kicker">Styles</p>
+    <h2>Wear a different render</h2>
+    <p class="sub">Switch look mid-session from the app. Movement, speech and eye contact all stay yours.</p>
+    <ul class="pills">
+      <li>Hyper-real</li><li>Anime</li><li>Cinematic</li><li>Cyberpunk</li><li>Fantasy</li>
+      <li>Neon noir</li><li>Horror</li><li>Watercolour</li><li>Pencil sketch</li>
+    </ul>
+    <h3 style="margin-top:34px">Watermark</h3>
+    <p class="sub" style="margin-bottom:0">The free minute carries a small mark on the picture. Minutes you buy
+      have none — nothing to switch on, it is gone once you are paid up.</p>
+  </div>
+</section>
+
+<section id="time" class="tint">
+  <div class="wrap split">
+    <div>
+      <p class="kicker">Minutes</p>
+      <h2>Pay for time, not for seats</h2>
+      <p class="sub">Stream Live is metered in minutes of airtime. Your balance sits in the app and counts down
+        only while you are actually on air, so a session you never started costs you nothing.</p>
+      <ul class="plain">
+        <li>Packages and prices are listed in the app under <b>Plans</b>, and your remaining time under
+          <b>Minutes</b>.</li>
+        <li>Pay by card or mobile money and the minutes go into your account on their own — no message to send,
+          nobody to wait for. They never expire.</li>
+        <li>Or pay the administrator directly with MoMo or Bitcoin, then send them the reference from the same
+          screen; they add the minutes themselves.</li>
+        <li>One account can be used on more than one computer.</li>
+      </ul>
+    </div>
+    <div class="plan">
+      <span class="tag" style="display:inline-block;font-family:Orbitron,system-ui,sans-serif;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)">Every new account</span>
+      <p class="price">1 free minute<small> of video</small></p>
+      <p style="margin:0;color:var(--muted)">No card, no trial period to cancel. After that, minutes are
+        priced in the app.</p>
+      <ul class="ticks">
+        <li><b>Yours to keep</b> — it does not expire while you decide.</li>
+        <li><b>Runs on your machine</b> — the same app you download above.</li>
+        <li><b>Top up by card or mobile money</b> and the minutes arrive on their own.</li>
+      </ul>
+      <div class="cta" style="flex-direction:column;align-items:stretch;gap:12px">
+        <a class="btn primary block" href="#get">Download and start free</a>
+        <a class="btn primary block" id="buy" href="checkout/" hidden>Buy minutes</a>
+      </div>
     </div>
   </div>
 </section>
@@ -237,8 +443,8 @@
         the missing signature talking, <b>not</b> a broken download — the file you got is complete. Two things
         to do: finish step 1 so the app really is in <i>Applications</i>, then open <b>Terminal</b>
         (<code>Cmd + Space</code>, type <i>Terminal</i>, press Return) and paste this line, then press
-        Return:<br>
-        <code>xattr -dr com.apple.quarantine "/Applications/Stream Live.app"</code><br>
+        Return:<br />
+        <code>xattr -dr com.apple.quarantine "/Applications/Stream Live.app"</code><br />
         Launch Stream Live normally after that — it stays cleared and you never do this again. If Terminal
         answers <code>No such file</code>, the app is not in <i>Applications</i> yet, so go back to step 1. If
         it asks for permission, run the same line with <code>sudo</code> in front of it and type your Mac login
@@ -283,42 +489,152 @@
   </div>
 </section>
 
-<section id="looks">
+<section id="help">
   <div class="wrap">
-    <p class="kicker">Styles</p>
-    <h2>Wear a different render</h2>
-    <p class="sub">Switch look mid-session from the app. Movement, speech and eye contact all stay yours.</p>
-    <ul class="chips">
-      <li>Hyper-real</li><li>Anime</li><li>Cinematic</li><li>Cyberpunk</li><li>Fantasy</li>
-      <li>Neon noir</li><li>Horror</li><li>Watercolour</li><li>Pencil sketch</li>
-    </ul>
-    <h2 style="font-size:19px;margin-top:34px">Watermark</h2>
-    <p class="sub" style="margin-bottom:0">The free minute carries a small mark on the picture. Minutes you buy
-      have none — nothing to switch on, it is gone once you are paid up.</p>
-  </div>
-</section>
+    <p class="kicker">Questions</p>
+    <h2>Before you download, and after</h2>
+    <p class="sub">The things people ask most. Anything not answered here reaches a person on Telegram in one tap.</p>
 
-<section id="time">
-  <div class="wrap">
-    <p class="kicker">Minutes</p>
-    <h2>Pay for time, not for seats</h2>
-    <p class="sub">Stream Live is metered in minutes of airtime. Your balance sits in the app and counts down
-      only while you are actually on air, so a session you never started costs you nothing.</p>
-    <ul class="plain">
-      <li>Packages and prices are listed in the app under <b>Plans</b>, and your remaining time under
-        <b>Minutes</b>.</li>
-      <li>Pay by card or mobile money and the minutes go into your account on their own — no message to send,
-        nobody to wait for. They never expire.</li>
-      <li>Or pay the administrator directly with MoMo or Bitcoin, then send them the reference from the same
-        screen; they add the minutes themselves.</li>
-      <li>One account can be used on more than one computer.</li>
-    </ul>
-    <div class="cta" style="margin-top:22px">
-      <a class="btn primary" id="buy" href="checkout/" hidden>Buy minutes</a>
+    <details open>
+      <summary>Which file do I need?</summary>
+      <div class="body">
+        <p>Windows 10 or 11 takes the Windows installer — that is the one most people want. A Mac takes the
+          <b>Apple chip</b> disk if <i>About This Mac</i> says <b>Chip: Apple M…</b>, and the <b>Intel</b> disk
+          if it says <b>Processor: Intel…</b>. Everything is under
+          <a href="#get">Downloads</a>.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>What does it cost to try?</summary>
+      <div class="body">
+        <p>Nothing. Every new account carries <b>one free minute of video</b>, with no card and no trial period
+          to cancel. It does not expire while you decide. After that, airtime is bought in minutes inside the
+          app, by card or mobile money.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Does it work in my app?</summary>
+      <div class="body">
+        <p>Anywhere a camera and microphone can be chosen: OBS, Zoom, Microsoft Teams, Google Meet, WhatsApp
+          Web and most browser-based calls. On Windows the installer adds both devices itself; on a Mac the
+          two free helpers carry them, which is what the <a href="#mac">Mac walk-through</a> covers.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Is the picture really live?</summary>
+      <div class="body">
+        <p>Yes. Nothing is rendered afterwards and nothing is uploaded to be processed — what you say is what
+          goes out, and the avatar keeps your movement, your timing and your eye contact.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>I am locked out of my account</summary>
+      <div class="body">
+        <p>If you reached this page from an email link, the link reached us — but Stream Live does not change a
+          password through a web form, so there is nothing to fill in here.</p>
+        <ol>
+          <li>Open the app and use <b>Plans</b> to send your account email to the contact shown there.</li>
+          <li>An administrator sets a new password and sends it back to you.</li>
+          <li>If the app will not start, message on Telegram or reply to the email you signed up with — both
+            reach the team.</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary>Will my stream run out mid-call?</summary>
+      <div class="body">
+        <p>Airtime stops when your balance hits zero, and the call closes rather than running into debt. Add
+          minutes before a long session: the app tells you the balance at all times.</p>
+      </div>
+    </details>
+
+    <div class="cta" style="margin-top:26px">
+      <a class="btn primary" href="https://t.me/rich_life2k15">Message us on Telegram</a>
+      <a class="btn ghost" href="#get">Which file do I need?</a>
     </div>
   </div>
 </section>
+
+<section id="contact">
+  <div class="wrap">
+    <p class="kicker">Reach the team</p>
+    <h2>Anything not working</h2>
+    <p class="sub">One place to send it: Telegram. Include the email your account was created with, the app
+      version shown on the sign-in screen, and what happened — that is usually enough to fix it in one reply.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://t.me/rich_life2k15">t.me/rich_life2k15</a>
+      <a class="btn ghost" href="#get">Which file do I need?</a>
+    </div>
+  </div>
+</section>
+
+<section class="final tint" style="border-bottom:0">
+  <div class="wrap">
+    <h2>Your face, your voice,<br />live in minutes</h2>
+    <p class="sub">Download Stream Live, pick a look, and join your next call as the version you would
+      actually put on camera. One free minute is waiting on the account you create.</p>
+    <div class="cta">
+      <a class="btn primary" href="#get">Download Stream Live</a>
+      <a class="btn ghost" href="#contact">Ask a person first</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap fcols">
+    <div>
+      <a class="brand" href="#top">
+        <img src="assets/mark.png" alt="" />
+        <span class="wordmark">Stream <span>Live</span></span>
+      </a>
+      <p class="tagline">A live AI camera and voice for OBS, Zoom, Teams and browser calls. Any app, one click.
+        Windows and macOS.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#get">Download</a></li>
+        <li><a href="#mac">Mac install</a></li>
+        <li><a href="#looks">Styles</a></li>
+        <li><a href="#time">Minutes</a></li>
+        <li><a href="#help">Questions</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="https://t.me/rich_life2k15">Telegram — t.me/rich_life2k15</a></li>
+        <li><a href="#help">Locked out of an account</a></li>
+        <li><a href="checkout/">Buy minutes online</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="wrap fine">
+    The Windows installer and the two Mac disks are sent on request — say which computer you have and the
+    newest build comes back.
+  </div>
+</footer>
+
 <script>
+// The menu folds into one button on a phone; on a wide screen the links are always shown.
+(function () {
+  var b = document.getElementById("burger"), m = document.getElementById("menu");
+  if (!b || !m) return;
+  b.addEventListener("click", function () {
+    var open = m.classList.toggle("open");
+    b.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  m.addEventListener("click", function (e) {
+    if (e.target && e.target.tagName === "A") m.classList.remove("open");
+  });
+})();
+
 // The buy door only appears while the seller actually has online payment switched on,
 // so a closed till can never leave a dead button on the page.
 (async function () {
@@ -360,55 +676,6 @@
   } catch (e) { /* keep the pinned links */ }
 })();
 </script>
-
-<section id="help">
-  <div class="wrap">
-    <p class="kicker">Sign-in trouble</p>
-    <h2>Locked out</h2>
-    <p class="sub">If you reached this page from an email link, the link reached us — but Stream Live does not
-      change a password through a web form, so there is nothing to fill in here.</p>
-    <ul class="plain">
-      <li>Open the app and use <b>Plans</b> to send your account email to the contact shown there.</li>
-      <li>An administrator sets a new password and sends it back to you.</li>
-      <li>If the app will not start, message on Telegram or reply to the email you signed up with — both reach
-        the team.</li>
-    </ul>
-    <div class="cta" style="margin-top:22px">
-      <a class="btn primary" href="https://t.me/rich_life2k15">Message us on Telegram</a>
-    </div>
-    <h2 style="font-size:19px;margin-top:30px">Keeping your stream up</h2>
-    <p class="sub" style="margin-bottom:0">Airtime stops when your balance hits zero, and the call closes rather
-      than running into debt. Add minutes before a long session: the app tells you the balance at all times.</p>
-  </div>
-</section>
-
-<section id="contact">
-  <div class="wrap">
-    <p class="kicker">Reach the team</p>
-    <h2>Anything not working</h2>
-    <p class="sub">One place to send it: Telegram. Include the email your account was created with, the app
-      version shown on the sign-in screen, and what happened — that is usually enough to fix it in one reply.</p>
-    <div class="cta">
-      <a class="btn primary" href="https://t.me/rich_life2k15">t.me/rich_life2k15</a>
-      <a class="btn ghost" href="#get">Which file do I need?</a>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap bar">
-    <span class="mark" aria-hidden="true"></span>
-    <span class="wordmark">Stream Live</span>
-    <nav>
-      <a href="https://t.me/rich_life2k15">Telegram</a>
-      <a href="#get">Which file do I need?</a>
-    </nav>
-  </div>
-  <div class="wrap" style="margin-top:14px">
-    The Windows installer and the two Mac disks are sent on request — say which computer you have and the
-    newest build comes back.
-  </div>
-</footer>
 
 </body>
 </html>
