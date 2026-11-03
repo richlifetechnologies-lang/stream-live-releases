@@ -653,25 +653,30 @@
 
 // The three download buttons are pinned to a build that exists, so a link can never die. This
 // then asks which build is newest and moves them onto it — typed-in versions went stale and sent
-// new customers to an installer three releases behind. If GitHub answers late or not at all, the
-// pinned links stand, and a file the release does not carry is never offered.
+// new customers to an installer three releases behind. A release carries only the files built for
+// it: this machine builds Windows, so each button takes its own file from the newest release that
+// actually has it, and a link never falls back to the pinned ancient one.
 (async function () {
   const BASE = "https://github.com/richlifetechnologies-lang/stream-live/releases/download/";
   try {
-    const res = await fetch("https://api.github.com/repos/richlifetechnologies-lang/stream-live/releases/latest",
+    const res = await fetch("https://api.github.com/repos/richlifetechnologies-lang/stream-live/releases?per_page=15",
       { headers: { Accept: "application/vnd.github+json" } });
-    const rel = await res.json();
-    const tag = rel && rel.tag_name;
-    if (!tag || !Array.isArray(rel.assets) || !rel.assets.length) return;
-    const present = {};
-    rel.assets.forEach(a => { present[a.name] = true; });
-    const ver = tag.replace(/^v/, "");
+    const rels = await res.json();
+    if (!Array.isArray(rels) || !rels.length) return;
+    const newestWith = (attr) => {
+      for (const r of rels) {
+        if (!Array.isArray(r.assets)) continue;
+        const file = attr.replace("{v}", String(r.tag_name || "").replace(/^v/, ""));
+        if (r.assets.some(x => x.name === file)) return { rel: r, file };
+      }
+      return null;
+    };
     document.querySelectorAll("[data-name]").forEach(a => {
-      const file = a.getAttribute("data-name").replace("{v}", ver);
-      if (!present[file]) return;
-      a.href = BASE + tag + "/" + file;
+      const found = newestWith(a.getAttribute("data-name"));
+      if (!found) return;
+      a.href = BASE + found.rel.tag_name + "/" + found.file;
       const label = document.querySelector('[data-for="' + a.id + '"]');
-      if (label) label.textContent = file;
+      if (label) label.textContent = found.file;
     });
   } catch (e) { /* keep the pinned links */ }
 })();
