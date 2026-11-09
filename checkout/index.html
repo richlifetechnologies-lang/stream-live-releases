@@ -261,7 +261,7 @@ const DICT = {
     "MTN MoMo, Telecel Cash (the old Vodafone Cash) or AT Money — whichever network you use. Paystack sends a prompt to your phone and the payment goes when you approve it.": "MTN MoMo, Telecel Cash (el antiguo Vodafone Cash) o AT Money, la red que uses. Paystack te envía una solicitud a tu teléfono y el pago se realiza cuando la apruebas.",
     "Video Call": "Videollamada",
     "Audio Call": "Llamada de audio",
-    "Video + Audio": "Vídeo + audio",
+    "Video + Audio Cloning": "Clonación de video + audio",
     "Video calls": "Videollamadas",
     "Voice / audio": "Voz / audio",
     "Portrait OBS output": "Salida de OBS vertical",
@@ -370,7 +370,7 @@ const DICT = {
     "MTN MoMo, Telecel Cash (the old Vodafone Cash) or AT Money — whichever network you use. Paystack sends a prompt to your phone and the payment goes when you approve it.": "MTN MoMo, Telecel Cash (o antigo Vodafone Cash) ou AT Money, a rede que você usar. O Paystack envia uma solicitação ao seu telefone e o pagamento vai quando você aprova.",
     "Video Call": "Chamada de vídeo",
     "Audio Call": "Chamada de áudio",
-    "Video + Audio": "Vídeo + áudio",
+    "Video + Audio Cloning": "Clonagem de Vídeo + Áudio",
     "Video calls": "Chamadas de vídeo",
     "Voice / audio": "Voz / áudio",
     "Portrait OBS output": "Saída do OBS na vertical",
@@ -479,7 +479,7 @@ const DICT = {
     "MTN MoMo, Telecel Cash (the old Vodafone Cash) or AT Money — whichever network you use. Paystack sends a prompt to your phone and the payment goes when you approve it.": "MTN MoMo, Telecel Cash (l'ancien Vodafone Cash) ou AT Money, selon le réseau que tu utilises. Paystack envoie une demande sur ton téléphone et le paiement passe quand tu la valides.",
     "Video Call": "Appel vidéo",
     "Audio Call": "Appel audio",
-    "Video + Audio": "Vidéo + audio",
+    "Video + Audio Cloning": "Clonage Vidéo + Audio",
     "Video calls": "Appels vidéo",
     "Voice / audio": "Voix / audio",
     "Portrait OBS output": "Sortie OBS verticale",
@@ -588,7 +588,7 @@ const DICT = {
     "MTN MoMo, Telecel Cash (the old Vodafone Cash) or AT Money — whichever network you use. Paystack sends a prompt to your phone and the payment goes when you approve it.": "MTN MoMo أو Telecel Cash (شبكة فودافون كاش سابقاً) أو AT Money — أي شبكة تستخدمها. يرسل Paystack طلباً إلى هاتفك وينفَّذ الدفع بمجرد موافقتك.",
     "Video Call": "مكالمة فيديو",
     "Audio Call": "مكالمة صوتية",
-    "Video + Audio": "فيديو وصوت",
+    "Video + Audio Cloning": "استنساخ الفيديو والصوت",
     "Video calls": "مكالمات فيديو",
     "Voice / audio": "صوت / صوتيات",
     "Portrait OBS output": "إخراج OBS عمودي",
@@ -752,7 +752,7 @@ function setErr(key) { errKey = key || ""; $("err").textContent = key ? tr(key) 
 
 // The minutes' own words, copied from the panel rather than re-invented so the buyer reads
 // the same names in both places.
-const MOD_LABEL = { video: "Video Call", audio: "Audio Call", video_audio: "Video + Audio" };
+const MOD_LABEL = { video: "Video Call", audio: "Audio Call", video_audio: "Video + Audio Cloning" };
 const MODS = ["video", "audio", "video_audio"];
 const minutesOf = (p) => MODS.map((m) => [m, Number(p[m + "_minutes"] || 0)]).filter(([, v]) => v > 0);
 
