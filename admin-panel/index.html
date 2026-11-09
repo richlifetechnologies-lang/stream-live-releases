@@ -878,6 +878,7 @@
               <option value="sudden">Only the ones he did not stop</option>
               <option value="hand">Only the ones he stopped</option>
               <option value="blank">Only calls with nothing delivered</option>
+              <option value="refused">Only the ones the busy line refused</option>
               <option value="mid">Only calls that stopped mid-way</option>
               <option value="unrecorded">Only the ones not recorded</option>
             </select>
@@ -891,7 +892,9 @@
           question: <b>who closed it</b> is this machine reporting the customer's own hand on Stop, and
           <b>what the app wrote down</b> is the reason it saw. A call can have both: he pressed Stop a
           few seconds after the line refused him.
-          <b>Nothing here is a price or a minute figure</b> — that is the Calls and Airtime tabs.
+          <b>Nothing on this page is a price a customer pays or a minute he is charged</b> — that is
+          the Calls and Airtime tabs. The one money figure below is money WE paid the video line for
+          a call it refused, which is the figure you asked to have standing on its own.
         </p>
         <div class="grid4" id="endsStats"></div>
         <div style="overflow:auto;margin-top:12px">
@@ -901,6 +904,25 @@
           </table>
         </div>
         <div id="endsMsg"></div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:14px;margin:0 0 6px">The busy line: calls our video line refused</h2>
+        <p class="muted" style="margin:0 0 12px">
+          The one blank that is nobody's machine. The video line answered the dial itself with a
+          refusal — its own words, quoted in each row below — so his camera, his network and his
+          photo were never asked to do anything. The four figures stay on the page whatever the
+          list below them is doing; the day-by-day rows fold. A refused call is billed to us for
+          the seconds its line was held open, and to the customer for nothing, so this is our
+          money, sat there.
+        </p>
+        <div class="grid4" id="endsRefusedStats"></div>
+        <div style="overflow:auto;margin-top:12px">
+          <table id="endsRefusedTable">
+            <thead><tr><th>Day</th><th style="text-align:right">Refused</th><th style="text-align:right">Seconds held</th><th style="text-align:right">Cost</th><th>Accounts and machines</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card">
@@ -4620,8 +4642,73 @@
     if (which === "sudden") return endsSudden(x);
     if (which === "blank") return !x.r.media_started_at && !!x.r.ended_at;
     if (which === "mid") return x.why.key === "mid";
+    if (which === "refused") return x.why.key === "refused";
     if (which === "unrecorded") return !x.r.stopped_by && !!x.r.ended_at;
     return true;
+  }
+
+  // ── v1.8.66 item 3: the standing line for the busy video line ──────────────────
+  // The seller asked for this number in front of him rather than in an audit, and for the ONE blank
+  // that is ours: the line answered the dial itself with a refusal, so his camera, his network and
+  // his photo were never asked to do anything, and the customer is charged nothing for it. The four
+  // figures stay on the page whatever the rows below them are doing - a card that hides its own
+  // total is the mistake he has already told me about twice - and only the day rows fold.
+  //
+  // What is counted is the video line's own wording, quoted in the row the app wrote down: the same
+  // test that colours the row in the table above, so the two can never disagree about what a
+  // refusal was. The seconds are the time its line was held open, read off the call's own two
+  // stamps - an upper bound on the call, and the whole of it unbillable, because no picture ever
+  // arrived to meter from.
+  const REFUSAL_SEC_USD = 0.02; // the video line's price of a second, from the seller's own $1.20 a real minute
+
+  function endsSec(r) {
+    if (!r.started_at) return 0;
+    const to = r.ended_at ? new Date(r.ended_at) : new Date(serverNowMs());
+    return Math.max(0, Math.round((to - new Date(r.started_at)) / 1000));
+  }
+
+  function renderRefused(all) {
+    const rows = all.filter((x) => x.why.key === "refused");
+    const sec = rows.reduce((n, x) => n + endsSec(x.r), 0);
+    const accounts = new Set(rows.map((x) => x.r.user_id));
+    const machines = new Set(rows.map((x) => x.r.device_id || "—"));
+    $("endsRefusedStats").innerHTML = [
+      [rows.length, "calls the busy line refused"],
+      [sec, "seconds its line was held for nothing"],
+      ["$" + (sec * REFUSAL_SEC_USD).toFixed(2), "ours, at 2 cents a second"],
+      [accounts.size + " / " + machines.size, "accounts / machines hit"],
+    ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
+
+    const days = {};
+    for (const x of rows) {
+      const at = x.r.started_at || (x.why.lines[0] && x.why.lines[0].created_at);
+      const d = String(new Date(at).toISOString()).slice(0, 10);
+      (days[d] = days[d] || []).push(x);
+    }
+    const one = (n, word) => n + " " + word + (n === 1 ? "" : "s");
+    $("endsRefusedTable").querySelector("tbody").innerHTML = Object.keys(days).sort().reverse().map((d) => {
+      const set = days[d];
+      const s = set.reduce((n, x) => n + endsSec(x.r), 0);
+      const who = new Set(set.map((x) => EMAIL_OF[x.r.user_id] || shortId(x.r.user_id)));
+      const where = new Set(set.map((x) => x.r.device_id || "—"));
+      const detail = set.map((x) => {
+        const said = (x.why.why && x.why.why.detail) || "";
+        return '<div style="margin-top:6px"><b>' + esc(EMAIL_OF[x.r.user_id] || shortId(x.r.user_id)) + "</b> "
+          + '<span class="muted">' + esc(x.r.device_id || "—") + " · " + esc(ENDS_TAB[x.r.tab] || x.r.tab || "—")
+          + " · opened " + when(x.r.started_at) + " · " + endsSec(x.r) + " s held</span>"
+          + (said ? '<div class="muted mono" style="margin-top:2px;white-space:normal">' + esc(said) + "</div>"
+                  : '<div class="muted" style="margin-top:2px">His app wrote no words from the line against this call.</div>')
+          + "</div>";
+      }).join("");
+      return '<tr><td class="mono">' + esc(d) + "</td>"
+        + '<td class="mono" style="text-align:right">' + set.length + "</td>"
+        + '<td class="mono" style="text-align:right">' + s + " s</td>"
+        + '<td class="mono" style="text-align:right">$' + (s * REFUSAL_SEC_USD).toFixed(2) + "</td>"
+        + '<td class="muted">' + one(who.size, "account") + " · " + one(where.size, "machine") + "</td>"
+        + '<td style="white-space:nowrap"><button data-act="ends-detail">+</button></td></tr>'
+        + '<tr data-ends-detail class="hidden"><td colspan="6" class="muted">' + detail + "</td></tr>";
+    }).join("")
+      || '<tr><td colspan="6" class="muted">No call in this window was refused for a busy line. That is the honest zero, not a missing read.</td></tr>';
   }
 
   function endsMini(v, l) {
@@ -4672,6 +4759,7 @@
       [new Set(all.map((x) => x.r.user_id)).size, "accounts called"],
       [new Set(all.map((x) => x.r.device_id || "—")).size, "machines"],
     ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
+    renderRefused(all);
 
     const list = shown.slice(0, 200);
     $("endsTable").querySelector("tbody").innerHTML = list.map((x) => '<tr>'
