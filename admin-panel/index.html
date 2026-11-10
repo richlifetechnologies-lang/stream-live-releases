@@ -926,20 +926,20 @@
       </div>
 
       <div class="card">
-        <h2 style="font-size:14px;margin:0 0 6px">The cloned voice: how long callers waited for it</h2>
+        <h2 style="font-size:14px;margin:0 0 6px">The cloned voice that came back and was never heard</h2>
         <p class="muted" style="margin:0 0 12px">
-          The number behind "the cloned voice comes late", measured on his own machine from the
-          instant his microphone stopped holding a word to the instant the cloned answer began. Each
-          call reports the MIDDLE of its own answers, and the headline takes the middle of those, so
-          one answer caught in a busy minute cannot condemn the whole fleet and one lucky answer
-          cannot excuse it. A cloned call with no figure against it ran on a build older than this
-          readout: that is not a fast call, and it is not counted as one. The figures stay on the
-          page whatever the day rows below them are doing, and the day rows fold.
+          From 1.8.72 every cloning call writes down two figures of its own: how many seconds of the
+          cloned voice came back to the app, and how many of them never reached the caller. This is the
+          shape of a customer saying "it cut my sentence" — the reply existed and was paid for, and
+          nobody heard it. It happens when the app is too far behind to speak it, or when he presses
+          Stop while the answer is still arriving. The four figures stay on the page whatever the day
+          rows below them do; the day rows fold. A call that lost nothing writes nothing, so an empty
+          table here is the honest zero, not a missing read.
         </p>
-        <div class="grid4" id="endsWaitStats"></div>
+        <div class="grid4" id="endsUnplayedStats"></div>
         <div style="overflow:auto;margin-top:12px">
-          <table id="endsWaitTable">
-            <thead><tr><th>Day</th><th style="text-align:right">Calls</th><th style="text-align:right">Middle wait</th><th style="text-align:right">Answers counted</th><th>Accounts and machines</th><th></th></tr></thead>
+          <table id="endsUnplayedTable">
+            <thead><tr><th>Day</th><th style="text-align:right">Calls</th><th style="text-align:right">Seconds never heard</th><th style="text-align:right">Seconds that came back</th><th>Accounts and machines</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -3933,7 +3933,7 @@
     await emailsOf((data || []).map((r) => r.user_id));
     $("faultTable").querySelector("tbody").innerHTML = (data || []).map((r) => `<tr>
       <td class="muted">${when(r.created_at)}</td>
-      <td><span class="pill ${r.stage === "gateway" || r.stage === "video line closed" ? "warn" : "fail"}">${esc(r.stage)}</span></td>
+      <td><span class="pill ${r.stage === "gateway" || r.stage === "video line closed" || r.stage === "voice_unplayed" ? "warn" : "fail"}">${esc(r.stage)}</span></td>
       <td class="muted">${esc(EMAIL_OF[r.user_id] || shortId(r.user_id))}</td>
       <td class="muted">${esc(r.detail || "")}</td></tr>`).join("")
       || '<tr><td colspan="4" class="muted">No call has been refused or lost in the last 24 hours.</td></tr>';
@@ -4542,7 +4542,7 @@
     const since = new Date(serverNowMs() - days * 864e5).toISOString();
     const [ses, fls] = await Promise.all([
       sb.from("usage_sessions")
-        .select("id, user_id, tab, modality, device_id, started_at, media_started_at, ended_at, real_minutes, stopped_by, voice_wait_ms, voice_wait_answers")
+        .select("id, user_id, tab, modality, device_id, started_at, media_started_at, ended_at, real_minutes, stopped_by")
         .eq("engine", "fal").gte("started_at", since)
         .order("started_at", { ascending: false }).limit(1000),
       sb.from("call_failures")
@@ -4611,6 +4611,11 @@
         if (noAnswer) return mk("voice_service_silent", "fail", "No " + kind + ": pieces went out and nothing came back", "our voice service", noAnswer);
         const stuck = said(/cause=voice_hold\b/);
         if (stuck) return mk("voice_answer_stuck", "fail", "No " + kind + ": an answer came back and never reached his speakers", "our app", stuck);
+        // 1.8.72 counts the reply in seconds as well as in pieces, so a call that took delivery of
+        // cloned audio and never put a sample of it on the line now says so in its own figures
+        // instead of being read as a build that wrote no evidence.
+        const aired = said(/voice_unplayed/);
+        if (aired) return mk("voice_never_aired", "fail", "No " + kind + ": the reply arrived at this app and was never put on the line", "our app", aired);
         // Voice rows written by a build older than this one carry no cause token. They are shown as
         // what they are - not on record - instead of being read through the video causes below.
         if (lines.length) return mk("voice_said_unk", "warn", "No " + kind + ", and the build that ran it wrote no voice evidence", "the app's own words, below", lines[0]);
@@ -4643,6 +4648,8 @@
         : "our video line";
       return mk("mid", "warn", "Stopped mid-call", side, mid);
     }
+    const unplayed = said(/voice_unplayed/);
+    if (unplayed) return mk("voice_unplayed", "warn", "Part of the cloned voice never reached the caller", "our app", unplayed);
     if (lines.length) return mk("fault_late", "warn", "A fault was written down on a call that was moving", "the app's own words, below", lines[0]);
     if (r.stopped_by === "user") return mk("clean_hand", "ok", "Nothing written down — he stopped it", "he chose to stop", null);
     return mk("clean_quiet", "none", "Nothing written down", "no fault on record", null);
@@ -4654,7 +4661,7 @@
   function endsSudden(x) {
     return x.r.stopped_by !== "user" && (["refused", "photo", "camera", "never", "hold", "blank_said", "blank_quiet", "mid",
       "voice_crash", "voice_mic_closed", "voice_mic_silent", "voice_no_word", "voice_nothing_sent",
-      "voice_service_silent", "voice_answer_stuck", "voice_said_unk", "voice_unk"].includes(x.why.key));
+      "voice_service_silent", "voice_answer_stuck", "voice_never_aired", "voice_said_unk", "voice_unk"].includes(x.why.key));
   }
 
   function endsMatches(which, x) {
@@ -4731,72 +4738,68 @@
       || '<tr><td colspan="6" class="muted">No call in this window was refused for a busy line. That is the honest zero, not a missing read.</td></tr>';
   }
 
-  // ── v1.8.67: the standing line for how long the cloned voice kept callers waiting ──────────
-  // The complaint was in front of him for weeks and every figure we had was measured somewhere else.
-  // The card above the split answers the sentence as he heard it: on his machine, from the last word
-  // his microphone held to the first cloned sound, one number per call, written by the app as it
-  // came out of the call.
-  //
-  // A median of medians is not the same arithmetic as a median of every answer, and it is not
-  // claimed as one. It weights a ten-second call with two answers the same as an hour-long call with
-  // two hundred, which is the honest shape for a panel figure: the question is what a CALL was like,
-  // not what a sample count was like. The answers total is printed beside it so the weighting is
-  // visible rather than implied.
-  function endsMedian(nums) {
-    const s = nums.filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b);
-    if (s.length === 0) return 0;
-    const mid = Math.floor(s.length / 2);
-    return s.length % 2 ? s[mid] : Math.round((s[mid - 1] + s[mid]) / 2);
-  }
-
-  function endsWaitMs(r) { return Number(r.voice_wait_ms) > 0 ? Number(r.voice_wait_ms) : 0; }
-
-  function renderVoiceWait(all) {
-    const rows = all.filter((x) => endsWaitMs(x.r) > 0);
-    // A cloned call that closed with nothing reported ran a build older than this column. Counting
-    // it as a zero would put the fastest wait in the fleet on the calls we know least about.
-    // Which calls could have reported one is decided by the tab the call was dialled on, not by
-    // ENDS_KIND: that classifier answers what the delivery stamp MEANS, and a picture call with a
-    // cloned voice on it is a call with a cloned voice on it.
-    const silent = all.filter((x) => !endsWaitMs(x.r) && x.r.tab !== "video-only" && !!x.r.ended_at);
-    const answers = rows.reduce((n, x) => n + (Number(x.r.voice_wait_answers) || 0), 0);
-    $("endsWaitStats").innerHTML = [
-      [rows.length, "calls reporting their wait"],
-      [endsMedian(rows.map((x) => endsWaitMs(x.r))) + " ms", "middle of those calls"],
-      [answers, "cloned answers counted"],
-      [silent.length, "cloned calls too old to report"],
-    ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
-
-    const days = {};
-    for (const x of rows) {
-      const d = String(new Date(x.r.started_at || x.r.ended_at).toISOString()).slice(0, 10);
-      (days[d] = days[d] || []).push(x);
-    }
-    $("endsWaitTable").querySelector("tbody").innerHTML = Object.keys(days).sort().reverse().map((d) => {
-      const set = days[d];
-      const a = set.reduce((n, x) => n + (Number(x.r.voice_wait_answers) || 0), 0);
-      const who = new Set(set.map((x) => EMAIL_OF[x.r.user_id] || shortId(x.r.user_id)));
-      const where = new Set(set.map((x) => x.r.device_id || "—"));
-      const detail = set.map((x) => '<div style="margin-top:6px"><b>'
-        + esc(EMAIL_OF[x.r.user_id] || shortId(x.r.user_id)) + "</b> "
-        + '<span class="muted">' + esc(x.r.device_id || "—") + " · " + esc(ENDS_TAB[x.r.tab] || x.r.tab || "—")
-        + " · opened " + when(x.r.started_at) + " · " + endsWaitMs(x.r) + " ms over "
-        + (Number(x.r.voice_wait_answers) || 0) + " answer(s)</span></div>").join("");
-      return '<tr><td class="mono">' + esc(d) + "</td>"
-        + '<td class="mono" style="text-align:right">' + set.length + "</td>"
-        + '<td class="mono" style="text-align:right">' + endsMedian(set.map((x) => endsWaitMs(x.r))) + " ms</td>"
-        + '<td class="mono" style="text-align:right">' + a + "</td>"
-        + '<td class="muted">' + who.size + " account(s) · " + where.size + " machine(s)</td>"
-        + '<td style="white-space:nowrap"><button data-act="ends-detail">+</button></td></tr>'
-        + '<tr data-ends-detail class="hidden"><td colspan="6" class="muted">' + detail + "</td></tr>";
-    }).join("")
-      || '<tr><td colspan="6" class="muted">No call in this window reported its cloned-voice wait. '
-        + 'Either nobody ran a build new enough to write it down, or no cloned answer reached a cable.</td></tr>';
-  }
-
   function endsMini(v, l) {
     return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:12px"><span class="muted">'
       + esc(l) + '</span><b class="mono">' + esc(v) + "</b></div>";
+  }
+
+  // The three figures the app counted for one cloning call. Its own sentence carries them as
+  // `key=value` at the head of the line, so this page never has to read prose back into a number.
+  // `played=` is matched on a word boundary so it cannot be lifted out of `unplayed=`.
+  function endsUnplayed(l) {
+    const d = String((l && l.detail) || "");
+    const fig = (k) => {
+      const m = d.match(new RegExp("\\b" + k + "=([0-9]+(?:\\.[0-9]+)?)"));
+      return m ? Number(m[1]) : 0;
+    };
+    return { lost: fig("unplayed"), arrived: fig("arrived"), played: fig("played") };
+  }
+
+  function renderUnplayed(all) {
+    const rows = all.filter((x) => x.why.key === "voice_unplayed");
+    const figs = rows.map((x) => endsUnplayed(x.why.why));
+    const lost = figs.reduce((n, v) => n + v.lost, 0);
+    const arrived = figs.reduce((n, v) => n + v.arrived, 0);
+    const accounts = new Set(rows.map((x) => x.r.user_id));
+    const machines = new Set(rows.map((x) => x.r.device_id || "—"));
+    $("endsUnplayedStats").innerHTML = [
+      [rows.length, "cloning calls that lost part of the reply"],
+      [lost.toFixed(1) + " s", "of the cloned voice nobody heard"],
+      [arrived ? (lost / arrived * 100).toFixed(1) + "%" : "—", "of everything that came back"],
+      [accounts.size + " / " + machines.size, "accounts / machines hit"],
+    ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
+
+    const days = {};
+    rows.forEach((x, i) => {
+      const at = x.r.started_at || (x.why.why && x.why.why.created_at);
+      const d = String(new Date(at).toISOString()).slice(0, 10);
+      (days[d] = days[d] || []).push({ x, f: figs[i] });
+    });
+    const one = (n, word) => n + " " + word + (n === 1 ? "" : "s");
+    $("endsUnplayedTable").querySelector("tbody").innerHTML = Object.keys(days).sort().reverse().map((d) => {
+      const set = days[d];
+      const l = set.reduce((n, e) => n + e.f.lost, 0);
+      const a = set.reduce((n, e) => n + e.f.arrived, 0);
+      const who = new Set(set.map((e) => EMAIL_OF[e.x.r.user_id] || shortId(e.x.r.user_id)));
+      const where = new Set(set.map((e) => e.x.r.device_id || "—"));
+      const detail = set.map((e) => {
+        const said = (e.x.why.why && e.x.why.why.detail) || "";
+        return '<div style="margin-top:6px"><b>' + esc(EMAIL_OF[e.x.r.user_id] || shortId(e.x.r.user_id)) + "</b> "
+          + '<span class="muted">' + esc(e.x.r.device_id || "—") + " · " + esc(ENDS_TAB[e.x.r.tab] || e.x.r.tab || "—")
+          + " · opened " + when(e.x.r.started_at) + " · " + e.f.lost.toFixed(1) + " s lost of " + e.f.arrived.toFixed(1) + " s back</span>"
+          + (said ? '<div class="muted mono" style="margin-top:2px;white-space:normal">' + esc(said) + "</div>"
+                  : '<div class="muted" style="margin-top:2px">His app wrote no words against this call.</div>')
+          + "</div>";
+      }).join("");
+      return '<tr><td class="mono">' + esc(d) + "</td>"
+        + '<td class="mono" style="text-align:right">' + set.length + "</td>"
+        + '<td class="mono" style="text-align:right">' + l.toFixed(1) + " s</td>"
+        + '<td class="mono" style="text-align:right">' + a.toFixed(1) + " s</td>"
+        + '<td class="muted">' + one(who.size, "account") + " · " + one(where.size, "machine") + "</td>"
+        + '<td style="white-space:nowrap"><button data-act="ends-detail">+</button></td></tr>'
+        + '<tr data-ends-detail class="hidden"><td colspan="6" class="muted">' + detail + "</td></tr>";
+    }).join("")
+      || '<tr><td colspan="6" class="muted">No cloning call in this window lost any of its reply. That is the honest zero, not a missing read.</td></tr>';
   }
 
   function endsDetail(r, x) {
@@ -4814,7 +4817,7 @@
     const lines = x.why.lines.length
       ? x.why.lines.slice(0, 6).map((l) => {
           const at = r.started_at ? Math.max(0, Math.round((new Date(l.created_at) - new Date(r.started_at)) / 1000)) : null;
-          const tone = l.stage === "gateway" || l.stage === "video line closed" ? "warn" : "fail";
+          const tone = l.stage === "gateway" || l.stage === "video line closed" || l.stage === "voice_unplayed" ? "warn" : "fail";
           return '<div style="margin-top:6px"><span class="pill ' + tone + '">' + esc(l.stage || "note") + "</span> "
             + '<span class="muted">' + when(l.created_at) + (at === null ? "" : " · " + at + " s into the call") + "</span>"
             + '<div class="muted mono" style="margin-top:2px;white-space:normal">' + esc(l.detail || "") + "</div></div>";
@@ -4843,7 +4846,7 @@
       [new Set(all.map((x) => x.r.device_id || "—")).size, "machines"],
     ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
     renderRefused(all);
-    renderVoiceWait(all);
+    renderUnplayed(all);
 
     const list = shown.slice(0, 200);
     $("endsTable").querySelector("tbody").innerHTML = list.map((x) => '<tr>'
