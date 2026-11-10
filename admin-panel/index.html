@@ -268,6 +268,12 @@
               <div style="flex:0 0 auto"><button id="detSaveEngine">Save video service</button></div>
               <div class="muted" id="detEngineNow" style="flex:1 1 240px"></div>
             </div>
+            <div class="row" style="align-items:center;margin-top:10px">
+              <div style="flex:0 0 220px"><label style="margin-top:0">Picture model</label><select id="detVideoModel"><option value="">Default (2.5)</option><option value="lucy-2-5">Lucy 2.5</option><option value="lucy-2-6">Lucy 2.6</option></select></div>
+              <div style="flex:0 0 auto"><button id="detSaveVideoModel">Save picture model</button></div>
+              <div class="muted" id="detVideoModelNow" style="flex:1 1 240px"></div>
+            </div>
+            <div class="muted" style="margin-top:8px">This line only moves an account that runs on the paid service — the free-trial pool has one model of its own and this cannot change it. The two cost the same per second, so choosing one prices nothing differently and books nothing differently on your meter. A build of the app older than this switch can only dial 2.5, and its calls are recorded as 2.5 whatever is chosen here. Which model a call actually ran is written on the call and printed in the Calls list under <b>Picture model</b>.</div>
           </div>
 
           <div id="noSub" class="hidden" style="margin-top:12px;border:1px dashed #6b2233;border-radius:10px;padding:10px">
@@ -496,7 +502,7 @@
           <div class="prov">
             <div class="phead">
               <span class="pdot" id="vidDot"></span>
-              <b>Video</b><span class="pmeta">fal.ai · LUCY 2.5 realtime</span>
+              <b>Video</b><span class="pmeta">fal.ai · Lucy 2.5 and 2.6 realtime</span>
               <span class="chip" id="vidChip">not tested</span>
             </div>
             <label>fal.ai API key</label>
@@ -690,8 +696,9 @@
             <p class="phint" style="margin-top:0">Serves <b>every brand new account</b> and nothing else: the free 1 minute of video, <b>video only</b>, once per account, for as long as that account has never been credited or bought a minute. A trial minute burns at 1x, so the minute you promise is the minute they stream.</p>
           </div>
           <div class="prov">
-            <div class="phead"><b>Paid service</b><span class="pmeta">fal.ai · LUCY 2.5 realtime</span></div>
+            <div class="phead"><b>Paid service</b><span class="pmeta">fal.ai · Lucy 2.5 and 2.6 realtime</span></div>
             <p class="phint" style="margin-top:0">Serves <b>anyone who has ever had minutes credited or bought</b>, plus every voice call. That switch is permanent in both directions of bookkeeping: an account that paid once is never moved back to the trial pool, even if its balance later reaches zero.</p>
+            <p class="phint">Both picture models cost the same per second, so choosing one for an account moves nothing about what he is charged or what your meter books. Which of the two an account dials is set on his own account, under <b>Picture model</b> (that box is beside the <b>Video service</b> one, which decides paid-versus-trial, not which model); which one a call actually ran is written on the call and printed in the Calls list.</p>
           </div>
         </div>
         <p class="muted" style="margin:12px 0 0">When the trial pool has no key left, a trial account is told the lines are busy and <b>nothing is billed to fal.ai</b>. That refusal is the protection on your fal balance — turning on the fallback below removes it.</p>
@@ -711,7 +718,7 @@
           <div>
             <label>Trial minutes granted at sign-up</label>
             <input id="engTrialMinutes" type="number" min="0" step="0.5" />
-            <div class="muted" style="margin-top:6px">Into the one video pool, which all three call tabs spend. A new account gets this the moment it is created, so the Minutes page already reads the trial before they press Start. Existing accounts are not topped up.</div>
+            <div class="muted" style="margin-top:6px">Into the one video pool, which all three call tabs spend. A new account gets this the moment it is created, so the Minutes page already reads the trial before they press Start. Existing accounts are not topped up. Whatever of these minutes an account still holds the moment real minutes are credited to it is taken back, once, so nobody can spend free minutes on top of minutes he paid for. The take-back is written in that account's ledger.</div>
           </div>
           <div>
             <label>Trial calls allowed at once, across all accounts</label>
@@ -1140,7 +1147,7 @@
             <div style="display:flex;align-items:flex-end"><button id="pgDerive" class="primary">Work it out</button></div>
           </div>
         </details>
-        <p class="muted" style="margin:14px 0 0">What they publish today: <a href="https://fal.ai/models/decart/lucy-2-5/realtime" target="_blank" rel="noreferrer">fal.ai · Lucy 2.5 realtime</a> and <a href="https://elevenlabs.io/pricing" target="_blank" rel="noreferrer">ElevenLabs · plans and credits</a>. Both change without notice, so check before you quote a customer. Saved on <span id="pgVerified" class="mono">—</span>.</p>
+        <p class="muted" style="margin:14px 0 0">What they publish today: <a href="https://fal.ai/models/decart/lucy-2-5/realtime" target="_blank" rel="noreferrer">fal.ai · Lucy 2.5 realtime</a>, <a href="https://fal.ai/models/decart/lucy-2-6/realtime" target="_blank" rel="noreferrer">fal.ai · Lucy 2.6 realtime</a> and <a href="https://elevenlabs.io/pricing" target="_blank" rel="noreferrer">ElevenLabs · plans and credits</a>. Both change without notice, so check before you quote a customer. Saved on <span id="pgVerified" class="mono">—</span>.</p>
         <div id="pgMsg"></div>
       </div>
 
@@ -1393,6 +1400,10 @@
   // use these words: a user sees one Start button and no service name.
   const ENGINE_LABEL = { fal: "Paid service", decart: "Trial pool" };
   const ENGINE_PILL = { fal: "yes", decart: "past_due" };
+  // The two paid picture services, named by the tokens the call row is written with. Only this
+  // page ever prints them; a customer sees one Start button.
+  const VIDEO_MODEL_NAME = { "lucy-2-5": "Lucy 2.5", "lucy-2-6": "Lucy 2.6" };
+  const FIRST_VIDEO_MODEL = "lucy-2-5";
   // Same decision the gateway makes: credited minutes mean the paid service for
   // good; otherwise the pin wins and the default is the trial pool.
   // Mirrors the gateway's decision exactly, so this page can never show an engine
@@ -1482,6 +1493,11 @@
   let AIR_TRUNC = false;
   let HIST = [];
   let hasEngineCols = false;
+  // Same rule as the engine pin: the picture-model columns only exist once their migration has
+  // run, and this page can be deployed ahead of it. The switch stays visible either way — hiding
+  // it read as "the panel has no model choice" — and the Calls list prints "—" on rows the
+  // database cannot name a model for, which are the calls made before this was recorded.
+  let hasVideoModelCols = false;
   let hasTrialCols = false;
   let hasTrialCfg = false;
   // Which computer each account was created on, and whether that computer is already in
@@ -1921,6 +1937,26 @@
     }
   }
 
+  // Choosing the picture service for one account. Nothing here touches a price or a meter
+  // figure: the two services cost the same per second, so this only says which one he dials.
+  async function pinVideoModel(userId, choice, box) {
+    const target = choice === "" ? null : choice;
+    const name = EMAIL_OF[userId] || userId;
+    try {
+      const res = await api({ action: "set_video_model", userId, videoModel: target });
+      if (CUR && CUR.user_id === userId) {
+        CUR.pin = { ...(CUR.pin || {}), video_model: res.video_model ?? null, video_model_at: serverNowIso() };
+        await renderVideoModelPin();
+      }
+      msg(box, `${name}'s paid calls now dial ${VIDEO_MODEL_NAME[res.effective] || res.effective}${
+        target === null ? " — back on the normal rule." : "."}`, "ok");
+      return true;
+    } catch (err) {
+      msg(box, err.message);
+      return false;
+    }
+  }
+
   // A select has no click handler of its own in this panel's delegation, so the
   // change event is wired separately and re-renders on a cancelled confirmation.
   document.addEventListener("change", async (e) => {
@@ -1949,9 +1985,16 @@
     if (!EMAIL_OF[userId]) await emailsOf([userId]);
     const snap = await rpc("sl_account_snapshot", { p_user: userId });
     if (snap?.ok === false) return msg("detMsg", snap.error || "snapshot failed");
-    const { data: pin, error: pinErr } = await sb.from("subscriptions")
-      .select("engine_override, engine_override_by, engine_override_at, trial_granted_at")
+    const pinCols = "engine_override, engine_override_by, engine_override_at, trial_granted_at";
+    // The picture-model columns came later than these, and naming a column the database does not
+    // have fails the whole read, so ask with them and fall back to without.
+    const pinWith = await sb.from("subscriptions")
+      .select(pinCols + ", video_model, video_model_by, video_model_at")
       .eq("user_id", userId).maybeSingle();
+    hasVideoModelCols = !pinWith.error;
+    const { data: pin, error: pinErr } = hasVideoModelCols
+      ? pinWith
+      : await sb.from("subscriptions").select(pinCols).eq("user_id", userId).maybeSingle();
     hasEngineCols = !pinErr;
     // This account's OWN cloning line, asked straight off the row. What the snapshot answers with
     // is the folded position — the gateway-wide line has already had its say — and this box edits
@@ -2000,7 +2043,7 @@
     };
     $("acctDetail").classList.remove("hidden");
     renderAccount();
-    await Promise.all([loadAssignments(), loadLedger(userId), renderEnginePin()]);
+    await Promise.all([loadAssignments(), loadLedger(userId), renderEnginePin(), renderVideoModelPin()]);
     msg("detMsg", "Account loaded.", "ok");
   }
 
@@ -2048,6 +2091,29 @@
             : " — not in the trial register") + "</div>"
         : '<div class="muted">no computer code has ever come from this account, not at sign-up and not on a call</div>')
       + (c.net ? netNote(c.net.network_first_ip, c.net.network_first_at, c.net.network_last_ip, c.net.network_last_at) : "");
+  }
+
+  // Which of the two paid picture services this account dials. The gateway decides per call —
+  // the pin here, then the first service — and an installed build that cannot dial the second
+  // one gets the first one whatever this box says, so the note below names the engine too:
+  // on the free-trial pool this line is a promise for later, not a change now.
+  async function renderVideoModelPin() {
+    const c = CUR;
+    const isPaid = await paidOf(c.user_id);
+    const granted = !!c.pin?.trial_granted_at;
+    const isAdmin = await adminOf(c.user_id);
+    const eng = engineOf(isPaid, c.pin?.engine_override ?? null, granted, isAdmin);
+    const pinned = c.pin?.video_model ?? null;
+    const live = pinned ?? FIRST_VIDEO_MODEL;
+    $("detVideoModel").value = pinned ?? "";
+    $("detVideoModelNow").innerHTML = `<span class="pill ${eng === "decart" ? "past_due" : "yes"}">${VIDEO_MODEL_NAME[live]}</span> `
+      + (!hasVideoModelCols
+        ? "this is the picture service he dials today; the choice cannot be saved until the migration that adds it has run."
+        : eng === "decart"
+          ? "this line moves nothing for him right now — he runs on the free-trial pool, which has one picture service of its own. It takes effect the day he is on the paid service."
+          : pinned
+            ? `chosen by you${c.pin.video_model_at ? " on " + when(c.pin.video_model_at) : ""}. His paid calls dial ${VIDEO_MODEL_NAME[pinned]}, and each one is written into the Calls list with it.`
+            : "nobody has chosen, so the normal rule runs: the first picture service. An app build that predates this switch dials that one whatever is chosen here, and its calls are recorded as that one too.");
   }
 
   function renderAccount() {
@@ -2251,6 +2317,12 @@
     if (!CUR) return;
     msg("detMsg", "");
     await pinEngine(CUR.user_id, $("detEngine").value, "detMsg");
+  };
+
+  $("detSaveVideoModel").onclick = async () => {
+    if (!CUR) return;
+    msg("detMsg", "");
+    await pinVideoModel(CUR.user_id, $("detVideoModel").value, "detMsg");
   };
 
   $("detCreateSub").onclick = async () => {
@@ -3730,6 +3802,10 @@
           + ` — a difference of <b>${usd(Math.abs(gap))}</b> is ${gap >= 0.005 ? "calls still settling on fal.ai's side, calls outside this window, or spending by a key that is not in the pool" : "within reading distance"}`
           + `${bill.read === false ? " — and one or more accounts gave no answer, so that bill is the accounts that did." : "."}`
           + `${CALL_TODAY_CAPPED ? " The day's list is capped at 2,000 calls, so the difference can be larger than it looks." : ""}`;
+    // Which of the two paid picture services this call ran. The gateway writes it on the call the
+    // second the line opens, so a row with nothing in it is a call made before that stamp existed
+    // - not a call that failed to send a picture, which is what the pill two columns over says.
+    const modelOf = (m) => (m ? VIDEO_MODEL_NAME[m] || esc(String(m)) : "not recorded");
     const list = `
       <p class="muted" style="margin:10px 0 0">One line per call, newest first, for every ${meta.name} run on the paid video service${CALL_SKIPPED ? ` - the <b>${CALL_SKIPPED}</b> trial call(s) are not here` : ""}. The services bill by the second, so
         <b>what it cost</b> is the price on your Prices tab (${rateText}) times
@@ -3739,10 +3815,11 @@
         every time the card loads, so a package you re-price shows up on the next refresh.</p>
       <div style="overflow:auto;margin-top:10px">
         <table id="callsTable">
-          <thead><tr><th>Account</th><th>Started</th><th>Line held</th><th>${meta.picName}</th><th>What it cost</th><th>You charged</th><th>What it paid</th><th>Difference</th></tr></thead>
+          <thead><tr><th>Account</th><th>Started</th>${meta.picture ? "<th>Picture model</th>" : ""}<th>Line held</th><th>${meta.picName}</th><th>What it cost</th><th>You charged</th><th>What it paid</th><th>Difference</th></tr></thead>
           <tbody>${rows.map((x) => `<tr>
             <td><b>${esc(EMAIL_OF[x.r.user_id] || shortId(x.r.user_id))}</b></td>
             <td class="muted">${when(x.r.started_at)}${x.r.ended_at ? "" : ' <span class="pill warn">on air</span>'}${x.r.settled ? "" : " · not settled"}</td>
+            ${meta.picture ? `<td class="muted">${modelOf(x.r.video_model)}</td>` : ""}
             <td class="mono" style="text-align:right">${clock(x.line / 60)}</td>
             <td class="mono" style="text-align:right">${x.pic > 0 ? clock(x.pic / 60) : `<span class="pill warn">${meta.noneName}</span>`}</td>
             ${money(x.cost)}
@@ -3751,7 +3828,7 @@
             <td class="mono" style="text-align:right;color:${x.paid - x.cost < 0.005 ? "#fb7185" : "#35e0a0"}">${x.paid - x.cost >= 0 ? "+" : ""}${usd(x.paid - x.cost)}</td>
           </tr>`).join("")}</tbody>
           <tfoot><tr>
-            <td><b>these ${rows.length} calls</b></td><td></td>
+            <td><b>these ${rows.length} calls</b></td><td></td>${meta.picture ? "<td></td>" : ""}
             <td class="mono" style="text-align:right"><b>${clock(sum.line / 60)}</b></td>
             <td class="mono" style="text-align:right"><b>${clock(sum.pic / 60)}</b></td>
             <td class="mono" style="text-align:right"><b>${usd(sum.cost)}</b></td>
