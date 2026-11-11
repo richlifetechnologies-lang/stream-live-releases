@@ -269,7 +269,7 @@
               <div class="muted" id="detEngineNow" style="flex:1 1 240px"></div>
             </div>
             <div class="row" style="align-items:center;margin-top:10px">
-              <div style="flex:0 0 220px"><label style="margin-top:0">Picture model</label><select id="detVideoModel"><option value="">Default (2.5)</option><option value="lucy-2-5">Lucy 2.5</option><option value="lucy-2-6">Lucy 2.6</option></select></div>
+              <div style="flex:0 0 220px"><label style="margin-top:0">Picture model</label><select id="detVideoModel"><option value="">Automatic (the software chooses)</option><option value="lucy-2-5">Lucy 2.5</option><option value="lucy-2-6">Lucy 2.6</option></select></div>
               <div style="flex:0 0 auto"><button id="detSaveVideoModel">Save picture model</button></div>
               <div class="muted" id="detVideoModelNow" style="flex:1 1 240px"></div>
             </div>
@@ -933,6 +933,39 @@
       </div>
 
       <div class="card">
+        <h2 style="font-size:14px;margin:0 0 6px">Which picture line went blank</h2>
+        <p class="muted" style="margin:0 0 12px">
+          The paid picture calls in the window, split by the two things that decide which line a
+          call actually ran on: the picture model it dialled and the key that paid for it. A blank
+          here is a call that opened and never put a picture on his screen — the black box he
+          complains about, and the only event that moves the next call to a different line. Both
+          lines cost the same per second, so a busier one is not a worse product; it is a bigger
+          crowd in front of the same door. The four figures are the whole window whatever the rows
+          below them are doing, and each row folds open to the calls behind it.
+        </p>
+        <div class="grid4" id="endsLineStats"></div>
+        <p class="muted" id="endsLineNote" style="margin:10px 0 0"></p>
+        <div style="overflow:auto;margin-top:12px">
+          <table id="endsLineTable">
+            <thead><tr><th>Picture line</th><th style="text-align:right">Calls</th><th style="text-align:right">No picture</th><th style="text-align:right">Blank rate</th><th style="text-align:right">Seconds held</th><th>Accounts and machines</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin:14px 0 6px">
+          The same calls by the key that was billed. Two keys are two separate accounts at the
+          video service, each with its own room inside it, so a line that looks crowded on one key
+          can be quiet on the other — and a customer's blank is only ever switched between models,
+          never between keys, because the pool decides the key by itself.
+        </p>
+        <div style="overflow:auto">
+          <table id="endsKeyTable">
+            <thead><tr><th>Key</th><th style="text-align:right">Calls</th><th style="text-align:right">No picture</th><th style="text-align:right">Blank rate</th><th style="text-align:right">Seconds held</th><th>Accounts and machines</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 style="font-size:14px;margin:0 0 6px">The cloned voice that came back and was never heard</h2>
         <p class="muted" style="margin:0 0 12px">
           From 1.8.72 every cloning call writes down two figures of its own: how many seconds of the
@@ -1038,6 +1071,11 @@
             <div id="cfgCloningBox"></div>
             <div class="muted" style="margin-top:6px">His screen has three call tabs, and this line decides two of them — <b>Video + Audio Cloning</b> and <b>Voice Clone Only</b>. <b>Video Call</b> carries no cloned voice, so it is never closed from here. Click the choice you want, then press <b>Save gateway config</b>. This is a ceiling over every account: it can close what an account's own line has opened, and it can never open what an account has closed. It lands on the next read each app makes — there is nothing to restart on anybody's machine.</div>
             <div class="muted" id="cfgCloningNow" style="margin-top:6px"></div>
+          </div>
+          <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
+            <label class="feat" style="margin:0"><input type="checkbox" id="cfgFirstCallLine" /> Choose the quietest picture line for a first call</label>
+            <div class="muted" style="margin-top:6px">Off, which is where it ships: a brand-new account dials the picture service it has always dialled. On: his <b>first</b> paid picture call goes to whichever of the two services the fleet went blank on least in the last day — but only when one is clearly quieter and both have real traffic behind them. A new account with a few calls already on it is never touched, and this never outranks a model you pinned on an account.</div>
+            <div class="muted" id="cfgFirstCallNow" style="margin-top:6px"></div>
           </div>
         </div>
         <label>Maintenance message</label>
@@ -1948,8 +1986,9 @@
         CUR.pin = { ...(CUR.pin || {}), video_model: res.video_model ?? null, video_model_at: serverNowIso() };
         await renderVideoModelPin();
       }
-      msg(box, `${name}'s paid calls now dial ${VIDEO_MODEL_NAME[res.effective] || res.effective}${
-        target === null ? " — back on the normal rule." : "."}`, "ok");
+      msg(box, target === null
+        ? `${name} is back on Automatic: the software now chooses his picture line on each call, away from whichever one this computer last went blank on. Check the Calls list to see which one he is dialling.`
+        : `${name}'s paid calls now dial ${VIDEO_MODEL_NAME[res.effective] || res.effective}, and nothing overrides it.`, "ok");
       return true;
     } catch (err) {
       msg(box, err.message);
@@ -2093,10 +2132,13 @@
       + (c.net ? netNote(c.net.network_first_ip, c.net.network_first_at, c.net.network_last_ip, c.net.network_last_at) : "");
   }
 
-  // Which of the two paid picture services this account dials. The gateway decides per call —
-  // the pin here, then the first service — and an installed build that cannot dial the second
-  // one gets the first one whatever this box says, so the note below names the engine too:
-  // on the free-trial pool this line is a promise for later, not a change now.
+  // Which of the two paid picture services this account dials. The pin here is the whole
+  // decision when you have set one — the gateway obeys it on every call and no automatic rule
+  // overrides it — and on Automatic the gateway chooses per call: away from whichever line this
+  // machine last went blank on, otherwise onto whichever line last actually gave this account a
+  // picture. An installed build that cannot dial the second service gets the first whatever this
+  // box says, so the note below names the engine too: on the free-trial pool this line is a
+  // promise for later, not a change now.
   async function renderVideoModelPin() {
     const c = CUR;
     const isPaid = await paidOf(c.user_id);
@@ -2104,16 +2146,16 @@
     const isAdmin = await adminOf(c.user_id);
     const eng = engineOf(isPaid, c.pin?.engine_override ?? null, granted, isAdmin);
     const pinned = c.pin?.video_model ?? null;
-    const live = pinned ?? FIRST_VIDEO_MODEL;
     $("detVideoModel").value = pinned ?? "";
-    $("detVideoModelNow").innerHTML = `<span class="pill ${eng === "decart" ? "past_due" : "yes"}">${VIDEO_MODEL_NAME[live]}</span> `
+    $("detVideoModelNow").innerHTML = `<span class="pill ${eng === "decart" ? "past_due" : pinned ? "yes" : "none"}">${
+      eng === "decart" ? VIDEO_MODEL_NAME[FIRST_VIDEO_MODEL] : pinned ? VIDEO_MODEL_NAME[pinned] : "Automatic"}</span> `
       + (!hasVideoModelCols
         ? "this is the picture service he dials today; the choice cannot be saved until the migration that adds it has run."
         : eng === "decart"
           ? "this line moves nothing for him right now — he runs on the free-trial pool, which has one picture service of its own. It takes effect the day he is on the paid service."
           : pinned
-            ? `chosen by you${c.pin.video_model_at ? " on " + when(c.pin.video_model_at) : ""}. His paid calls dial ${VIDEO_MODEL_NAME[pinned]}, and each one is written into the Calls list with it.`
-            : "nobody has chosen, so the normal rule runs: the first picture service. An app build that predates this switch dials that one whatever is chosen here, and its calls are recorded as that one too.");
+            ? `chosen by you${c.pin.video_model_at ? " on " + when(c.pin.video_model_at) : ""}. His paid calls dial ${VIDEO_MODEL_NAME[pinned]} every time, and each one is written into the Calls list with it. Nothing overrides a choice you have made here.`
+            : "nothing chosen, so the software decides on each call: away from the line this computer last went blank on, and otherwise onto the line that last gave this account a picture. Whichever it dials is written into the Calls list, so the Calls tab tells you what he actually ran. An app build older than this switch dials the first service whatever is chosen here.");
   }
 
   function renderAccount() {
@@ -4613,17 +4655,34 @@
   let ENDS_CALLS = [];
   let ENDS_FAIL = {}; // session id -> the lines that app wrote down about this call
   let ENDS_TRUNC = "";
+  let ENDS_HAS_LINE_COLS = false; // these rows carry video_model and fal_key_id
+  let ENDS_KEYS = {};             // gateway_keys id -> its label, for the picture-line card
 
   async function loadEnds() {
     const days = N($("endsWindow").value) || 7;
     const since = new Date(serverNowMs() - days * 864e5).toISOString();
-    const [ses, fls] = await Promise.all([
-      sb.from("usage_sessions")
-        .select("id, user_id, tab, modality, device_id, started_at, media_started_at, ended_at, real_minutes, stopped_by")
-        .eq("engine", "fal").gte("started_at", since)
-        .order("started_at", { ascending: false }).limit(1000),
+    // The two stamps the picture-line card below groups by are written by the gateway on the call
+    // row itself, and they arrived with the second-picture-line migration. A panel redeployed
+    // before that SQL runs must still load this tab, so the wide read is tried first and the
+    // narrow one is the fallback — never a select that names a column this database has not got.
+    const wide = "id, user_id, tab, modality, device_id, started_at, media_started_at, ended_at, real_minutes, stopped_by, video_model, fal_key_id";
+    const narrow = "id, user_id, tab, modality, device_id, started_at, media_started_at, ended_at, real_minutes, stopped_by";
+    const [ses, fls, keys] = await Promise.all([
+      (async () => {
+        const first = await sb.from("usage_sessions").select(wide)
+          .eq("engine", "fal").gte("started_at", since)
+          .order("started_at", { ascending: false }).limit(1000);
+        if (!first.error) { ENDS_HAS_LINE_COLS = true; return first; }
+        ENDS_HAS_LINE_COLS = false;
+        return await sb.from("usage_sessions").select(narrow)
+          .eq("engine", "fal").gte("started_at", since)
+          .order("started_at", { ascending: false }).limit(1000);
+      })(),
       sb.from("call_failures")
         .select("session_id, stage, detail, created_at").gte("created_at", since).limit(4000),
+      // Only so a key can be named the way the Key pool tab names it. A pool this tab cannot
+      // read is not a reason to show no card at all — the rows fall back to the short id.
+      sb.from("gateway_keys").select("id, label").limit(200),
     ]);
     if (ses.error) return msg("endsMsg", "Could not read the paid calls: " + ses.error.message);
     if (fls.error) return msg("endsMsg", "Could not read what the apps wrote down: " + fls.error.message);
@@ -4635,8 +4694,11 @@
     }
     ENDS_TRUNC = (ENDS_CALLS.length >= 1000 ? "The window holds more than 1,000 paid calls, so the oldest are not read. " : "")
       + ((fls.data || []).length >= 4000 ? "More than 4,000 fault lines fell in the window, so a call's earliest lines may be missing from its detail. " : "");
+    ENDS_KEYS = {};
+    for (const k of (keys && !keys.error ? keys.data || [] : [])) ENDS_KEYS[k.id] = k.label || "";
     await emailsOf(ENDS_CALLS.map((r) => r.user_id));
     renderEnds();
+    renderLines();
   }
 
   // Measured from the row's own two stamps, which makes it an upper bound on the call rather than
@@ -4813,6 +4875,93 @@
         + '<tr data-ends-detail class="hidden"><td colspan="6" class="muted">' + detail + "</td></tr>";
     }).join("")
       || '<tr><td colspan="6" class="muted">No call in this window was refused for a busy line. That is the honest zero, not a missing read.</td></tr>';
+  }
+
+  // ══ The picture-line card ═════════════════───────────────────────────────
+  // The two questions the model switch above now answers on its own, on every call: is one
+  // picture line blanking more than the other, and is one key blanking more than its
+  // neighbours? Both answers are already in the rows this tab reads — the gateway writes the
+  // line each call dialled and the key that carried it — so this card only lines them up
+  // beside each other instead of making him run an audit to find out whether the switching is
+  // earning anything.
+  //
+  // A blank here is a call that opened and never put a picture on screen: no picture stamp, on a
+  // paid picture call. That is the customer's "black box" and nothing else, so the rate is the
+  // figure he can act on — not the count of refusals, which is the card above this one.
+  function endsLineRows(field, nameOf) {
+    const out = {};
+    for (const r of ENDS_CALLS) {
+      if (r.modality !== "video" && r.modality !== "video_audio") continue;
+      const k = r[field] || "";
+      const b = (out[k] = out[k] || { key: k, calls: 0, blank: 0, secs: 0, accounts: new Set(), machines: new Set(), rows: [] });
+      b.calls++;
+      if (!r.media_started_at) { b.blank++; b.secs += endsSec(r); }
+      b.accounts.add(r.user_id);
+      b.machines.add(r.device_id || "—");
+      b.rows.push(r);
+    }
+    return Object.values(out).sort((a, b) => b.calls - a.calls).map((b) => ({ ...b, name: nameOf(b.key) }));
+  }
+
+  function endsLineTable(list, id, colspan) {
+    const one = (n, word) => n + " " + word + (n === 1 ? "" : "s");
+    $(id).querySelector("tbody").innerHTML = list.map((b) => {
+      const rate = b.calls ? Math.round(b.blank / b.calls * 1000) / 10 : null;
+      // The blanks are taken once, into a name, and not re-filtered inside the markup: the list is
+      // capped at forty, and the line that counts the rest has to be added to whatever the first
+      // forty produced. Written as one `||` and one `+` chain, JavaScript reads the whole tail as
+      // the fallback branch and a group of forty-five blanks silently loses five of them.
+      const blanks = b.rows.filter((r) => !r.media_started_at);
+      const listed = blanks.slice(0, 40).map((r) =>
+        '<div style="margin-top:6px"><b>' + esc(EMAIL_OF[r.user_id] || shortId(r.user_id)) + "</b> "
+        + '<span class="muted">' + esc(r.device_id || "—") + " · " + esc(ENDS_TAB[r.tab] || r.tab || "—")
+        + " · opened " + when(r.started_at) + " · " + endsSec(r) + " s held with nothing on screen</span></div>").join("");
+      const detail = (listed || '<div class="muted" style="margin-top:6px">No blank call in this group.</div>')
+        + (blanks.length > 40
+          ? '<div class="muted">' + (blanks.length - 40) + " more blank call(s) not listed.</div>" : "");
+      return '<tr><td>' + esc(b.name) + "</td>"
+        + '<td class="mono" style="text-align:right">' + b.calls + "</td>"
+        + '<td class="mono" style="text-align:right">' + b.blank + "</td>"
+        + '<td class="mono" style="text-align:right;color:' + (rate !== null && rate >= 25 ? "#fb7185" : "#35e0a0") + '">'
+        + (rate === null ? "—" : rate.toFixed(1) + "%") + "</td>"
+        + '<td class="mono" style="text-align:right">' + b.secs + " s</td>"
+        + '<td class="muted">' + one(b.accounts.size, "account") + " · " + one(b.machines.size, "machine") + "</td>"
+        + '<td style="white-space:nowrap"><button data-act="ends-detail">+</button></td></tr>'
+        + '<tr data-ends-detail class="hidden"><td colspan="' + colspan + '" class="muted">' + detail + "</td></tr>";
+    }).join("")
+      || '<tr><td colspan="' + colspan + '" class="muted">No paid picture call in this window. That is the honest zero, not a missing read.</td></tr>';
+  }
+
+  function renderLines() {
+    const stats = $("endsLineStats");
+    if (!stats) return;
+    if (!ENDS_HAS_LINE_COLS) {
+      stats.innerHTML = "";
+      $("endsLineTable").querySelector("tbody").innerHTML = "";
+      $("endsKeyTable").querySelector("tbody").innerHTML = "";
+      $("endsLineNote").innerHTML = "These call rows carry no picture-line or key stamp yet: the migration that writes them has not run on this database, so this card has nothing honest to count. Nothing here has been changed.";
+      return;
+    }
+    const models = endsLineRows("video_model", (k) => k ? (VIDEO_MODEL_NAME[k] || k) : "Not recorded — a call from before the line was written down");
+    const keys = endsLineRows("fal_key_id", (k) => k ? (ENDS_KEYS[k] || "key " + shortId(k)) : "Not recorded — a call from before the key was written down");
+    const calls = models.reduce((n, b) => n + b.calls, 0);
+    const blank = models.reduce((n, b) => n + b.blank, 0);
+    const withBoth = models.filter((b) => b.calls >= 10 && b.key);
+    const worst = withBoth.slice().sort((a, b) => (b.blank / b.calls) - (a.blank / a.calls))[0] || null;
+    const best = withBoth.slice().sort((a, b) => (a.blank / a.calls) - (b.blank / b.calls))[0] || null;
+    $("endsLineNote").innerHTML = withBoth.length < 2
+      ? "At least two picture lines need ten or more calls in this window before one can be called busier than the other, so the four figures count and nothing is compared yet. The gateway makes the same rule wait before it moves a customer off a line."
+      : worst && best && worst.key !== best.key
+        ? `In this window the quieter of the two was <b>${esc(best.name)}</b> at <b>${(best.blank / best.calls * 100).toFixed(1)}%</b> and the busier <b>${esc(worst.name)}</b> at <b>${(worst.blank / worst.calls * 100).toFixed(1)}%</b>. That gap is what a call after a blank is switched away from, and what the last line that gave this account a picture is switched back to.`
+        : "";
+    stats.innerHTML = [
+      [calls, "paid picture calls in the window"],
+      [blank, "of them put no picture on screen"],
+      [calls ? (blank / calls * 100).toFixed(1) + "%" : "—", "blank across both lines"],
+      [models.length, "picture lines dialled"],
+    ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
+    endsLineTable(models, "endsLineTable", 7);
+    endsLineTable(keys, "endsKeyTable", 7);
   }
 
   function endsMini(v, l) {
@@ -5142,6 +5291,7 @@
   // sending a column that does not exist and failing the whole save.
   let hasVideoCeiling = false;
   let hasCloningCfg = false;
+  let hasFirstCallLineCfg = false;   // app_config.first_call_health_line exists on this database
 
   async function loadConfig() {
     const { data, error } = await sb.from("app_config").select("*").eq("id", 1).maybeSingle();
@@ -5182,6 +5332,16 @@
     $("engFalFallback").checked = data.allow_fal_when_no_decart === true;
     if (!hasTrialCfg) msg("engMsg", "The trial columns are not in the database yet — run the dual-engine migration, then reload this page.");
 
+    // The first-call line: same probe-then-fallback, because a panel redeployed before
+    // 20261111120000 would fail the whole save by naming a column that is not there yet.
+    const probeFirstCall = await sb.from("app_config").select("first_call_health_line").eq("id", 1).maybeSingle();
+    hasFirstCallLineCfg = !probeFirstCall.error;
+    $("cfgFirstCallLine").checked = hasFirstCallLineCfg && probeFirstCall.data?.first_call_health_line === true;
+    $("cfgFirstCallLine").disabled = !hasFirstCallLineCfg;
+    $("cfgFirstCallNow").innerHTML = hasFirstCallLineCfg
+      ? ""
+      : "The database has no first-call column yet — run the migration, then reload this page. Nothing here has been changed.";
+
     await Promise.all([loadPool(), loadSupply()]);
   }
 
@@ -5212,6 +5372,8 @@
       row.cloning_enabled = globalCloneMode === "voice_video";
       CLONING_MODE = row.cloning_enabled ? "voice_video" : "off";
     }
+    const firstCallWanted = $("cfgFirstCallLine").checked;
+    if (hasFirstCallLineCfg) row.first_call_health_line = firstCallWanted;
     const { error } = await sb.from("app_config").update(row).eq("id", 1);
     if (error) return msg("cfgMsg", error.message);
     // Paint what actually landed, not what was clicked: on a database without the middle position a
@@ -5219,13 +5381,18 @@
     setCloneDoor("cfgCloningMode", hasCloneModeCfg ? globalCloneMode : CLONING_MODE);
     const landed = !hasCloneModeCfg && hasCloningCfg && globalCloneMode === "voice_only"
       ? " (this database has no middle position, so it landed as closed)" : "";
+    $("cfgFirstCallNow").innerHTML = hasFirstCallLineCfg
+      ? ""
+      : "The first-call line was not saved: this database has no column for it yet.";
     msg("cfgMsg", "Gateway config saved — voice cloning across the whole software is now "
       + CLONE_LABEL[hasCloneModeCfg ? globalCloneMode : CLONING_MODE] + " " + landed
       + (CLONING_MODE === "off"
         ? ". It lands on the next read each app makes, so a Video + Audio Cloning tab or a Voice Clone Only tab that is open on someone's screen goes dead at their next Start, and a call already running closes at its next voice ask. Nobody's Video Call tab is touched."
         : CLONING_MODE === "voice_only"
           ? ". The Video + Audio Cloning tab is shut for everyone now, so no call pairs a picture with a cloned voice; the Voice Clone Only tab is still open to the accounts whose own line allows it, and every Video Call tab keeps working."
-          : " — applies to the next call, and each account is back to its own line for its Video + Audio Cloning and Voice Clone Only tabs. Video Call is never decided from here."), "ok");
+          : " — applies to the next call, and each account is back to its own line for its Video + Audio Cloning and Voice Clone Only tabs. Video Call is never decided from here.")
+      + " The first-call line is now "
+      + (hasFirstCallLineCfg ? (firstCallWanted ? "ON: a brand-new account's first paid picture call goes to whichever of the two picture services the fleet went blank on least in the last day." : "OFF: a brand-new account dials the picture service it has always dialled.") : "unchanged (this database has no column for it yet)"), "ok");
   };
 
   async function loadPool() {
