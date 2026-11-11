@@ -209,11 +209,11 @@
         <div id="unlAlert"></div>
         <div data-unlfold style="overflow:auto;margin-top:12px">
           <table id="unlTable">
-            <thead><tr><th>Account</th><th>One call may run</th><th>Total cap</th><th>Used so far</th><th>Left of the cap</th><th>Right now</th><th>Calls 24h</th><th>On air 24h</th><th>Refused 24h</th></tr></thead>
+            <thead><tr><th>Account</th><th>One call may spend</th><th>Total cap</th><th>Spent so far</th><th>Left of the cap</th><th>Right now</th><th>Calls 24h</th><th>On air 24h</th><th>Refused 24h</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
-        <p class="muted" data-unlfold style="margin:10px 0 0">Used minutes are read off the calls that really happened, from the moment the package was granted — the same read that decides whether his next press is accepted. A cap typed now therefore comes down on everything he has already used, exactly as it should. The <b>Refused</b> column counts presses the gateway turned away in the last day: a package that ran out, or an account with no video key attached to it.</p>
+        <p class="muted" data-unlfold style="margin:10px 0 0">What is spent is read off the calls that really happened, from the moment the package was granted — the same read that decides whether his next press is accepted. The minute columns are minutes <b>spent</b>, not minutes on screen: a minute of picture spends the figure on the <b>Unlimited dial</b> on the Burn rates tab, and a minute of voice spends your Voice Clone Only rate. So a window or a cap typed in minutes buys that much airtime at the rate in force, and a cap typed now comes down on everything he has already used, exactly as it should. <b>On air 24h</b> is the wall-clock time he really watched, before any rate. The <b>Refused</b> column counts presses the gateway turned away in the last day: a package that ran out, or an account with no video key attached to it.</p>
         <div id="unlMsg"></div>
       </div>
 
@@ -253,8 +253,8 @@
           <div class="muted" id="gMinHint" style="margin:4px 0 0"></div>
           <div class="row" style="margin-top:10px;align-items:center">
             <div style="flex:0 0 auto"><label class="feat" style="margin:0"><input type="checkbox" id="gUnlimited" /> Set unlimited</label></div>
-            <div style="flex:0 0 120px"><label style="margin:0">Minutes per call</label><input id="gUnlimitedWindow" type="number" min="1" step="1" value="15" title="One call may run this long, then starts fresh when the buyer presses Stop or his network drops. Used with Set unlimited." /></div>
-            <div style="flex:0 0 130px"><label style="margin:0">Total cap (minutes)</label><input id="gUnlimitedCap" type="number" min="1" step="1" placeholder="not set" title="Everything this account uses counts against this total. Leave it empty and the account runs on the per-call window alone, with every minute still counted, so the cap you type later is a total and the minutes already used come out of it." /></div>
+            <div style="flex:0 0 120px"><label style="margin:0">Minutes per call</label><input id="gUnlimitedWindow" type="number" min="1" step="1" value="15" title="One call may spend this many minutes at the rate on the Burn rates tab - your Unlimited dial for a picture call, your Voice Clone Only rate for a voice call. At 1x the figure is the time itself; at 1.25x it buys four-fifths as much on screen. It starts fresh when the buyer presses Stop or his network drops. Used with Set unlimited." /></div>
+            <div style="flex:0 0 130px"><label style="margin:0">Total cap (minutes)</label><input id="gUnlimitedCap" type="number" min="1" step="1" placeholder="not set" title="Everything this account uses counts against this total, in minutes spent at that same rate. Leave it empty and the account runs on the per-call window alone, with every minute still counted, so the cap you type later is a total and the minutes already used come out of it." /></div>
             <div style="flex:0 0 auto"><label class="feat" style="margin:0"><input type="checkbox" id="gClearUnlimited" /> Clear unlimited</label></div>
             <div style="flex:0 0 auto"><button id="grantBtn" class="primary">Credit minutes</button></div>
             <div style="flex:0 0 auto"><button id="deductBtn" class="danger">Deduct</button></div>
@@ -831,7 +831,7 @@
 
       <div class="card">
         <h2 style="font-size:14px;margin:0 0 4px">Post a new rate</h2>
-        <p class="muted" style="margin:0 0 12px">Rates are versioned history: never edit a rate that already ran, post a new row. <b>Saving a rate starts it the same second it is saved</b> — there is no start time to set and nothing to wait for. A lease already in flight keeps the multiplier it started with.</p>
+        <p class="muted" style="margin:0 0 12px">Rates are versioned history: never edit a rate that already ran, post a new row. <b>Saving a rate starts it the same second it is saved</b> — there is no start time to set and nothing to wait for. A call already running picks the new figure up on its next beat; a call that already ended keeps what it was charged.</p>
         <div class="row">
           <div><label>Call type</label><select id="brModality"><option value="video">Video Call</option><option value="audio">Voice Clone Only (no picture)</option><option value="video_audio">Video + Audio Cloning</option></select></div>
           <div><label>Multiplier</label><input id="brMult" type="number" min="0.05" step="0.05" value="1" /></div>
@@ -839,6 +839,18 @@
         </div>
         <div class="btns" style="margin-top:12px"><button id="saveRate" class="primary">Save new rate</button></div>
         <div id="rateMsg"></div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:14px;margin:0 0 4px">Unlimited accounts — their own video rate</h2>
+        <p class="muted" style="margin:0 0 12px">Empty, an Unlimited account spends at the three rates above: your Video Call rate on a picture call and your Voice Clone Only rate on a voice call. Type a figure here and <b>only Unlimited accounts move to it</b> — the minutes other customers buy keep draining at the rates above, untouched. This dial prices the picture service; a voice call from an Unlimited account keeps your voice rate whatever is set here. What it changes is what <b>Minutes per call</b> and <b>Total cap</b> on the Accounts tab are worth: those figures are minutes <i>spent</i>, so at 1.25x a 15-minute window is 12 minutes of picture.</p>
+        <div id="unlRateNow"></div>
+        <div class="row" style="margin-top:10px">
+          <div><label>Multiplier for Unlimited picture calls</label><input id="urMult" type="number" min="0.05" max="100" step="0.05" placeholder="empty follows your Video Call rate" /></div>
+          <div style="flex:2 1 240px"><label>Note</label><input id="urNote" placeholder="e.g. Unlimited pack repriced" /></div>
+        </div>
+        <div class="btns" style="margin-top:12px"><button id="saveUnlRate" class="primary">Save Unlimited rate</button><button id="followUnlRate">Follow my paid video rate</button></div>
+        <div id="unlRateMsg"></div>
       </div>
 
       <div class="card">
@@ -1637,7 +1649,7 @@
     decart: [loadKeys, loadSupply],
     split: [loadAccounts],
     engines: [loadConfig],
-    burn: [loadRates],
+    burn: [loadRates, loadUnlimitedRate],
     sessions: [loadSessions],
     ends: [loadEnds],
     airtime: [loadAirtime],
@@ -1691,7 +1703,7 @@
     // ahead it would otherwise show half a day and call it a day.
     await CLOCK_READY;
     await loadPlans();
-    await Promise.all([loadRequests(), loadKeys(), loadRates(), loadSessions(), loadAirtime(), loadConfig(), loadContact(), loadAccounts(), loadUnlimited(), loadCalls()]);
+    await Promise.all([loadRequests(), loadKeys(), loadRates(), loadSessions(), loadAirtime(), loadConfig(), loadContact(), loadAccounts(), loadUnlimited(), loadCalls(), loadUnlimitedRate()]);
     await loadPricing();
   }
 
@@ -4636,13 +4648,97 @@
     }
     const sweptN = Number(res.retired_with_it) || 0;
     const repriced = Number(res.calls_repriced) || 0;
+    // Whether this save reaches the Unlimited pack is a fact about the OTHER dial, and he should not
+    // have to scroll down to find out: a picture rate moves Unlimited accounts only while that dial
+    // is empty, and a voice rate always moves them because the Unlimited dial prices picture alone.
+    const unlSet = !!(UNL_RATE && UNL_RATE.set);
+    const unlRead = !!UNL_RATE;
+    const unlReach = modality === "audio"
+      ? "Unlimited voice calls follow this rate — the dial below is for picture only."
+      : !unlRead
+        ? "Unlimited picture calls are on a rate of their own or on this one — the dial below was not read, so check it before you act on this line."
+        : unlSet
+          ? `Unlimited picture calls stay on their own dial (${rateLabel(UNL_RATE.in_force)}x), so this figure did not move them.`
+          : "Unlimited picture calls follow this rate until you set a figure on the dial below.";
     msg("rateMsg",
-      `${MOD_LABEL[modality]} now drains the pool at ${rateLabel(mult)}x, dated by the server clock at ${when(res.effective_from)}. The gateway answers ${rateLabel(inForce)}x for that tab this second, so the next call on it — any account, old or new — is metered at that figure.`
+      `${MOD_LABEL[modality]} now drains the pool at ${rateLabel(mult)}x, dated by the server clock at ${when(res.effective_from)}. The gateway answers ${rateLabel(inForce)}x for that tab this second, so the next call on it — every account that buys minutes — is metered at that figure. ${unlReach}`
       + (sweptN ? ` ${sweptN} older ${MOD_LABEL[modality]} rate${sweptN === 1 ? "" : "s"} retired with it, so nothing changes later.` : "")
       + (repriced ? ` ${repriced} call${repriced === 1 ? "" : "s"} already running on that tab switched to it too.` : ""),
       "ok");
     $("brNote").value = "";
-    await Promise.all([loadRates(), loadAccounts()]);
+    await Promise.all([loadRates(), loadUnlimitedRate(), loadAccounts()]);
+  };
+
+  // ══ THE UNLIMITED DIAL ════════════════════════════════════════════════════════════════
+  // One number, and it belongs to the pack rather than to the price of a minute. The database answers
+  // what it meters with — nothing here recomputes the figure from a history table, because a browser
+  // that disagrees with the server about what is "in force" is the fault already fixed on the paid
+  // side. An unread read is said as unread: a blank here would be a figure he acts on.
+  let UNL_RATE = null;
+
+  async function loadUnlimitedRate() {
+    const el = $("unlRateNow");
+    let data, error;
+    try { ({ data, error } = await sb.rpc("sl_unlimited_video_rate")); }
+    catch (err) { UNL_RATE = null; el.innerHTML = `<div class="err">The Unlimited rate could not be read: ${esc(err.message || String(err))}</div>`; return; }
+    if (error || !data) {
+      UNL_RATE = null;
+      el.innerHTML = `<div class="err">The Unlimited rate could not be read${error ? `: ${esc(error.message)}` : ""}. Until this line shows a figure, do not act on what the dials below say.</div>`;
+      return;
+    }
+    UNL_RATE = data;
+    const mult = rateLabel(data.in_force);
+    el.innerHTML = `<div class="row" style="gap:18px;align-items:baseline">
+      <div>Multiplier now in force <b class="mono">${mult}x</b> <span class="pill ${data.set ? "warn" : "active"}">${data.set ? "your own Unlimited figure" : "following your Video Call rate"}</span></div>
+      <div class="muted">${esc(data.note || "no note")}${data.effective_from ? ` · since ${when(data.effective_from)}` : ""}</div>
+    </div>
+    <div class="muted" style="margin-top:6px">One minute of picture on his screen spends <b>${mult}</b> minute${Math.abs(Number(data.in_force) - 1) > 1e-9 ? "s" : ""} of the window and of the cap he is given. A voice call he makes on the same pack spends your Voice Clone Only rate instead.</div>`;
+  }
+
+  $("saveUnlRate").onclick = async () => {
+    msg("unlRateMsg", "");
+    const mult = N($("urMult").value);
+    if (!Number.isFinite(mult) || mult <= 0) return msg("unlRateMsg", "Type a figure above 0. To put the pack back on your paid video rate, press Follow my paid video rate.");
+    let res;
+    try {
+      const { data, error } = await sb.rpc("sl_set_unlimited_video_rate", {
+        p_multiplier: mult, p_note: $("urNote").value.trim() || null,
+      });
+      if (error) return msg("unlRateMsg", error.message);
+      res = data;
+    } catch (err) { return msg("unlRateMsg", err.message); }
+    if (!res || !res.ok) return msg("unlRateMsg", (res && res.detail) || "the Unlimited rate was not saved.");
+    const inForce = Number(res.in_force);
+    if (Math.abs(inForce - mult) > 1e-9) {
+      return msg("unlRateMsg", `Saved, but the meter still answers ${rateLabel(inForce)}x for Unlimited picture calls — it did not take this figure. Do not rely on it until the line above goes amber.`, "err");
+    }
+    const sweptN = Number(res.retired_with_it) || 0;
+    msg("unlRateMsg",
+      `Unlimited picture calls now spend at ${rateLabel(mult)}x, dated by the server clock at ${when(res.effective_from)} — nothing on the rates above moved, so the minutes other customers buy are untouched. The next picture call he dials is metered at this figure, and one already running picks it up on its next beat; calls that already ended keep the rate they ran at. Unlimited voice calls stay on your Voice Clone Only rate.`
+      + (sweptN ? ` ${sweptN} older Unlimited rate${sweptN === 1 ? "" : "s"} retired with it.` : ""),
+      "ok");
+    $("urNote").value = "";
+    await Promise.all([loadUnlimitedRate(), loadAccounts()]);
+  };
+
+  // Emptying the dial is a save of its own, not a delete: the history stays, and the pack goes back to
+  // following the paid video rate from this second.
+  $("followUnlRate").onclick = async () => {
+    msg("unlRateMsg", "");
+    let res;
+    try {
+      const { data, error } = await sb.rpc("sl_set_unlimited_video_rate", { p_multiplier: null, p_note: null });
+      if (error) return msg("unlRateMsg", error.message);
+      res = data;
+    } catch (err) { return msg("unlRateMsg", err.message); }
+    if (!res || !res.ok) return msg("unlRateMsg", (res && res.detail) || "the Unlimited rate was not cleared.");
+    const paid = Number(res.in_force);
+    $("urMult").value = "";
+    $("urNote").value = "";
+    msg("unlRateMsg",
+      `The Unlimited pack spends at your Video Call rate again — the meter answers ${rateLabel(paid)}x for it this second${res.retired_with_it ? `, and ${res.retired_with_it} Unlimited rate${res.retired_with_it === 1 ? "" : "s"} retired with this` : ""}.`,
+      "ok");
+    await Promise.all([loadUnlimitedRate(), loadAccounts()]);
   };
 
   // ══ CALLS ══════════════════════════════════════════════════════════════
@@ -5816,10 +5912,10 @@
       </div>
       <label class="feat" style="margin:10px 0 6px"><input type="checkbox" data-f="unlimited" ${v.unlimited ? "checked" : ""} /> This package sells <b>UNLIMITED</b> instead of minutes</label>
       <div class="grid2" data-unlimited style="${v.unlimited ? "" : "display:none"}">
-        <div><label style="margin-top:0">Minutes one call may run</label><input data-f="window" type="number" min="1" step="1" value="${v.window}" /></div>
+        <div><label style="margin-top:0">Minutes one call may spend</label><input data-f="window" type="number" min="1" step="1" value="${v.window}" /></div>
         <div><label style="margin-top:0">Total cap on the buyer's account (minutes)</label><input data-f="cap" type="number" min="1" step="1" value="${esc(String(v.cap))}" placeholder="set it per account later" /></div>
       </div>
-      <p class="phint" data-unlimited-hint style="${v.unlimited ? "" : "display:none"}">A buyer of this package is shown the word UNLIMITED and <b>no minutes figure anywhere</b>, so nothing he reads looks like a cap. Two things bound him, both yours: one call may run for the number of minutes you type above and the window starts again whenever he presses Stop or his network drops; and the total cap is what he can use altogether. Leave the cap empty and he can call straight away on the window alone — every minute he uses is still being counted, so the cap you type later is a <b>total</b> and his earlier calls come out of it. Do not forget to tick a video key for unlimited accounts on the Keys tab, or his video calls are refused with nothing spent.</p>
+      <p class="phint" data-unlimited-hint style="${v.unlimited ? "" : "display:none"}">A buyer of this package is shown the word UNLIMITED and <b>no minutes figure anywhere</b>, so nothing he reads looks like a cap. Two things bound him, both yours: one call may spend the number of minutes you type above and the window starts again whenever he presses Stop or his network drops; and the total cap is what he can spend altogether. Both are minutes <b>spent</b>, not minutes on screen — the rate that turns them into airtime is the Unlimited dial on the Burn rates tab for a picture call, and your Voice Clone Only rate for a voice call. At 1x the window is the time itself. Leave the cap empty and he can call straight away on the window alone — every minute he uses is still being counted, so the cap you type later is a <b>total</b> and his earlier calls come out of it. Do not forget to tick a video key for unlimited accounts on the Keys tab, or his video calls are refused with nothing spent.</p>
       <input type="hidden" data-f="min_video_audio" value="${v.min_video_audio}" />
       ${v.min_video_audio > 0 ? `<p class="phint" style="margin-top:6px">This package still holds ${mins(v.min_video_audio)} on the retired Video + Audio line, from when that tab drew from a bucket of its own. There is one pool now, so a buyer who pays this gets ${mins(v.min_video + v.min_video_audio)} min to spend on either call tab — the figure stays on the record, and no box here can change it.</p>` : ""}
       ${v.min_audio > 0 ? `<p class="phint" style="margin-top:6px">This package also holds ${mins(v.min_audio)} of Audio Call minutes from when the app kept a separate audio bucket. Every call now, the Voice Clone Only one included, pays from the one video pool, so they are kept on the record and left out when the package is credited — no box here can change them.</p>` : ""}
@@ -5894,12 +5990,24 @@
       const rate = N(PLAN_MINCOST.video, 0);
       const w = Math.max(1, Math.round(v.window || 15));
       const cap = Math.max(0, Math.round(v.cap || 0));
+      // The window and the cap are minutes SPENT, and what turns them into airtime is the Unlimited
+      // dial, which the database answers. Costing them as wall-clock minutes would overstate his cost
+      // at any rate above 1x, so the division happens here; and when that dial was not read the figure
+      // is costed at 1x with that said out loud, never guessed at.
+      const burn = N(UNL_RATE && UNL_RATE.in_force, 0) > 0 ? N(UNL_RATE.in_force) : 1;
+      const read = !!UNL_RATE;
+      const airW = w / burn, airCap = cap / burn;
+      const at = read && Math.abs(burn - 1) > 1e-9
+        ? ` at the ${rateLabel(burn)}x this pack spends at`
+        : (read ? " — this pack spends at 1x, so window and cap are the time itself"
+                : " (the Unlimited rate was not read, so this is costed at 1x)");
       return "<b>No minutes, so no fixed cost.</b> This package costs you the airtime your buyer really uses, at about "
-        + pgUsd(rate, 3) + " a video minute. One call can run " + w + " minutes and then starts again, so the worst a single forgotten call does is "
-        + pgUsd(rate * w, 2) + "."
+        + pgUsd(rate, 3) + " a video minute. His window is " + w + " minutes spent" + at
+        + ", so one call is at most " + airW.toFixed(1) + " minutes on screen and the worst a single forgotten call does is "
+        + pgUsd(rate * airW, 2) + ". A voice call on the same pack spends your Voice Clone Only rate instead; this is the picture line, the expensive one."
         + (cap > 0
-          ? ` The cap of ${cap.toLocaleString("en-US")} minutes bounds the whole account at about <b>${pgUsd(rate * cap, 2)}</b> against a price of ${pgUsd(v.price)} — `
-            + (rate * cap > v.price
+          ? ` The cap of ${cap.toLocaleString("en-US")} minutes spent is ${airCap.toFixed(1)} minutes on screen, which bounds the whole account at about <b>${pgUsd(rate * airCap, 2)}</b> against a price of ${pgUsd(v.price)} — `
+            + (rate * airCap > v.price
               ? '<span style="color:#fb7185">so a buyer who uses every capped minute costs you more than he paid. Lower the cap or raise the price.</span>'
               : '<span style="color:#4ade80">you keep the difference even if he uses all of it.</span>')
           : ' <span style="color:#fbbf24">No cap typed yet: this buyer calls on the ' + w + '-minute window alone, with no total, until you set one on the Accounts tab.</span>');
