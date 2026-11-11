@@ -190,6 +190,33 @@
         <div id="quickMsg"></div>
       </div>
 
+      <!-- The Unlimited buyers, standing in front of him rather than buried in an audit. His rule
+           for this package is that a cap is typed AFTER the buyer starts calling, so the numbers
+           have to live somewhere he comes back to: what each account has really used, what is left
+           of the cap, how much of its current call window is still ahead, and how many presses were
+           refused. Every figure here is his side of the glass — a customer on Unlimited is shown the
+           word and a counter of what he has used, never a cap. -->
+      <div class="card" id="unlCard">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="font-size:14px;margin:0">Unlimited accounts</h2>
+          <div class="row" style="align-items:center;gap:10px">
+            <span class="muted" id="unlWhen"></span>
+            <button id="refreshUnl">Refresh</button>
+            <button id="foldUnl" class="foldbtn" title="Show or hide the list of accounts" style="display:none">+</button>
+          </div>
+        </div>
+        <div class="grid4" style="margin-top:12px" id="unlStats"></div>
+        <div id="unlAlert"></div>
+        <div data-unlfold style="overflow:auto;margin-top:12px">
+          <table id="unlTable">
+            <thead><tr><th>Account</th><th>One call may run</th><th>Total cap</th><th>Used so far</th><th>Left of the cap</th><th>Right now</th><th>Calls 24h</th><th>On air 24h</th><th>Refused 24h</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="muted" data-unlfold style="margin:10px 0 0">Used minutes are read off the calls that really happened, from the moment the package was granted — the same read that decides whether his next press is accepted. A cap typed now therefore comes down on everything he has already used, exactly as it should. The <b>Refused</b> column counts presses the gateway turned away in the last day: a package that ran out, or an account with no video key attached to it.</p>
+        <div id="unlMsg"></div>
+      </div>
+
       <div id="acctDetail" class="hidden">
         <div class="card" style="padding:12px 14px;margin-bottom:10px">
           <div class="row" style="justify-content:space-between;align-items:center">
@@ -226,6 +253,8 @@
           <div class="muted" id="gMinHint" style="margin:4px 0 0"></div>
           <div class="row" style="margin-top:10px;align-items:center">
             <div style="flex:0 0 auto"><label class="feat" style="margin:0"><input type="checkbox" id="gUnlimited" /> Set unlimited</label></div>
+            <div style="flex:0 0 120px"><label style="margin:0">Minutes per call</label><input id="gUnlimitedWindow" type="number" min="1" step="1" value="15" title="One call may run this long, then starts fresh when the buyer presses Stop or his network drops. Used with Set unlimited." /></div>
+            <div style="flex:0 0 130px"><label style="margin:0">Total cap (minutes)</label><input id="gUnlimitedCap" type="number" min="1" step="1" placeholder="not set" title="Everything this account uses counts against this total. Leave it empty and the account runs on the per-call window alone, with every minute still counted, so the cap you type later is a total and the minutes already used come out of it." /></div>
             <div style="flex:0 0 auto"><label class="feat" style="margin:0"><input type="checkbox" id="gClearUnlimited" /> Clear unlimited</label></div>
             <div style="flex:0 0 auto"><button id="grantBtn" class="primary">Credit minutes</button></div>
             <div style="flex:0 0 auto"><button id="deductBtn" class="danger">Deduct</button></div>
@@ -539,6 +568,7 @@
           <div style="flex:0 0 auto;display:flex;align-items:center">
             <label class="feat" style="margin:0"><input type="checkbox" id="kEnabled" checked /> enabled</label>
             <label class="feat" style="margin:0 0 0 16px"><input type="checkbox" id="kDefault" /> global default</label>
+            <label class="feat" style="margin:0 0 0 16px" title="Ticked: every Unlimited account is served by this key and by no other. Unticked: ordinary minute-buying customers use it, and Unlimited accounts never touch it. Video only — voice keys are not fenced."><input type="checkbox" id="kForUnlimited" /> unlimited accounts</label>
           </div>
         </div>
         <div class="btns" style="margin-top:12px">
@@ -555,7 +585,7 @@
         <p class="muted" style="margin:6px 0 12px">Only the last four characters ever reach this page. <b>Verify</b> re-checks the stored copy against the provider; <span class="pill ok">live</span> means no failure was recorded against it in the last 24 hours.</p>
         <div style="overflow:auto">
           <table id="keysTable">
-            <thead><tr><th>Label</th><th>Video · fal.ai</th><th title="Which of your own keys did the burning. fal.ai is asked for this at most every ten minutes, because asking on every glance is what made it refuse to answer; the running-call line under the figure counts forward from that reading.">Spent on fal.ai today</th><th id="thTrialKey">Trial · DeCart</th><th id="thTrialLeft">Trial left</th><th>Voice · ElevenLabs</th><th>Enabled</th><th>Priority</th><th>Today / cap</th><th>Failures 24h</th><th>Last error</th><th></th></tr></thead>
+            <thead><tr><th>Label</th><th>Video · fal.ai</th><th title="Which of your own keys did the burning. fal.ai is asked for this at most every ten minutes, because asking on every glance is what made it refuse to answer; the running-call line under the figure counts forward from that reading.">Spent on fal.ai today</th><th id="thTrialKey">Trial · DeCart</th><th id="thTrialLeft">Trial left</th><th>Voice · ElevenLabs</th><th>Enabled</th><th id="thForUnl" title="Ticked: this key is one of the keys Unlimited accounts are allowed to dial. Unticked: ordinary minute-buyers use it and Unlimited accounts never touch it. Video only — voice keys are never fenced.">For unlimited</th><th>Priority</th><th>Today / cap</th><th>Failures 24h</th><th>Last error</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -1542,6 +1572,7 @@
   // database cannot name a model for, which are the calls made before this was recorded.
   let hasVideoModelCols = false;
   let hasTrialCols = false;
+  let hasUnlCol = false;
   let hasTrialCfg = false;
   // Which computer each account was created on, and whether that computer is already in
   // the trial register — without these the panel cannot say why an account got no minute.
@@ -1598,7 +1629,7 @@
   // you switch back to can never keep showing the numbers from before a call ran. A
   // tab click means the same thing as pressing that tab's Refresh button.
   const TAB_LOADERS = {
-    accounts: [loadAccounts],
+    accounts: [loadAccounts, loadUnlimited],
     machines: [loadMachines],
     topups: [loadRequests],
     payments: [loadPayments, loadPaystackHook],
@@ -1660,7 +1691,7 @@
     // ahead it would otherwise show half a day and call it a day.
     await CLOCK_READY;
     await loadPlans();
-    await Promise.all([loadRequests(), loadKeys(), loadRates(), loadSessions(), loadAirtime(), loadConfig(), loadContact(), loadAccounts(), loadCalls()]);
+    await Promise.all([loadRequests(), loadKeys(), loadRates(), loadSessions(), loadAirtime(), loadConfig(), loadContact(), loadAccounts(), loadUnlimited(), loadCalls()]);
     await loadPricing();
   }
 
@@ -2422,7 +2453,16 @@
     if ($("gClearUnlimited").checked) unlimited = false;
     const modality = $("gModality").value;
     if (!modality) throw new Error("Pick which wallet this is for. Nothing is chosen yet, so nothing was moved.");
-    return { action: "grant", userId: CUR.user_id, modality, minutes, reason, unlimited };
+    const grant = { action: "grant", userId: CUR.user_id, modality, minutes, reason, unlimited };
+    // The two numbers belong to the tick and travel with it, or not at all: a window or a cap
+    // written beside a minutes grant would be a ceiling on a wallet that is already bounded by
+    // its own balance.
+    if (unlimited === true) {
+      grant.unlimitedWindow = Math.max(1, Math.round(N($("gUnlimitedWindow").value, 15)));
+      const cap = Math.max(0, Math.round(N($("gUnlimitedCap").value, 0)));
+      grant.unlimitedCap = cap > 0 ? cap : null;
+    }
+    return grant;
   }
 
   function refreshMinHint() {
@@ -2454,7 +2494,7 @@
       const flip = !wasPaid && N(payload.minutes) > 0 ? " It is now on the paid video service for good." : "";
       msg("grantMsg", `Granted. ${res.unlimited ? "Wallet is unlimited." : "New balance " + clock(res.balance) + " on the meter."}${flip}`, "ok");
       delete PAID_OF[CUR.user_id];
-      await Promise.all([openAccount(CUR.user_id), loadAccounts(), loadSessions(), loadAirtime()]);
+      await Promise.all([openAccount(CUR.user_id), loadAccounts(), loadUnlimited(), loadSessions(), loadAirtime()]);
     } catch (err) { msg("grantMsg", err.message); }
   };
 
@@ -2540,7 +2580,7 @@
       done.push(`${MOD_LABEL.video} → ${clock(res.balance)}`);
       msg("grantMsg", `Credited “${p.name}”: ${done.join(", ")}.${wasPaid ? "" : " This account is now on the paid video service for good."}`, "ok");
       delete PAID_OF[CUR.user_id];
-      await Promise.all([openAccount(CUR.user_id), loadAccounts(), loadSessions(), loadAirtime()]);
+      await Promise.all([openAccount(CUR.user_id), loadAccounts(), loadUnlimited(), loadSessions(), loadAirtime()]);
     } catch (err) {
       msg("grantMsg", err.message + (done.length ? ` — already credited: ${done.join(", ")}` : ""));
     } finally {
@@ -3927,15 +3967,19 @@
 
   async function loadKeys() {
     const base = "id, label, enabled, priority, daily_minute_cap, minutes_today, usage_day, last_error, last_error_at, is_default, created_at, video_key_tail, voice_key_tail, recent_failures";
-    let { data, error } = await sb.from("admin_key_health").select(base + ", trial_key_tail, trial_minutes_budget, trial_minutes_used").order("priority", { ascending: true });
+    const ordered = (cols) => sb.from("admin_key_health").select(cols).order("priority", { ascending: true });
+    let { data, error } = await ordered(base + ", for_unlimited_accounts, trial_key_tail, trial_minutes_budget, trial_minutes_used");
+    hasUnlCol = !error;
+    if (error) ({ data, error } = await ordered(base + ", trial_key_tail, trial_minutes_budget, trial_minutes_used"));
     // The DeCart columns arrive with the dual-engine migration. Probing keeps this
     // page working whether or not that SQL has run yet.
     hasTrialCols = !error;
-    if (!hasTrialCols) ({ data, error } = await sb.from("admin_key_health").select(base).order("priority", { ascending: true }));
+    if (!hasTrialCols) ({ data, error } = await ordered(base));
     if (error) return msg("poolMsg", "Could not read the key pool: " + error.message);
     msg("poolMsg", "");
     KEY_ROWS = data || [];
     ["thTrialKey", "thTrialLeft"].forEach((id) => $(id).classList.toggle("hidden", !hasTrialCols));
+    $("thForUnl").classList.toggle("hidden", !hasUnlCol);
     renderDecartKeys();
 
     const live = KEY_ROWS.filter((k) => k.enabled !== false);
@@ -3946,6 +3990,12 @@
       [KEY_ROWS.length, "pairs stored"],
       [live.filter((k) => k.video_key_tail).length, "paid video keys live"],
     ];
+    if (hasUnlCol) {
+      // The fence is only as real as this number. At zero, every Unlimited buyer's video call is
+      // refused by design, so the figure is red rather than a quiet nought.
+      const n = live.filter((k) => k.for_unlimited_accounts && k.video_key_tail).length;
+      stats.push([n || '<span style="color:#fb7185">0</span>', "keys serve Unlimited accounts"]);
+    }
     if (hasTrialCols) {
       stats.push([trialLive.length, "trial keys live"]);
       stats.push([uncapped ? "uncapped" : mins(left) + " min", "trial minutes left"]);
@@ -3979,6 +4029,9 @@
         ${hasTrialCols ? `<td>${tLeft}</td>` : ""}
         <td>${cell(k, "elevenlabs", k.voice_key_tail)}</td>
         <td style="white-space:nowrap">${k.enabled === false ? '<span class="pill no">disabled</span>' : '<span class="pill yes">enabled</span>'} <button data-act="toggle" data-id="${k.id}">${k.enabled === false ? "enable" : "disable"}</button></td>
+        ${hasUnlCol ? `<td>${k.for_unlimited_accounts
+          ? `<span class="pill yes" title="${k.video_key_tail ? "Unlimited accounts dial this key and no other" : "ticked, but this row holds no video key, so no Unlimited account can dial it"}">unlimited</span>`
+          : '<span class="muted" title="ordinary minute-buying customers use this key; Unlimited accounts never touch it">—</span>'}</td>` : ""}
         <td class="mono">${N(k.priority, 100)}</td>
         <td class="mono" data-usage="${k.id}">${cap == null ? "uncapped" : mins(used) + " / " + mins(cap)}${cap != null && used >= N(cap) ? ' <span class="pill warn">capped</span>' : ""}</td>
         <td class="mono">${N(k.recent_failures) ? `<span class="pill fail">${k.recent_failures}</span>` : '<span class="pill ok">0</span>'}</td>
@@ -3987,7 +4040,7 @@
           <button data-act="edit" data-id="${k.id}">Edit</button>
           <button data-act="del" data-id="${k.id}" class="danger">Delete</button>
         </td></tr>`;
-    }).join("") || '<tr><td colspan="12" class="muted">The pool is empty, so every call falls back to the FAL_KEY / ELEVENLABS_KEY env secrets. Add a pair above and press Verify.</td></tr>';
+    }).join("") || '<tr><td colspan="13" class="muted">The pool is empty, so every call falls back to the FAL_KEY / ELEVENLABS_KEY env secrets. Add a pair above and press Verify.</td></tr>';
 
     // Opens empty for the same reason as the plan and package boxes: this used to default
     // to whichever key the pool listed first, and Assign writes a live key.
@@ -3996,6 +4049,113 @@
     stamp("poolWhen");
     await Promise.all([loadKeyUsage(), loadAssignments(), loadCallFailures()]);
   }
+
+  // ── Unlimited accounts ────────────────────────────────────────────────────
+  // The one standing read of the package a customer never sees a number from. His rule is that the
+  // cap is typed AFTER the buyer starts calling, so everything that bounds an Unlimited account has
+  // to be somewhere he comes back to: what it used, what is left, how much of the current call
+  // window is still ahead, how many presses were refused, and whether the key fence held.
+  const UNL_FOLD_KEY = "streamlive.unlimited.folded";
+  let UNL_FOLD = false;
+  try { if (localStorage.getItem(UNL_FOLD_KEY) === "1") UNL_FOLD = true; } catch { }
+  let UNL = null;
+
+  function paintFoldUnl() {
+    const b = $("foldUnl");
+    if (!b) return;
+    b.style.display = ((UNL && UNL.accounts) || []).length ? "" : "none";
+    b.textContent = UNL_FOLD ? "+" : "−";
+    b.title = UNL_FOLD ? "Show the list of accounts" : "Hide the list of accounts";
+    document.querySelectorAll("#unlCard [data-unlfold]").forEach((n) => { n.style.display = UNL_FOLD ? "none" : ""; });
+  }
+
+  const mmss = (secs) => {
+    const s = Math.max(0, Math.round(N(secs)));
+    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  };
+
+  function renderUnlimited(p) {
+    UNL = p;
+    const list = p.accounts || [];
+    const act = list.filter((a) => a.active);
+    const keys = p.keys || {};
+    const leaks = N(p.fence_leaks);
+    const refused = list.reduce((s, a) => s + N(a.refused_used_up_24h) + N(a.refused_no_key_24h), 0);
+    const onAir = act.reduce((s, a) => s + N(a.airtime_24h), 0);
+
+    $("unlStats").innerHTML = [
+      [act.length, "on Unlimited now"],
+      [list.length - act.length, "packages finished"],
+      [clock(onAir), "h:mm on air today"],
+      [refused ? `<span style="color:#fbbf24">${refused}</span>` : refused, "presses refused in 24h"],
+    ].map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+
+    // Nothing about a fence is quiet on this card. An Unlimited account with no key of its own is
+    // refused by design, and a refusal the seller cannot see looks exactly like a fault in his
+    // video line.
+    const box = [];
+    if (!N(keys.usable_now)) {
+      const why = !N(keys.ticked)
+        ? "Not one key carries the <b>unlimited accounts</b> tick, so an Unlimited buyer is refused the moment he presses Start — nothing dials and nothing is spent. Tick it on a video key on the Key pool tab."
+        : "The keys you ticked cannot be dialled right now — switched off, holding no video key, or past their daily minutes. An Unlimited buyer is refused until one of them is free.";
+      box.push(`<div class="presult show ${act.length ? "fail" : ""}">${act.length
+        ? `<b>${act.length} account${act.length > 1 ? "s are" : " is"} on Unlimited with no key to call on.</b> ` + why
+        : why + " Nothing to fix until someone buys the package."}</div>`);
+    }
+    box.push(leaks
+      ? `<div class="presult show fail"><b>${leaks} paid picture call${leaks > 1 ? "s were" : " was"} run for an Unlimited account on a key that is not ticked for unlimited accounts.</b> That is the one thing the fence exists to prevent: those accounts must spend only their own keys. The calls are listed on the Calls tab.</div>`
+      : '<div class="presult show ok">Fence holding: <b>0</b> picture calls have run for an Unlimited account on a key outside its own. Voice calls are never fenced — an Unlimited buyer uses any voice key, like everyone else.</div>');
+    $("unlAlert").innerHTML = box.join("");
+
+    $("unlTable").querySelector("tbody").innerHTML = list.map((a) => {
+      const noCap = a.cap_minutes == null;
+      const left = noCap ? null : N(a.remaining_minutes);
+      const n = N(a.refused_used_up_24h) + N(a.refused_no_key_24h);
+      const rows = [];
+      if (N(a.refused_used_up_24h)) rows.push(`${a.refused_used_up_24h} package finished`);
+      if (N(a.refused_no_key_24h)) rows.push(`${a.refused_no_key_24h} no key attached`);
+      return `<tr${a.over_cap ? ' style="background:#2a1215"' : (a.near_cap ? ' style="background:#241f0d"' : "")}>
+        <td><b>${esc(a.email || shortId(a.user_id))}</b>${a.active ? "" : ' <span class="pill no">finished</span>'}${a.calling_now ? ' <span class="pill yes">on air</span>' : ""}<div class="muted">since ${when(a.granted_at)}</div></td>
+        <td class="mono">${N(a.window_minutes, 15)} min</td>
+        <td class="mono">${noCap ? '<span class="muted" title="no total typed yet: this buyer calls on the per-call window alone, and every minute he uses comes off the cap the moment you type one">not set</span>' : mins(a.cap_minutes)}</td>
+        <td class="mono">${mins1(a.used_minutes)}${a.over_cap ? ' <span class="pill fail">over cap</span>' : (a.near_cap ? ' <span class="pill warn">near cap</span>' : "")}</td>
+        <td class="mono">${left == null ? '<span class="muted">—</span>' : `<span${a.near_cap ? ' style="color:#fbbf24"' : ""}>${mins1(left)}</span>`}</td>
+        <td class="muted">${a.calling_now ? mmss(a.window_left_seconds) + " of this call left"
+          : (a.active ? "not calling" : "ended " + when(a.finished_at))}</td>
+        <td class="mono">${N(a.calls_24h)}</td>
+        <td class="mono">${clock(a.airtime_24h)}</td>
+        <td class="mono">${n ? `<span class="pill fail" title="${esc(rows.join(", "))}">${n}</span>` : '<span class="pill ok">0</span>'}</td>
+      </tr>`;
+    }).join("") || '<tr><td colspan="9" class="muted">Nobody is on the Unlimited package yet. Sell one from the Plans tab, or tick <b>Set unlimited</b> when you credit an account.</td></tr>';
+
+    stamp("unlWhen");
+    paintFoldUnl();
+  }
+
+  async function loadUnlimited() {
+    try {
+      renderUnlimited(await api({ action: "unlimited_accounts" }));
+      msg("unlMsg", "");
+    } catch (err) {
+      // An empty table would read as an empty product. Say what could not be read instead, and
+      // leave the last figures out rather than showing a stale ones as if they were now.
+      UNL = null;
+      $("unlStats").innerHTML = "";
+      $("unlAlert").innerHTML = "";
+      $("unlTable").querySelector("tbody").innerHTML = "";
+      paintFoldUnl();
+      msg("unlMsg", "Could not read the Unlimited accounts: " + err.message
+        + (String(err.message).toLowerCase().includes("sl_unlimited_accounts")
+          ? " — the Unlimited migration has not run on this database yet." : ""));
+    }
+  }
+
+  $("refreshUnl").onclick = () => loadUnlimited();
+  $("foldUnl").onclick = () => {
+    UNL_FOLD = !UNL_FOLD;
+    try { localStorage.setItem(UNL_FOLD_KEY, UNL_FOLD ? "1" : "0"); } catch { }
+    paintFoldUnl();
+  };
 
   function setChip(prefix, cls, text) {
     const chip = $(prefix + "Chip"), dot = $(prefix + "Dot");
@@ -4170,7 +4330,7 @@
   function clearKeyForm() {
     ["kId", "kLabel", "kFal", "kEleven"].forEach((i) => $(i).value = "");
     $("kPriority").value = 100; $("kCap").value = "";
-    $("kEnabled").checked = true; $("kDefault").checked = false;
+    $("kEnabled").checked = true; $("kDefault").checked = false; $("kForUnlimited").checked = false;
     setChip("vid", "", "not tested"); setChip("voice", "", "not tested");
     ["vidResult", "voiceResult"].forEach((i) => $(i).className = "presult");
     msg("keyMsg", "");
@@ -4187,6 +4347,9 @@
       priority: N($("kPriority").value, 100),
       daily_minute_cap: $("kCap").value.trim() === "" ? null : N($("kCap").value),
       is_default: $("kDefault").checked,
+      // Asked for on the same press that saves the key, so the fence cannot be forgotten into a
+      // second visit: an Unlimited account dials only keys carrying this tick.
+      for_unlimited_accounts: $("kForUnlimited").checked,
     };
     const fal = $("kFal").value.trim(), eleven = $("kEleven").value.trim();
     if (fal) row.fal_key = fal;
@@ -5252,6 +5415,7 @@
       $("kCap").value = row.daily_minute_cap ?? "";
       $("kEnabled").checked = row.enabled !== false;
       $("kDefault").checked = !!row.is_default;
+      $("kForUnlimited").checked = !!row.for_unlimited_accounts;
       setChip("vid", "", "not tested"); setChip("voice", "", "not tested");
       msg("keyMsg", `Editing “${row.label || shortId(id)}”. Stored keys stay exactly as they are unless you paste over them${row.trial_key_tail ? ", and its DeCart trial key is edited on the DeCart keys tab" : ""}.`, "ok");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -5626,10 +5790,12 @@
       name: p.name ?? "", price: (N(p.price_cents) / 100).toFixed(2), blurb: p.blurb ?? "",
       includes: (p.includes || []).join("\n"), devices: N(p.max_devices, 1), feats: p.features || [],
       min_video: N(p.video_minutes, 0), min_audio: N(p.audio_minutes, 0), min_video_audio: N(p.video_audio_minutes, 0),
+      unlimited: !!p.unlimited, window: N(p.unlimited_window_minutes, 15), cap: p.unlimited_cap_minutes == null ? "" : N(p.unlimited_cap_minutes),
       market: p.market === "intl" ? "intl" : "gh",
     } : {
       name: "", price: "", blurb: "", includes: "Minutes never expire\nWorks on every device you sign in to",
       devices: 2, feats: ["video"], min_video: 0, min_audio: 0, min_video_audio: 0, market: "gh",
+      unlimited: false, window: 15, cap: "",
     };
     return `
       <div class="row">
@@ -5648,6 +5814,12 @@
       <div class="grid2">
         <div><label style="margin-top:0">${MOD_LABEL.video} <span class="muted">· all three call tabs</span></label><input data-f="min_video" type="number" min="0" step="1" value="${v.min_video}" /></div>
       </div>
+      <label class="feat" style="margin:10px 0 6px"><input type="checkbox" data-f="unlimited" ${v.unlimited ? "checked" : ""} /> This package sells <b>UNLIMITED</b> instead of minutes</label>
+      <div class="grid2" data-unlimited style="${v.unlimited ? "" : "display:none"}">
+        <div><label style="margin-top:0">Minutes one call may run</label><input data-f="window" type="number" min="1" step="1" value="${v.window}" /></div>
+        <div><label style="margin-top:0">Total cap on the buyer's account (minutes)</label><input data-f="cap" type="number" min="1" step="1" value="${esc(String(v.cap))}" placeholder="set it per account later" /></div>
+      </div>
+      <p class="phint" data-unlimited-hint style="${v.unlimited ? "" : "display:none"}">A buyer of this package is shown the word UNLIMITED and <b>no minutes figure anywhere</b>, so nothing he reads looks like a cap. Two things bound him, both yours: one call may run for the number of minutes you type above and the window starts again whenever he presses Stop or his network drops; and the total cap is what he can use altogether. Leave the cap empty and he can call straight away on the window alone — every minute he uses is still being counted, so the cap you type later is a <b>total</b> and his earlier calls come out of it. Do not forget to tick a video key for unlimited accounts on the Keys tab, or his video calls are refused with nothing spent.</p>
       <input type="hidden" data-f="min_video_audio" value="${v.min_video_audio}" />
       ${v.min_video_audio > 0 ? `<p class="phint" style="margin-top:6px">This package still holds ${mins(v.min_video_audio)} on the retired Video + Audio line, from when that tab drew from a bucket of its own. There is one pool now, so a buyer who pays this gets ${mins(v.min_video + v.min_video_audio)} min to spend on either call tab — the figure stays on the record, and no box here can change it.</p>` : ""}
       ${v.min_audio > 0 ? `<p class="phint" style="margin-top:6px">This package also holds ${mins(v.min_audio)} of Audio Call minutes from when the app kept a separate audio bucket. Every call now, the Voice Clone Only one included, pays from the one video pool, so they are kept on the record and left out when the package is credited — no box here can change them.</p>` : ""}
@@ -5698,16 +5870,40 @@
     const mods = CALL_MODALITIES.filter((m) => v.minutes[m] > 0);
     const intl = v.market === "intl";
     const accent = intl ? "#a78bfa" : "#35e0e6";
+    // The whole point of an Unlimited package is that the buyer reads no figure, so this preview
+    // prints no figure either — not the window, not the cap. Those two are his business, and they
+    // are named in the line under this card, not on it.
+    const body = v.unlimited
+      ? `<div class="pm"><p class="pml">What this package sells</p><div class="pmm"><span>Calling</span><span class="mono">UNLIMITED</span></div></div>`
+      : (mods.length
+        ? `<div class="pm"><p class="pml">Minutes in this package</p>${mods.map((m) => `<div class="pmm"><span>${MOD_LABEL[m]}</span><span class="mono">${v.minutes[m].toLocaleString("en-US")} min</span></div>`).join("")}</div>`
+        : '<div class="pb" style="color:#facc15">No minutes attached — a buyer who pays this gets nothing.</div>');
     return `<div class="ph" style="color:${accent}">${esc(v.name || "Untitled package")}</div>
       <div class="pp" style="color:${accent}">${pgUsd(v.price)}<span>USD</span></div>
-      ${mods.length
-        ? `<div class="pm"><p class="pml">Minutes in this package</p>${mods.map((m) => `<div class="pmm"><span>${MOD_LABEL[m]}</span><span class="mono">${v.minutes[m].toLocaleString("en-US")} min</span></div>`).join("")}</div>`
-        : '<div class="pb" style="color:#facc15">No minutes attached — a buyer who pays this gets nothing.</div>'}
+      ${body}
       <div class="pt"><span style="background:${accent}1f;color:${accent}">${intl ? "Buy by card" : "Buy by mobile money"} · ${SHELF_NAME[intl ? "intl" : "gh"]} list</span></div>`;
   }
 
   function planMoney(v) {
     if (!PLAN_MINCOST) return "<b>Cost figures unavailable</b> — this login could not read the saved rates.";
+    // An Unlimited package has no minutes to price, so the arithmetic a minutes package gets
+    // here would be meaningless — and a zero cost next to a real price would read as pure profit,
+    // which is the one thing this product is not. What bounds his cost is the cap, so that is what
+    // is costed, and the window is named because it is what stops one long call eating a day.
+    if (v.unlimited) {
+      const rate = N(PLAN_MINCOST.video, 0);
+      const w = Math.max(1, Math.round(v.window || 15));
+      const cap = Math.max(0, Math.round(v.cap || 0));
+      return "<b>No minutes, so no fixed cost.</b> This package costs you the airtime your buyer really uses, at about "
+        + pgUsd(rate, 3) + " a video minute. One call can run " + w + " minutes and then starts again, so the worst a single forgotten call does is "
+        + pgUsd(rate * w, 2) + "."
+        + (cap > 0
+          ? ` The cap of ${cap.toLocaleString("en-US")} minutes bounds the whole account at about <b>${pgUsd(rate * cap, 2)}</b> against a price of ${pgUsd(v.price)} — `
+            + (rate * cap > v.price
+              ? '<span style="color:#fb7185">so a buyer who uses every capped minute costs you more than he paid. Lower the cap or raise the price.</span>'
+              : '<span style="color:#4ade80">you keep the difference even if he uses all of it.</span>')
+          : ' <span style="color:#fbbf24">No cap typed yet: this buyer calls on the ' + w + '-minute window alone, with no total, until you set one on the Accounts tab.</span>');
+    }
     const cost = planCost(v), keep = v.price - cost;
     const parts = CALL_MODALITIES.filter((m) => v.minutes[m] > 0)
       .map((m) => `${v.minutes[m]} ${MOD_LABEL[m]} at ${pgUsd(PLAN_MINCOST[m], 3)} a minute = ${pgUsd(PLAN_MINCOST[m] * v.minutes[m])}`);
@@ -5731,6 +5927,9 @@
       minutes: Object.fromEntries(MODALITIES.map((m) => [m, Math.max(0, Math.round(num("min_" + m)))])),
       features: FEATURES.filter((f) => get("feat_" + f)?.checked),
       market: get("market")?.value === "intl" ? "intl" : "gh",
+      unlimited: !!get("unlimited")?.checked,
+      window: Math.max(1, Math.round(num("window") || 15)),
+      cap: Math.max(0, Math.round(num("cap"))),
     };
   }
 
@@ -5744,9 +5943,16 @@
       blurb: v.blurb || null,
       includes: v.includes,
       max_devices: v.devices,
-      video_minutes: v.minutes.video,
-      audio_minutes: v.minutes.audio,
-      video_audio_minutes: v.minutes.video_audio,
+      video_minutes: v.unlimited ? 0 : v.minutes.video,
+      audio_minutes: v.unlimited ? 0 : v.minutes.audio,
+      video_audio_minutes: v.unlimited ? 0 : v.minutes.video_audio,
+      // An Unlimited package carries no minutes anywhere, on the shelf and in the row both. The
+      // database refuses the pair, so the zeroes are written here rather than trusted to a
+      // warning: a package that says UNLIMITED and also says a figure is exactly the card he
+      // does not want his buyers to see.
+      unlimited: !!v.unlimited,
+      unlimited_window_minutes: v.window,
+      unlimited_cap_minutes: v.unlimited && v.cap > 0 ? v.cap : null,
       features: v.features,
       market: v.market,
     };
@@ -5766,6 +5972,11 @@
       host.querySelector("[data-prev]").innerHTML = planPreview(v);
       host.querySelector("[data-money]").innerHTML = planMoney(v);
       host.querySelector("[data-dirty]").hidden = !PLAN_DIRTY;
+      // The window and the cap belong to one package type, so they appear with its tick and are
+      // taken away without it. Leaving a cap box visible under a minutes package would invite a
+      // number that nothing can read.
+      const on = v.unlimited ? "" : "none";
+      host.querySelectorAll("[data-unlimited], [data-unlimited-hint]").forEach((el) => { el.style.display = on; });
     };
     host.querySelectorAll("[data-f]").forEach((el) => el.addEventListener("input", () => { PLAN_DIRTY = true; paint(); }));
     paint();
