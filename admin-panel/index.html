@@ -891,6 +891,7 @@
             </select>
             <input id="endsSearch" placeholder="filter by email" style="max-width:200px" />
             <button id="endsRefresh">Refresh</button>
+            <button id="foldEnds" class="foldbtn" title="Show or hide every list on this page">−</button>
           </div>
         </div>
         <p class="muted" style="margin:6px 0 12px">
@@ -902,9 +903,13 @@
           <b>Nothing on this page is a price a customer pays or a minute he is charged</b> — that is
           the Calls and Airtime tabs. The one money figure below is money WE paid the video line for
           a call it refused, which is the figure you asked to have standing on its own.
+          <b>The <span style="font-weight:800">−</span> beside Refresh folds every list on this page away</b>
+          and the <b>+</b> opens it back, because the lists grow a row for every paid call while the
+          figures above them are the same boxes either way. Folding hides rows only — it asks the
+          database nothing new, and it never blanks a number.
         </p>
         <div class="grid4" id="endsStats"></div>
-        <div style="overflow:auto;margin-top:12px">
+        <div data-endsfold style="overflow:auto;margin-top:12px">
           <table id="endsTable">
             <thead><tr><th>User</th><th>Tab</th><th>Call type</th><th>Device</th><th>Started</th><th style="text-align:right">On air</th><th>Who closed it</th><th>What the app wrote down</th><th></th></tr></thead>
             <tbody></tbody>
@@ -924,7 +929,7 @@
           money, sat there.
         </p>
         <div class="grid4" id="endsRefusedStats"></div>
-        <div style="overflow:auto;margin-top:12px">
+        <div data-endsfold style="overflow:auto;margin-top:12px">
           <table id="endsRefusedTable">
             <thead><tr><th>Day</th><th style="text-align:right">Refused</th><th style="text-align:right">Seconds held</th><th style="text-align:right">Cost</th><th>Accounts and machines</th><th></th></tr></thead>
             <tbody></tbody>
@@ -945,7 +950,7 @@
         </p>
         <div class="grid4" id="endsLineStats"></div>
         <p class="muted" id="endsLineNote" style="margin:10px 0 0"></p>
-        <div style="overflow:auto;margin-top:12px">
+        <div data-endsfold style="overflow:auto;margin-top:12px">
           <table id="endsLineTable">
             <thead><tr><th>Picture line</th><th style="text-align:right">Calls</th><th style="text-align:right">No picture</th><th style="text-align:right">Blank rate</th><th style="text-align:right">Seconds held</th><th>Accounts and machines</th><th></th></tr></thead>
             <tbody></tbody>
@@ -957,7 +962,7 @@
           can be quiet on the other — and a customer's blank is only ever switched between models,
           never between keys, because the pool decides the key by itself.
         </p>
-        <div style="overflow:auto">
+        <div data-endsfold style="overflow:auto">
           <table id="endsKeyTable">
             <thead><tr><th>Key</th><th style="text-align:right">Calls</th><th style="text-align:right">No picture</th><th style="text-align:right">Blank rate</th><th style="text-align:right">Seconds held</th><th>Accounts and machines</th><th></th></tr></thead>
             <tbody></tbody>
@@ -977,7 +982,7 @@
           table here is the honest zero, not a missing read.
         </p>
         <div class="grid4" id="endsUnplayedStats"></div>
-        <div style="overflow:auto;margin-top:12px">
+        <div data-endsfold style="overflow:auto;margin-top:12px">
           <table id="endsUnplayedTable">
             <thead><tr><th>Day</th><th style="text-align:right">Calls</th><th style="text-align:right">Seconds never heard</th><th style="text-align:right">Seconds that came back</th><th>Accounts and machines</th><th></th></tr></thead>
             <tbody></tbody>
@@ -4658,6 +4663,23 @@
   let ENDS_HAS_LINE_COLS = false; // these rows carry video_model and fal_key_id
   let ENDS_KEYS = {};             // gateway_keys id -> its label, for the picture-line card
 
+  // This page lists one row per paid call, so it grows taller every day while the figures above the
+  // lists are the same eight boxes either way. One press folds EVERY list on the tab away and the next
+  // opens it back, and the position is remembered in this browser — the same way the Calls tab keeps
+  // a separate fold for each of its own lists. Folding hides rows already in memory: it asks the
+  // database nothing, draws no spinner, and blanks no figure.
+  const ENDS_FOLD_KEY = "streamlive.ends.folded";
+  let ENDS_FOLD = false;
+  try { if (localStorage.getItem(ENDS_FOLD_KEY) === "1") ENDS_FOLD = true; } catch { }
+
+  function paintEndsFold() {
+    const b = $("foldEnds");
+    if (b) b.textContent = ENDS_FOLD ? "+" : "−";
+    document.querySelectorAll("#tab-ends [data-endsfold]").forEach((n) => {
+      n.style.display = ENDS_FOLD ? "none" : "";
+    });
+  }
+
   async function loadEnds() {
     const days = N($("endsWindow").value) || 7;
     const since = new Date(serverNowMs() - days * 864e5).toISOString();
@@ -5109,6 +5131,7 @@
     if (others) notes.push(others + " row(s) carry a tab name from a build older than the three tabs, so they are listed in the table but not counted in the three tiles.");
     if (ENDS_TRUNC) notes.push(ENDS_TRUNC.trim());
     msg("endsMsg", notes.join(" "), notes.length ? "ok" : "err");
+    paintEndsFold();
   }
 
   function endsToggle(btn) {
@@ -5122,6 +5145,13 @@
   $("endsWindow").onchange = loadEnds;
   $("endsFilter").onchange = renderEnds;
   $("endsSearch").oninput = renderEnds;
+  // The press changes only what is on the screen, so it never re-reads the window he has chosen.
+  $("foldEnds").onclick = () => {
+    ENDS_FOLD = !ENDS_FOLD;
+    try { localStorage.setItem(ENDS_FOLD_KEY, ENDS_FOLD ? "1" : "0"); } catch { }
+    paintEndsFold();
+  };
+  paintEndsFold();
 
 
   // Delegated actions that live inside table rows.
