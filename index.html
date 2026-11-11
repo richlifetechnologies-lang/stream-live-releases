@@ -347,26 +347,26 @@
       <div class="card rec">
         <span class="tag">Most machines</span>
         <h3>Windows 10 or 11</h3>
-        <p><code data-for="dl-win">StreamLive-Setup-1.8.10.exe</code><br />
+        <p><code data-for="dl-win">StreamLive-Setup-1.8.72.exe</code><br />
           Double-click it and accept the security prompt. Part way through it asks to add one free audio
           driver — press <b>Yes</b>. When it finishes, <b>restart the computer</b>: the microphone does not
           work until you do. Nothing else to download.</p>
-        <p style="margin-top:18px"><a class="btn primary block" id="dl-win" data-name="StreamLive-Setup-{v}.exe" href="https://github.com/richlifetechnologies-lang/stream-live/releases/download/v1.8.10/StreamLive-Setup-1.8.10.exe">Download for Windows</a></p>
+        <p style="margin-top:18px"><a class="btn primary block" id="dl-win" data-name="StreamLive-Setup-{v}.exe" href="https://github.com/richlifetechnologies-lang/stream-live-releases/releases/download/v1.8.72/StreamLive-Setup-1.8.72.exe">Download for Windows</a></p>
       </div>
       <div class="card">
         <span class="tag">M1 to M4 chips</span>
         <h3>Mac with an Apple chip</h3>
-        <p><code data-for="dl-arm">StreamLive-1.8.10-arm64.dmg</code><br />
+        <p><code data-for="dl-arm">StreamLive-1.8.1-arm64.dmg</code><br />
           For M1, M2, M3 and M4 Macs. Installs like any other Mac app, then follows the
           <a href="#mac">five steps below</a> so a call app can see it.</p>
-        <p style="margin-top:18px"><a class="btn ghost block" id="dl-arm" data-name="StreamLive-{v}-arm64.dmg" href="https://github.com/richlifetechnologies-lang/stream-live/releases/download/v1.8.10/StreamLive-1.8.10-arm64.dmg">Download for Apple Mac</a></p>
+        <p style="margin-top:18px"><a class="btn ghost block" id="dl-arm" data-name="StreamLive-{v}-arm64.dmg" href="https://github.com/richlifetechnologies-lang/stream-live-releases/releases/download/v1.8.1/StreamLive-1.8.1-arm64.dmg">Download for Apple Mac</a></p>
       </div>
       <div class="card">
         <span class="tag">Intel Macs</span>
         <h3>Mac with an Intel chip</h3>
-        <p><code data-for="dl-x64">StreamLive-1.8.10-x64.dmg</code><br />
+        <p><code data-for="dl-x64">StreamLive-1.8.1-x64.dmg</code><br />
           For Intel Macs from 2020 and earlier. Same five steps as the Apple-chip disk.</p>
-        <p style="margin-top:18px"><a class="btn ghost block" id="dl-x64" data-name="StreamLive-{v}-x64.dmg" href="https://github.com/richlifetechnologies-lang/stream-live/releases/download/v1.8.10/StreamLive-1.8.10-x64.dmg">Download for Intel Mac</a></p>
+        <p style="margin-top:18px"><a class="btn ghost block" id="dl-x64" data-name="StreamLive-{v}-x64.dmg" href="https://github.com/richlifetechnologies-lang/stream-live-releases/releases/download/v1.8.1/StreamLive-1.8.1-x64.dmg">Download for Intel Mac</a></p>
       </div>
     </div>
     <div class="note" style="margin-top:22px">
@@ -656,10 +656,15 @@
 // new customers to an installer three releases behind. A release carries only the files built for
 // it: this machine builds Windows, so each button takes its own file from the newest release that
 // actually has it, and a link never falls back to the pinned ancient one.
+//
+// Both addresses name the downloads repo, never the source repo: the source repo stopped taking
+// releases at 1.8.59, and it is on its way private, where an anonymous question about it is simply
+// refused. The list is asked a hundred at a time because the Mac files stop at 1.8.1 — fifteen was
+// too short a window to ever reach them, and the two Mac buttons then died on their pin.
 (async function () {
-  const BASE = "https://github.com/richlifetechnologies-lang/stream-live/releases/download/";
+  const BASE = "https://github.com/richlifetechnologies-lang/stream-live-releases/releases/download/";
   try {
-    const res = await fetch("https://api.github.com/repos/richlifetechnologies-lang/stream-live/releases?per_page=15",
+    const res = await fetch("https://api.github.com/repos/richlifetechnologies-lang/stream-live-releases/releases?per_page=100",
       { headers: { Accept: "application/vnd.github+json" } });
     const rels = await res.json();
     if (!Array.isArray(rels) || !rels.length) return;
