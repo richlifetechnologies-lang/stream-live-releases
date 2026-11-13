@@ -167,6 +167,7 @@
       <button data-tab="keys">Key pool</button>
       <button data-tab="decart">DeCart keys</button>
       <button data-tab="engines">Engines</button>
+      <button data-tab="voices">Voices</button>
       <button data-tab="split">Trial vs Paid</button>
       <button data-tab="burn">Burn rates</button>
       <button data-tab="sessions">Calls</button>
@@ -768,6 +769,122 @@
         </div>
         <div class="btns" style="margin-top:14px"><button id="engSave" class="primary">Save trial settings</button></div>
         <div id="engMsg"></div>
+      </div>
+    </section>
+
+    <!-- ══ TAB: VOICES ═══════════════════════════════════════════════════════ -->
+    <section id="tab-voices" class="hidden">
+      <div class="card">
+        <h2 style="font-size:14px;margin:0 0 6px">One speaking voice per call, taken when the call starts</h2>
+        <p class="muted" style="margin:0 0 12px">Every answer on a cloning call is spoken by one of two voices. The customer is never told which, and on one call he never hears both.</p>
+        <div class="grid2">
+          <div class="prov">
+            <div class="phead"><b>The fuller voice</b><span class="pmeta">the one that sounds like a person</span></div>
+            <p class="phint" style="margin-top:0">This is the sound your listeners picked. It begins speaking about <b>a quarter of a second later</b> than the other one, and it allows far <b>fewer answers being made at the same instant</b> — which is the only reason any call is ever given the other voice.</p>
+          </div>
+          <div class="prov">
+            <div class="phead"><b>The quicker voice</b><span class="pmeta">the rescue when the fuller one is crowded</span></div>
+            <p class="phint" style="margin-top:0">Same words, same voice model he picked on his own screen — a tighter, flatter delivery. It answers sooner and carries more calls at once. A call only starts here when there was no room left in the fuller allowance <b>at the moment it began</b>.</p>
+          </div>
+        </div>
+        <p class="muted" style="margin:12px 0 0"><b>Why the choice is made once and never again in that call:</b> a customer who heard the voice change halfway through his own sentence would not think the line had crowded — he would think your software is unreliable, and he is right to. So a crowded instant makes the gateway <b>wait and ask the fuller voice again</b> instead of switching voices or dropping the call, and a call that has no room left is put on the quicker voice at the very start, before the caller ever hears anything else.</p>
+        <p class="muted" style="margin:8px 0 0">What the gateway dials, for the record: <span class="mono" id="vcModelNames"></span></p>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:14px;margin:0 0 4px">The allowance behind the box below, per plan</h2>
+        <p class="muted" style="margin:0 0 12px">Read off the voice service's own published figures. The limit is <b>per billing account, not per key</b>: two keys on one account share one allowance, which is why a second key only helps when it belongs to a second account.</p>
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>Your plan</th><th>Answers in the making at one instant — fuller voice</th><th>— quicker voice</th><th>What to type below</th></tr></thead>
+            <tbody>
+              <tr><td>Starter</td><td class="mono">3</td><td class="mono">6</td><td class="mono">3</td></tr>
+              <tr><td>Creator</td><td class="mono">5</td><td class="mono">10</td><td class="mono">5</td></tr>
+              <tr><td>Pro</td><td class="mono">10</td><td class="mono">20</td><td class="mono">10</td></tr>
+              <tr><td>Scale / Business</td><td class="mono">15</td><td class="mono">30</td><td class="mono">15</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin:12px 0 0"><b>Why the figure in the last column is safe:</b> a slot is held for the making of an answer (about <b>0.6 seconds</b>), not for the seconds it takes to play it, and a customer is silent while he listens. So three calls that "hold" the fuller voice are almost never three answers being made at the same instant — the refusals counted below are the thing to watch, not the arithmetic. The box below is at <b>0, which means no ceiling — every call gets the fuller voice</b>, and that is where the listening test of 13 November left it. Type your plan's figure only when you want a cap; if the refusals start climbing, come down by one.</p>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="font-size:14px;margin:0">Right now</h2>
+          <button id="vcRefresh" style="flex:0 0 auto">Refresh</button>
+        </div>
+        <div class="grid4" id="vcStats" style="margin-top:12px"></div>
+        <p class="muted" id="vcKeysNote" style="margin:10px 0 0"></p>
+        <p class="muted" id="vcLiveNote" style="margin:10px 0 0"></p>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:14px;margin:0 0 4px">What happens the moment the fuller voice is crowded</h2>
+        <p class="muted" style="margin:0 0 12px">Four steps, in this order, and the customer never hears a voice change on his own call.</p>
+        <div class="grid2">
+          <div class="prov">
+            <div class="phead"><b>1. Ask the other voice keys</b><span class="pmeta">same voice, no change at all</span></div>
+            <p class="phint" style="margin-top:0">Every enabled key that carries a voice credential is tried, in your priority order, on the <b>same</b> fuller voice. Nothing changes in what the caller hears. A key that fails three times in ten minutes is rested, so one bad key cannot slow the pool.</p>
+          </div>
+          <div class="prov">
+            <div class="phead"><b>2. Wait, and ask again</b><span class="pmeta">twice, about 0.7 s each</span></div>
+            <p class="phint" style="margin-top:0">A crowded instant normally clears inside a second. The wait is deliberately short and capped: four seconds of dead air on a live call reads as a dropped line far more loudly than an answer that sounds a little flatter.</p>
+          </div>
+          <div class="prov">
+            <div class="phead"><b>3. That one answer is refused — never the call</b><span class="pmeta">the app retries on the same voice</span></div>
+            <p class="phint" style="margin-top:0">The sentence comes back as "the voice line is carrying too many calls right now". The call <b>stays on its own voice</b> and its next sentence asks again. This is the change that stops a crowded instant from ending a customer's call.</p>
+          </div>
+          <div class="prov">
+            <div class="phead"><b>4. The next call may start on the quicker voice</b><span class="pmeta">and stays there to its last word</span></div>
+            <p class="phint" style="margin-top:0">This step only exists while the ceiling box below holds a number above 0. At <b>0 — no ceiling</b>, which is where the listening test left it, no call is ever moved for being late: steps 1 to 3 carry the crowd. With a ceiling, only a call that begins while every fuller slot is taken is put on the quicker voice, and its choice is written on the call and never re-judged. A caller who never heard the fuller voice cannot miss it.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:14px;margin:0 0 4px">How many calls at once may have the fuller voice</h2>
+        <p class="muted" style="margin:0 0 12px"><b>0 in this box means no ceiling: every call gets the fuller voice.</b> That is where the listening test left it, and it is the standing setting. The box is there for the day the voice line starts refusing answers when callers crowd it — a number above 0 is a ceiling you pull <i>down</i>, and only the calls past it fall back to the quicker voice. This is your figure, not one the software can look up: the service states its allowance per plan, and your plan sits on an invoice this gateway cannot see. <b>Move this box the day you move tier</b> — nothing else has to change, and no installer is involved.</p>
+        <div class="grid2">
+          <div>
+            <label>Calls allowed the fuller voice at the same instant (0 = no ceiling)</label>
+            <input id="vcSlots" type="number" min="0" step="1" />
+            <div class="muted" style="margin-top:6px">The count above is what is holding the fuller voice right now. With a ceiling set, the call that would be the one over it starts — and stays — on the quicker voice. Too high a number is the risky direction: the service then refuses answers it was told it could have, and each refusal costs the customer a fraction of a second. With no ceiling, a refusal is answered by the shorter wait, not by changing the voice.</div>
+          </div>
+          <div>
+            <label>Which voice the very next call gets</label>
+            <div class="muted" id="vcNext" style="margin-top:6px">Nothing is on air, so the next call is given the fuller voice.</div>
+          </div>
+        </div>
+        <div class="btns" style="margin-top:14px"><button id="vcSave" class="primary">Save voice capacity</button></div>
+        <div id="vcMsg"></div>
+        <p class="muted" style="margin:12px 0 0"><b>The day you move to the next plan:</b> type the new figure in the box, press Save, and that is the whole of it. No installer, no app version, no new key, nothing for your customers to do — the gateway reads this line on each answer it makes, so the change lands on the very next call that starts. Calls already running keep the voice they were given.</p>
+        <p class="muted" style="margin:8px 0 0"><b>Before you buy a second voice account instead:</b> a customer's cloned voice lives on the account that cloned it, so a second account cannot speak your existing customers' voices until the server is taught to route by account. An upgrade needs neither of those; a second account is worth having later, for resilience if a key is ever revoked, and for growth past the top plan.</p>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="font-size:14px;margin:0">The calls on air, and the voice each was given</h2>
+          <button id="vcFold" class="foldbtn" title="Show or hide the list of calls" style="display:none">+</button>
+        </div>
+        <p class="muted" style="margin:6px 0 0">A call that has not spoken yet shows no voice — the stamp is taken on its first answer, so a call that is only listening has not cost you a slot. Folding hides rows already on the screen and asks the database nothing.</p>
+        <div data-vcfold style="overflow:auto;margin-top:12px">
+          <table id="vcTable">
+            <thead><tr><th>Account</th><th>Call tab</th><th>Started</th><th>Voice this call speaks with</th><th>Chosen at</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:14px;margin:0 0 4px">The last 24 hours</h2>
+        <p class="muted" style="margin:0 0 12px">Every call that opened in the window, by the voice it was given, and every answer the voice line refused as too crowded.</p>
+        <div class="grid4" id="vcDayStats"></div>
+        <div data-vcfold style="overflow:auto;margin-top:12px">
+          <table id="vcRefusals">
+            <thead><tr><th>When</th><th>Account</th><th>What came back</th><th>Its own words</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -1649,6 +1766,7 @@
     decart: [loadKeys, loadSupply],
     split: [loadAccounts],
     engines: [loadConfig],
+    voices: [loadVoices],
     burn: [loadRates, loadUnlimitedRate],
     sessions: [loadSessions],
     ends: [loadEnds],
@@ -1703,7 +1821,7 @@
     // ahead it would otherwise show half a day and call it a day.
     await CLOCK_READY;
     await loadPlans();
-    await Promise.all([loadRequests(), loadKeys(), loadRates(), loadSessions(), loadAirtime(), loadConfig(), loadContact(), loadAccounts(), loadUnlimited(), loadCalls(), loadUnlimitedRate()]);
+    await Promise.all([loadRequests(), loadKeys(), loadRates(), loadSessions(), loadAirtime(), loadConfig(), loadContact(), loadAccounts(), loadUnlimited(), loadCalls(), loadUnlimitedRate(), loadVoices()]);
     await loadPricing();
   }
 
@@ -4530,6 +4648,177 @@
       ? `Saved. New accounts get ${mins(row.trial_video_minutes)} free video minute${row.trial_video_minutes === 1 ? "" : "s"} served by the trial pool, starting now.`
       : "Saved. The free trial is off: no account is granted trial minutes and no DeCart key is used.", "ok");
     await Promise.all([loadSupply(), loadKeys()]);
+  };
+
+  // ══ VOICES ══════════════════════════════════════════════════════════════
+  // Which speaking voice a call answers with is decided by the voice relay, ONCE per call, and
+  // written on the call's own row — so this tab reads the stamp rather than recomputing anything.
+  // The two identifiers below are the two the relay writes; a third voice appearing here means the
+  // relay and this page disagree, which is why the raw value is printed beside an unknown name.
+  const VOICE_RICH = "eleven_multilingual_v2";
+  const VOICE_QUICK = "eleven_flash_v2_5";
+  const VOICE_NAME = { [VOICE_RICH]: "the fuller voice", [VOICE_QUICK]: "the quicker voice" };
+  // The figure the relay falls back to when it cannot read this box — kept identical on purpose, so
+  // the number shown here is the number in force even on a database the migration has not reached.
+  // Zero is not "nobody gets the fuller voice": it is NO CEILING, every call gets it. That is his own
+  // standing answer from the listening test on 13 November, and a number above zero is only ever a
+  // ceiling he pulls down if the voice line starts refusing the fuller voice when callers crowd it.
+  const VOICE_RICH_SLOTS_DEFAULT = 0;
+  let hasVoiceModelCols = false;
+  let hasRichSlots = false;
+  let VOICE_ROWS = [];
+  let VOICE_SLOTS = VOICE_RICH_SLOTS_DEFAULT;
+
+  // Folding hides rows already in memory, asks the database nothing and blanks no figure.
+  const VC_FOLD_KEY = "streamlive.voices.folded";
+  let VC_FOLD = false;
+  try { if (localStorage.getItem(VC_FOLD_KEY) === "1") VC_FOLD = true; } catch { }
+
+  function paintVCFold() {
+    const b = $("vcFold");
+    if (b) b.textContent = VC_FOLD ? "+" : "−";
+    document.querySelectorAll("#tab-voices [data-vcfold]").forEach((n) => {
+      n.style.display = VC_FOLD ? "none" : "";
+    });
+  }
+
+  $("vcFold").onclick = () => {
+    VC_FOLD = !VC_FOLD;
+    try { localStorage.setItem(VC_FOLD_KEY, VC_FOLD ? "1" : "0"); } catch { }
+    paintVCFold();
+  };
+
+  function voiceCell(model) {
+    if (!model) return '<span class="muted">no voice yet — this call has not answered anyone</span>';
+    const known = VOICE_NAME[model];
+    return `<span class="pill ${model === VOICE_RICH ? "yes" : "warn"}">${esc(known || "a voice this page does not know")}</span>`
+      + (known ? "" : `<div class="muted mono">${esc(model)}</div>`);
+  }
+
+  function renderVoices(refusals) {
+    const live = VOICE_ROWS.filter((r) => !r.ended_at && r.settled !== true);
+    const richHeld = live.filter((r) => r.voice_model === VOICE_RICH).length;
+    const quickHeld = live.filter((r) => r.voice_model === VOICE_QUICK).length;
+    // Zero in the box is not "nobody gets the fuller voice" — it is "nothing caps it". Every branch
+    // below has to say which of the two readings is in force, or a blank-looking figure reads as a fault.
+    const capped = VOICE_SLOTS > 0;
+    const free = capped ? Math.max(0, VOICE_SLOTS - richHeld) : 0;
+    $("vcStats").innerHTML = [
+      [capped ? `${richHeld} / ${VOICE_SLOTS}` : richHeld, "calls hold the fuller voice right now"],
+      [quickHeld, capped ? "calls hold the quicker voice right now" : "calls on the quicker voice — only a call that the fuller voice refused lands here"],
+      [capped ? free : "no ceiling", "room left for the next call"],
+      [refusals.length, "answers the voice line refused today"],
+    ].map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+
+    $("vcNext").innerHTML = !hasVoiceModelCols
+      ? "Nothing can be said until the database has the voice column."
+      : !capped
+        ? `The box is 0, which is <b>no ceiling</b>: the next call that speaks is given <b>the fuller voice</b> and keeps it to its last word. Every call is given it, and only a call the voice line refuses falls back.`
+        : free > 0
+          ? `There is room, so the next call that speaks is given <b>the fuller voice</b> and keeps it to its last word.`
+          : `Every slot is taken, so the next call that speaks starts — and stays — on <b>the quicker voice</b>. Nobody already on a call is moved.`;
+
+    $("vcLiveNote").innerHTML = hasVoiceModelCols
+      ? `The count is calls, not people: a call keeps its slot for the whole of its life on air, and an abandoned one releases it when its lease runs out — which this gateway already closes on its own.`
+      : `The voice column is not in the database yet — run the migration, then reload this page. Nothing here has been changed, and every call still works exactly as it did.`;
+
+    // Step 1 of the ladder is the key pool, so the page has to say how many keys that step
+    // actually has to work with. A key only counts here if it carries a voice credential and is
+    // switched on; two keys on one billing account still share one allowance.
+    const voiceKeys = KEY_ROWS.filter((k) => k.voice_key_tail && k.enabled !== false);
+    $("vcKeysNote").innerHTML = hasVoiceModelCols
+      ? (voiceKeys.length > 1
+        ? `<b>${voiceKeys.length} voice keys</b> are switched on, so a crowded instant is first tried on the others, on the same fuller voice: ${voiceKeys.map((k) => esc(k.label || shortId(k.id)) + " (" + esc(k.voice_key_tail) + ")").join(", ")}. Each key on its own billing account brings its own allowance.`
+        : `<b>One voice key</b> is switched on${voiceKeys.length ? " (" + esc(voiceKeys[0].label || shortId(voiceKeys[0].id)) + ")" : ""}, so there is no other key to try — a crowded instant goes straight to the short wait. Add a key from another voice account, or move plan, and both figures below get room to breathe.`)
+      : "";
+
+    const b = $("vcFold");
+    if (b) b.style.display = live.length > 1 ? "" : "none";
+    $("vcTable").querySelector("tbody").innerHTML = live.map((r) => `<tr>
+        <td><b>${esc(EMAIL_OF[r.user_id] || shortId(r.user_id))}</b></td>
+        <td class="muted">${MOD_LABEL[r.modality] || esc(r.tab || "—")}</td>
+        <td class="muted">${when(r.started_at)}</td>
+        <td>${voiceCell(r.voice_model)}</td>
+        <td class="muted">${r.voice_model_set_at ? when(r.voice_model_set_at) : "—"}</td>
+      </tr>`).join("")
+      || '<tr><td colspan="5" class="muted">Nothing is on air right now — every call has closed.</td></tr>';
+
+    const spoken = VOICE_ROWS.filter((r) => r.voice_model);
+    $("vcDayStats").innerHTML = [
+      [VOICE_ROWS.length, "calls opened in the window"],
+      [spoken.filter((r) => r.voice_model === VOICE_RICH).length, "given the fuller voice"],
+      [spoken.filter((r) => r.voice_model === VOICE_QUICK).length, "given the quicker voice"],
+      [VOICE_ROWS.length - spoken.length, "never answered anyone, so no voice"],
+    ].map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+
+    const foldBtn = $("vcFold");
+    if (refusals.length && foldBtn) foldBtn.style.display = "";
+    $("vcRefusals").querySelector("tbody").innerHTML = refusals.map((r) => `<tr>
+        <td class="muted">${when(r.created_at)}</td>
+        <td class="muted">${esc(EMAIL_OF[r.user_id] || shortId(r.user_id))}</td>
+        <td><span class="pill fail">${N(r.status)}</span> <span class="muted">${N(r.status) === 429 ? "the line was carrying too many answers at once" : "the voice service refused it"}</span></td>
+        <td class="muted">${esc((r.detail || "").slice(0, 160)) || "—"}</td>
+      </tr>`).join("")
+      || '<tr><td colspan="4" class="muted">The voice line refused nothing today — every answer it was asked for came back.</td></tr>';
+    paintVCFold();
+  }
+
+  async function loadVoices() {
+    // The ladder's first step is the key pool, and this tab can be the one opened first.
+    if (KEY_ROWS.length === 0) { try { await loadKeys(); } catch { /* the note says "one key", which is the safe reading */ } }
+    $("vcModelNames").textContent = `fuller = ${VOICE_RICH} · quicker = ${VOICE_QUICK}`;
+
+    const slotsProbe = await sb.from("app_config").select("voice_rich_slots").eq("id", 1).maybeSingle();
+    hasRichSlots = !slotsProbe.error;
+    VOICE_SLOTS = Math.max(0, N(slotsProbe.data?.voice_rich_slots, VOICE_RICH_SLOTS_DEFAULT));
+    $("vcSlots").value = VOICE_SLOTS;
+    $("vcSlots").disabled = !hasRichSlots;
+    $("vcSave").disabled = !hasRichSlots;
+
+    const colProbe = await sb.from("usage_sessions").select("voice_model").limit(1);
+    hasVoiceModelCols = !colProbe.error;
+
+    const since = new Date(serverNowMs() - 864e5).toISOString();
+    if (!hasVoiceModelCols) {
+      VOICE_ROWS = [];
+    } else {
+      const { data, error } = await sb.from("usage_sessions")
+        .select("id, user_id, tab, modality, started_at, ended_at, settled, voice_model, voice_model_set_at")
+        .gte("started_at", since)
+        .order("started_at", { ascending: false })
+        .limit(1000);
+      if (error) return msg("vcMsg", error.message);
+      VOICE_ROWS = data || [];
+    }
+    await emailsOf(VOICE_ROWS.map((r) => r.user_id));
+
+    const { data: rej } = await sb.from("key_usage_log")
+      .select("created_at, user_id, status, detail")
+      .eq("provider", "elevenlabs").eq("outcome", "fail").eq("status", 429)
+      .gt("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    const rows = rej || [];
+    await emailsOf(rows.map((r) => r.user_id));
+    renderVoices(rows);
+    if (!hasRichSlots) msg("vcMsg", "The voice capacity column is not in the database yet — run the migration, then reload this page. Until then the gateway uses its own default, which is no ceiling: every call gets the fuller voice.");
+  }
+
+  $("vcRefresh").onclick = () => loadVoices();
+
+  $("vcSave").onclick = async () => {
+    msg("vcMsg", "");
+    if (!hasRichSlots) return msg("vcMsg", "The voice capacity column is not in the database yet — run the migration, then reload this page.");
+    const raw = ($("vcSlots").value || "").trim();
+    if (raw === "") return msg("vcMsg", "The box is empty. Press Refresh to put the saved figure back.");
+    const n = Math.floor(N(raw, 0));
+    // Zero is a real figure here, not an accident: it means no ceiling, every call gets the fuller
+    // voice. Only something below zero is refused, because the gateway would read it as its own default.
+    if (n < 0) return msg("vcMsg", "Type 0 or more. 0 means no ceiling — every call gets the fuller voice; a number above it is how many may hold it at the same instant.");
+    const { error } = await sb.from("app_config").update({ voice_rich_slots: n }).eq("id", 1);
+    if (error) return msg("vcMsg", error.message);
+    await loadVoices();
+    msg("vcMsg", `Saved. From the next call that speaks, ${n} call${n === 1 ? "" : "s"} at a time may answer with the fuller voice. Every call already running keeps the voice it was given.`, "ok");
   };
 
   // ══ BURN RATES ══════════════════════════════════════════════════════════
