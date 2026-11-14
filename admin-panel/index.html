@@ -41,6 +41,22 @@
   .grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
   .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
   @media (max-width: 820px){ .grid2,.grid3,.grid4{ grid-template-columns: 1fr 1fr; } }
+  /* The Unlimited card's session cell: what the customer's own screen shows him, in the same
+     figures - which one he is on, how many he bought, and one segment per session. */
+  .sbx { min-width: 132px; }
+  .sbx .n { font: 800 15px/1 ui-monospace, monospace; }
+  .sbx .n em { font-style: normal; color: #6b8296; font-size: 12px; }
+  .sbar { display: flex; gap: 2px; height: 6px; margin-top: 5px; }
+  .sbar i { flex: 1; border-radius: 2px; background: #24303d; min-width: 3px; }
+  .sbar i.done { background: #12a5ad; }
+  .sbar i.now { background: linear-gradient(90deg, #12a5ad 60%, #24303d 60%); }
+  .sbar.one i { background: none; border-radius: 3px; }
+  /* The sentence that appears under the cap box as he types it: the sessions his own figure
+     makes, said before anything is saved. */
+  .auto { border: 1px dashed #12a5ad; background: #0b1b20; border-radius: 10px; padding: 10px 12px;
+    font-size: 12.5px; color: #7fe9ee; flex: 3 1 320px; }
+  .auto b { font-family: ui-monospace, monospace; font-size: 14px; color: #e6f6fb; }
+  .auto div { color: #6b8296; margin-top: 4px; }
   .muted { color: #6b8296; font-size: 12px; }
   .hidden { display: none; }
   .err { color: #fb7185; font-size: 13px; margin-top: 8px; }
@@ -206,15 +222,16 @@
             <button id="foldUnl" class="foldbtn" title="Show or hide the list of accounts" style="display:none">+</button>
           </div>
         </div>
-        <div class="grid4" style="margin-top:12px" id="unlStats"></div>
+        <div class="grid3" style="margin-top:12px" id="unlStats"></div>
         <div id="unlAlert"></div>
         <div data-unlfold style="overflow:auto;margin-top:12px">
           <table id="unlTable">
-            <thead><tr><th>Account</th><th>One call may spend</th><th>Total cap</th><th>Spent so far</th><th>Left of the cap</th><th>Right now</th><th>Calls 24h</th><th>On air 24h</th><th>Refused 24h</th></tr></thead>
+            <thead><tr><th>Account</th><th title="The sessions his total minutes group into, counted by the server from the minutes he has really spent: the number he is on now out of the total, and one segment per session. Nothing here is typed - it all comes from the cap above.">Sessions</th><th title="Sessions finished. The one he is on counts in neither column: it is the number in the Sessions cell.">Sessions used</th><th title="Sessions not finished yet, including the one he is standing in.">Sessions left</th><th>One call may spend</th><th>Total cap</th><th>Spent so far</th><th>Left of the cap</th><th>Right now</th><th>Calls 24h</th><th>On air 24h</th><th>Refused 24h</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
         <p class="muted" data-unlfold style="margin:10px 0 0">What is spent is read off the calls that really happened, from the moment the package was granted — the same read that decides whether his next press is accepted. The minute columns are minutes <b>spent</b>, not minutes on screen: a minute of picture spends the figure on the <b>Unlimited dial</b> on the Burn rates tab, and a minute of voice spends your Voice Clone Only rate. So a window or a cap typed in minutes buys that much airtime at the rate in force, and a cap typed now comes down on everything he has already used, exactly as it should. <b>On air 24h</b> is the wall-clock time he really watched, before any rate. The <b>Refused</b> column counts presses the gateway turned away in the last day: a package that ran out, or an account with no video key attached to it.</p>
+        <p class="muted" data-unlfold style="margin:8px 0 0"><b>Sessions.</b> A session is one allowance of the length in the <b>One call may spend</b> column — 15 minutes on your pack — and the total you type is read in blocks of that length, so 120 minutes is 8 sessions and 95 is 7, the last one of 5 minutes. It is <b>not</b> reset when he stops early: 6 minutes used, stop, and his next call carries on with the 9 left in that session. A call always ends at the end of the session it is on, and never later than 15 minutes. The counts come from the calls he has really made, so an account already calling has its used sessions the moment you type the cap — nothing is given back, and nothing you save changes what he has already spent. Only his desktop card shows the sessions; the sessions themselves are derived here, never typed.</p>
         <div id="unlMsg"></div>
       </div>
 
@@ -254,12 +271,13 @@
           <div class="muted" id="gMinHint" style="margin:4px 0 0"></div>
           <div class="row" style="margin-top:10px;align-items:center">
             <div style="flex:0 0 auto"><label class="feat" style="margin:0"><input type="checkbox" id="gUnlimited" /> Set unlimited</label></div>
-            <div style="flex:0 0 120px"><label style="margin:0">Minutes per call</label><input id="gUnlimitedWindow" type="number" min="1" step="1" value="15" title="One call may spend this many minutes at the rate on the Burn rates tab - your Unlimited dial for a picture call, your Voice Clone Only rate for a voice call. At 1x the figure is the time itself; at 1.25x it buys four-fifths as much on screen. It starts fresh when the buyer presses Stop or his network drops. Used with Set unlimited." /></div>
-            <div style="flex:0 0 130px"><label style="margin:0">Total cap (minutes)</label><input id="gUnlimitedCap" type="number" min="1" step="1" placeholder="not set" title="Everything this account uses counts against this total, in minutes spent at that same rate. Leave it empty and the account runs on the per-call window alone, with every minute still counted, so the cap you type later is a total and the minutes already used come out of it." /></div>
+            <div style="flex:0 0 120px"><label style="margin:0">Minutes per call</label><input id="gUnlimitedWindow" type="number" min="1" step="1" value="15" title="The length of ONE session, in minutes at the rate on the Burn rates tab - your Unlimited dial for a picture call, your Voice Clone Only rate for a voice call. At 1x the figure is the time itself; at 1.25x it buys four-fifths as much on screen. Used with Set unlimited, the total cap is read in blocks of this length: one block carries on across his Stop presses until it is used up, and a call never runs past the block it is on. Raising it makes fewer, longer sessions - it never adds minutes." /></div>
+            <div style="flex:0 0 130px"><label style="margin:0">Total cap (minutes)</label><input id="gUnlimitedCap" type="number" min="1" step="1" placeholder="not set" title="Everything this account uses counts against this total, in minutes spent at that same rate. Leave it empty and the account runs on the per-call window alone, with every minute still counted, so the cap you type later is a total and the minutes already used come out of it. Type it and the line under this box tells you the sessions it makes before you save." /></div>
             <div style="flex:0 0 auto"><label class="feat" style="margin:0"><input type="checkbox" id="gClearUnlimited" /> Clear unlimited</label></div>
             <div style="flex:0 0 auto"><button id="grantBtn" class="primary">Credit minutes</button></div>
             <div style="flex:0 0 auto"><button id="deductBtn" class="danger">Deduct</button></div>
             <div style="flex:0 0 auto"><button id="zeroBtn" class="danger">Empty to 0:00</button></div>
+            <div class="auto hidden" id="gUnlAuto" style="flex:3 1 320px"></div>
           </div>
           <div class="row" style="margin-top:12px;align-items:center;border-top:1px solid #1d2733;padding-top:10px">
             <div style="flex:1 1 260px"><label style="margin-top:0">Or credit a whole package</label><select id="gPackage"></select></div>
@@ -1632,6 +1650,70 @@
   const clock = (v) => { const total = Math.max(0, Math.floor(N(v) * 60)); return Math.floor(total / 60) + ":" + String(total % 60).padStart(2, "0"); };
   const mins1 = (v) => N(v).toFixed(1);
   const mins2 = (v) => N(v).toFixed(2);
+  /**
+   * The session arithmetic, in one place, matching public.sl_unlimited_sessions_of exactly.
+   *
+   * A saved row carries the server's own answer in `sess` and this function is never asked for
+   * it; what it is for is the cap being TYPED, before anything is written. The sentence under
+   * the box has to count the sessions of a number that does not exist in the database yet, and
+   * it must be the number the database will agree to the moment he saves - a preview that
+   * disagrees with the saved figure is the one thing that makes a seller stop trusting the box.
+   */
+  function sessOf(used, win, cap) {
+    const u = Math.max(0, N(used));
+    const c = cap === null || cap === undefined || cap === "" || !Number.isFinite(Number(cap))
+      ? null : Number(cap);
+    // No session length and no total both mean the same thing here, exactly as in the SQL: the
+    // account runs on the per-call window alone and nothing is grouped. `N` cannot be used for
+    // the window because it reads null as 0, and 0 is not "not set".
+    const w = win === null || win === undefined || win === "" || !Number.isFinite(Number(win))
+      ? null : Math.max(1, Math.floor(Number(win)));
+    if (c === null || c <= 0 || w === null) return { sessions: false };
+    const total = Math.max(1, Math.ceil(c / w));
+    const usedCount = Math.min(Math.floor(u / w), total);
+    const number = Math.min(usedCount + 1, total);
+    const start = (number - 1) * w;
+    const bound = Math.min(number * w, c);
+    return {
+      sessions: true,
+      session_total: total,
+      session_number: number,
+      sessions_used: usedCount,
+      sessions_left: total - usedCount,
+      session_minutes_left: Math.max(0, Math.round((bound - u) * 1000) / 1000),
+      session_progress: bound > start
+        ? Math.min(1, Math.max(0, Math.round(((u - start) / (bound - start)) * 10000) / 10000))
+        : 1,
+      last_session: number === total,
+      short_session: (bound - start) < w,
+    };
+  }
+
+  /** One segment per session, up to twelve; past that one continuous bar filled by progress. */
+  function sessBar(s) {
+    const total = N(s.session_total), number = N(s.session_number);
+    if (total <= 12) {
+      let out = "";
+      for (let i = 1; i <= total; i++) {
+        out += `<i class="${i < number ? "done" : i === number ? "now" : ""}"></i>`;
+      }
+      return `<div class="sbar">${out}</div>`;
+    }
+    return `<div class="sbar one"><i class="done" style="flex:${N(s.session_progress)}"></i>`
+      + `<i style="flex:${Math.max(0, 1 - N(s.session_progress))}"></i></div>`;
+  }
+
+  /**
+   * The sessions of one row on the Unlimited card.
+   *
+   * The server sends them on the row (`sess`), and that answer is what shows. The local
+   * arithmetic is only a fallback for a database that has not run the migration on this card
+   * yet: same three figures in, same answer out, so the columns never disagree with each other.
+   */
+  function unlSess(a) {
+    if (a.sess && a.sess.sessions) return a.sess;
+    return sessOf(a.used_minutes, a.window_minutes, a.cap_minutes);
+  }
   // The meter shows a balance as 1:44, so the box that moves money has to read 1:44
   // too. A bare number stays decimal minutes, because packages are written that way.
   // Seconds are rounded UP to the stored three decimals: 104/60 is 1.7333…, and the
@@ -2432,6 +2514,7 @@
     $("gMinutes").value = ""; $("gReason").value = "";
     $("gUnlimited").checked = false; $("gClearUnlimited").checked = false;
     refreshMinHint();
+    paintUnlAuto();
 
     $("deviceTable").querySelector("tbody").innerHTML = (c.devices || []).map((d, i) => `<tr data-dev="${i}">
       <td class="mono">${esc(d.device_id)}</td><td>${esc(d.label || "—")}</td><td class="muted">${when(d.last_seen)}</td>
@@ -2611,6 +2694,61 @@
   }
   $("gMinutes").oninput = refreshMinHint;
   $("gModality").onchange = refreshMinHint;
+
+  /**
+   * The sentence that appears under the cap box while he types it.
+   *
+   * He asked for one figure to enter — the total minutes — and for the sessions to come out of
+   * it by themselves. This is that answer shown before anything is saved, from the same
+   * arithmetic the database runs when the box is saved and the same one the customer's card
+   * reads back, so the number in this sentence and the number on his screen are never two
+   * different numbers. It carries no new control and refuses nothing: it only says what the
+   * figure he has typed means.
+   */
+  function paintUnlAuto() {
+    const box = $("gUnlAuto");
+    if (!box) return;
+    // With no account open there is no account to count this against, and a sentence that said
+    // "on this account" about nobody would be a lie waiting to be read.
+    if (!CUR) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+    const capRaw = ($("gUnlimitedCap").value || "").trim();
+    const cap = capRaw === "" ? null : Math.round(N(capRaw));
+    const win = Math.max(1, Math.round(N($("gUnlimitedWindow").value, 15)));
+    if (cap === null || !(cap > 0)) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+    const row = (UNL && (UNL.accounts || []).find((a) => a.user_id === (CUR && CUR.user_id))) || null;
+    const read = !!UNL;
+    const used = row ? N(row.used_minutes) : 0;
+    const s = sessOf(used, win, cap);
+    const total = N(s.session_total);
+    const lastLen = cap - (total - 1) * win;
+    const parts = [];
+    if (lastLen === win) {
+      parts.push(`That is <b>${total} session${total === 1 ? "" : "s"} of ${win} minutes</b>`);
+    } else if (total === 1) {
+      parts.push(`That is <b>one session of ${cap} minutes</b> — shorter than the ${win} you allow a call to run, so no minute you sold goes missing`);
+    } else {
+      parts.push(`That is <b>${total} sessions</b> — ${total - 1} of ${win} minutes and a last one of <b>${lastLen} minutes</b>, so no minute you sold goes missing`);
+    }
+    // How many of them he has had is read off the calls he really made, so an account already
+    // calling shows its used sessions the moment the cap is typed - nothing is given back.
+    if (!read) parts.push("— the count of his used sessions appears once the Unlimited accounts card above has read.");
+    else if (used === 0) parts.push(`— <b>none used</b> yet on this account.`);
+    else parts.push(`— <b>${N(s.sessions_used)} used</b>, <b>${N(s.sessions_left)} left</b> on this account.`
+      + (N(s.sessions_left) === 1 ? " The one he is on now is the last one." : ""));
+    if (used > cap) {
+      parts.push(`<div style="color:#fbbf24">He has already spent ${mins1(used)} minutes at the rate in force, which is past this total — the gateway refuses his next press until you raise it.</div>`);
+    } else {
+      parts.push(`<div>Change the cap and the session count moves with it; minutes already used stay counted. He sees the sessions on his card, never these minutes. A call never runs past the session it is on, and one session carries on across his Stop presses until it is used up.</div>`);
+    }
+    if (!$("gUnlimited").checked && !row) {
+      parts.push(`<div>Takes effect when you save with <b>Set unlimited</b> ticked.</div>`);
+    }
+    box.innerHTML = parts.join(" ");
+    box.classList.remove("hidden");
+  }
+  $("gUnlimitedCap").oninput = paintUnlAuto;
+  $("gUnlimitedWindow").oninput = paintUnlAuto;
+  $("gUnlimited").onchange = paintUnlAuto;
 
   $("grantBtn").onclick = async () => {
     if (!CUR) return msg("grantMsg", "Open an account first.");
@@ -4212,10 +4350,18 @@
     const leaks = N(p.fence_leaks);
     const refused = list.reduce((s, a) => s + N(a.refused_used_up_24h) + N(a.refused_no_key_24h), 0);
     const onAir = act.reduce((s, a) => s + N(a.airtime_24h), 0);
+    // His two new questions, answered without arithmetic of its own: how much of what he sold
+    // has gone, and how much is still sitting there. Both read the server's session figures, so
+    // the totals agree with the column beside each account rather than being re-derived.
+    const sessRows = list.map(unlSess).filter((s) => s.sessions);
+    const sessUsed = sessRows.reduce((s, x) => s + N(x.sessions_used), 0);
+    const sessLeft = sessRows.reduce((s, x) => s + N(x.sessions_left), 0);
 
     $("unlStats").innerHTML = [
       [act.length, "on Unlimited now"],
       [list.length - act.length, "packages finished"],
+      [sessUsed || 0, "sessions used across them"],
+      [sessLeft || 0, "sessions still unused"],
       [clock(onAir), "h:mm on air today"],
       [refused ? `<span style="color:#fbbf24">${refused}</span>` : refused, "presses refused in 24h"],
     ].map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
@@ -4240,26 +4386,45 @@
     $("unlTable").querySelector("tbody").innerHTML = list.map((a) => {
       const noCap = a.cap_minutes == null;
       const left = noCap ? null : N(a.remaining_minutes);
+      const s = unlSess(a);
       const n = N(a.refused_used_up_24h) + N(a.refused_no_key_24h);
       const rows = [];
       if (N(a.refused_used_up_24h)) rows.push(`${a.refused_used_up_24h} package finished`);
       if (N(a.refused_no_key_24h)) rows.push(`${a.refused_no_key_24h} no key attached`);
+      // The session cell is the customer's own card read from the seller's side: which one he is
+      // on, how many the total bought, and one segment per session. "Used" counts finished
+      // sessions only, so the one in progress belongs to neither figure and the count says it.
+      const sessCell = s.sessions
+        ? `<div class="n">${N(s.session_number)} <em>/ ${N(s.session_total)}</em></div>${sessBar(s)}`
+          + `<div class="muted" style="font-size:11px${s.last_session ? ";color:#fbbf24" : ""}">`
+          + `${N(s.sessions_used)} used · ${N(s.sessions_left) ? N(s.sessions_left) + " left" : "none left"}`
+          + `${s.last_session ? " · the last one" : ""}</div>`
+        : '<span class="muted" title="no total typed yet, so nothing is grouped into sessions: he calls on the per-call window alone. Type a cap and the sessions appear here and on his screen.">no sessions</span>';
       return `<tr${a.over_cap ? ' style="background:#2a1215"' : (a.near_cap ? ' style="background:#241f0d"' : "")}>
         <td><b>${esc(a.email || shortId(a.user_id))}</b>${a.active ? "" : ' <span class="pill no">finished</span>'}${a.calling_now ? ' <span class="pill yes">on air</span>' : ""}<div class="muted">since ${when(a.granted_at)}</div></td>
+        <td class="sbx mono">${sessCell}</td>
+        <td class="mono">${s.sessions ? N(s.sessions_used) : '<span class="muted">—</span>'}</td>
+        <td class="mono">${s.sessions
+          ? `<span${s.sessions_left <= 1 ? ' style="color:#fbbf24"' : ""}>${N(s.sessions_left)}</span>`
+          : '<span class="muted">—</span>'}</td>
         <td class="mono">${N(a.window_minutes, 15)} min</td>
         <td class="mono">${noCap ? '<span class="muted" title="no total typed yet: this buyer calls on the per-call window alone, and every minute he uses comes off the cap the moment you type one">not set</span>' : mins(a.cap_minutes)}</td>
         <td class="mono">${mins1(a.used_minutes)}${a.over_cap ? ' <span class="pill fail">over cap</span>' : (a.near_cap ? ' <span class="pill warn">near cap</span>' : "")}</td>
         <td class="mono">${left == null ? '<span class="muted">—</span>' : `<span${a.near_cap ? ' style="color:#fbbf24"' : ""}>${mins1(left)}</span>`}</td>
-        <td class="muted">${a.calling_now ? mmss(a.window_left_seconds) + " of this call left"
+        <td class="muted">${a.calling_now
+          ? mmss(a.window_left_seconds) + (s.sessions ? " of this session left" : " of this call left")
           : (a.active ? "not calling" : "ended " + when(a.finished_at))}</td>
         <td class="mono">${N(a.calls_24h)}</td>
         <td class="mono">${clock(a.airtime_24h)}</td>
         <td class="mono">${n ? `<span class="pill fail" title="${esc(rows.join(", "))}">${n}</span>` : '<span class="pill ok">0</span>'}</td>
       </tr>`;
-    }).join("") || '<tr><td colspan="9" class="muted">Nobody is on the Unlimited package yet. Sell one from the Plans tab, or tick <b>Set unlimited</b> when you credit an account.</td></tr>';
+    }).join("") || '<tr><td colspan="12" class="muted">Nobody is on the Unlimited package yet. Sell one from the Plans tab, or tick <b>Set unlimited</b> when you credit an account.</td></tr>';
 
     stamp("unlWhen");
     paintFoldUnl();
+    // The sentence under the cap box counts this account's used sessions off the same read, so
+    // it refreshes with the card rather than keeping a count from before his last call.
+    paintUnlAuto();
   }
 
   async function loadUnlimited() {
