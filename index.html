@@ -432,7 +432,7 @@
   <div class="wrap">
     <p class="kicker">Mac install</p>
     <h2>Getting Stream Live onto a Mac</h2>
-    <p class="sub">Five steps, about three minutes. Do them in order; steps 1 and 2 are one-time, and steps 4
+    <p class="sub">Five steps, about five minutes. Do them in order; steps 1 and 2 are one-time, and steps 4
       and 5 are what make a call app see the AI picture and hear your voice.</p>
     <ol class="steps">
       <li><b>Move the app into Applications.</b> Double-click the <code>.dmg</code> you downloaded, drag
@@ -464,16 +464,35 @@
           <li><a href="https://obsproject.com/" target="_blank" rel="noreferrer">OBS Studio</a> — turns the
             Stream Live window into a webcam.</li>
         </ul>
+        <div class="note" style="margin-top:12px">
+          <b>Do not set BlackHole 2ch as your Mac's own sound output</b> in System Settings → Sound. It is a
+          silent device, so everything your computer plays — including the person you are calling — would go
+          into it instead of into your speakers and you would hear nothing. That is not a fault in Stream
+          Live. The app puts <b>only your voice</b> into BlackHole by itself while a call is on, and your
+          hearing of the call stays on your normal speakers or headphones.
+        </div>
       </li>
       <li><b>Put the AI feed into your call.</b> On the stream screen, open the <b>OBS</b> window and turn
         <b>Stream Live Microphone</b> on, so your voice moves to BlackHole 2ch — or the
         <b>cloned voice</b> on the tabs where cloning is switched on. Then:
         <ol style="margin:10px 0 0; padding-left:20px; color:var(--muted)">
+          <li>The first time OBS captures a window it asks to see your screen — allow it. If it never asked,
+            or the capture is black, go to <b>System Settings → Privacy &amp; Security → Screen &amp; System
+            Audio Recording</b>, switch <b>OBS</b> on, then quit OBS and open it again. Without that
+            permission every window OBS captures is black, however well Stream Live is working.</li>
           <li>In OBS: <b>Sources → + → Window Capture</b> → pick “Stream Live OBS”.</li>
           <li>In OBS: <b>Controls → Start Virtual Camera</b>.</li>
           <li>In Zoom, Teams, Meet or WhatsApp: Camera → <b>OBS Virtual Camera</b>, Microphone →
             <b>BlackHole 2ch</b>.</li>
         </ol>
+        <div class="note" style="margin-top:12px">
+          <b>If the OBS window says “Waiting for your picture”,</b> nothing is wrong with OBS — that window
+          simply has no picture yet, so anything capturing it sees black. Press <b>Start</b> on the Stream
+          Live window and stay on the call; the message disappears the moment your avatar arrives. If you are
+          already on a call and it stays, the picture has not reached that window and the fault is ours, not
+          yours — the same words are printed on the <b>OBS</b> button’s card in the app, so you always know
+          which half you are fixing.
+        </div>
       </li>
     </ol>
     <div class="note" style="margin-top:22px">
@@ -659,8 +678,10 @@
 //
 // Both addresses name the downloads repo, never the source repo: the source repo stopped taking
 // releases at 1.8.59, and it is on its way private, where an anonymous question about it is simply
-// refused. The list is asked a hundred at a time because the Mac files stop at 1.8.1 — fifteen was
-// too short a window to ever reach them, and the two Mac buttons then died on their pin.
+// refused. The list is asked a hundred at a time because a Mac disk is not always in the newest
+// release — the build that makes them runs on Apple hardware we do not own, so it can lag a Windows
+// build by a release or two. Fifteen was too short a window to ever reach an older Mac file, and the
+// two Mac buttons then died on their pin.
 (async function () {
   const BASE = "https://github.com/richlifetechnologies-lang/stream-live-releases/releases/download/";
   try {
