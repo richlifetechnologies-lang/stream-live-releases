@@ -35,6 +35,7 @@
   .pill.pending, .pill.past_due, .pill.warn { background: #3a2d0d; color: #facc15; }
   .pill.canceled, .pill.expired, .pill.no, .pill.rejected, .pill.fail, .pill.none { background: #3a1620; color: #fb7185; }
   .pill.n { background: #1a2430; color: #6b8296; }
+  .pill.busy { background: #3a2210; color: #fb9a4a; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
   .row > div { flex: 1; min-width: 150px; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -1061,7 +1062,7 @@
               <option value="all" selected>Every paid call</option>
               <option value="sudden">Only the ones he did not stop</option>
               <option value="hand">Only the ones he stopped</option>
-              <option value="blank">Only calls with nothing delivered</option>
+              <option value="blank">Only calls with nothing delivered (not busy)</option>
               <option value="refused">Only the ones the busy line refused</option>
               <option value="mid">Only calls that stopped mid-way</option>
               <option value="unrecorded">Only the ones not recorded</option>
@@ -1098,7 +1099,8 @@
       <div class="card">
         <h2 style="font-size:14px;margin:0 0 6px">The busy line: calls our video line refused</h2>
         <p class="muted" style="margin:0 0 12px">
-          The one blank that is nobody's machine. The video line answered the dial itself with a
+          This is the <b>line busy</b> number, kept apart from the no-picture number: the video line
+          answered the dial itself with a
           refusal — its own words, quoted in each row below — so his camera, his network and his
           photo were never asked to do anything. The four figures stay on the page whatever the
           list below them is doing; the day-by-day rows fold. A refused call is billed to us for
@@ -1115,33 +1117,35 @@
       </div>
 
       <div class="card">
-        <h2 style="font-size:14px;margin:0 0 6px">Which picture line went blank</h2>
+        <h2 style="font-size:14px;margin:0 0 6px">Which line gave no picture, and which answered busy</h2>
         <p class="muted" style="margin:0 0 12px">
           The paid picture calls in the window, split by the two things that decide which line a
-          call actually ran on: the picture model it dialled and the key that paid for it. A blank
-          here is a call that opened and never put a picture on his screen — the black box he
-          complains about, and the only event that moves the next call to a different line. Both
-          lines cost the same per second, so a busier one is not a worse product; it is a bigger
-          crowd in front of the same door. The four figures are the whole window whatever the rows
-          below them are doing, and each row folds open to the calls behind it.
+          call actually ran on: the picture model it dialled and the key that paid for it. The two
+          columns of bad calls are two different events, and a call is counted in one of them only:
+          <b>No picture</b> is a call that opened and never put a picture on his screen — the black
+          box he complains about, and the only event that moves the next call to a different line.
+          <b>Line busy</b> is the video line answering that it is full, so the dial never started; it
+          is a crowd at the door, not a fault in the picture. Both lines cost the same per second, so
+          the one taking more calls is not a worse product. The four figures are the whole window
+          whatever the rows below them are doing, and each row folds open to the calls behind it.
         </p>
         <div class="grid4" id="endsLineStats"></div>
         <p class="muted" id="endsLineNote" style="margin:10px 0 0"></p>
         <div data-endsfold style="overflow:auto;margin-top:12px">
           <table id="endsLineTable">
-            <thead><tr><th>Picture line</th><th style="text-align:right">Calls</th><th style="text-align:right">No picture</th><th style="text-align:right">Blank rate</th><th style="text-align:right">Seconds held</th><th>Accounts and machines</th><th></th></tr></thead>
+            <thead><tr><th>Picture line</th><th style="text-align:right">Calls</th><th style="text-align:right">No picture</th><th style="text-align:right">Line busy</th><th style="text-align:right">No-picture rate</th><th style="text-align:right">Seconds held</th><th>Accounts and machines</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
         <p class="muted" style="margin:14px 0 6px">
           The same calls by the key that was billed. Two keys are two separate accounts at the
           video service, each with its own room inside it, so a line that looks crowded on one key
-          can be quiet on the other — and a customer's blank is only ever switched between models,
+          can be quiet on the other — and a customer's next call is only ever switched between models,
           never between keys, because the pool decides the key by itself.
         </p>
         <div data-endsfold style="overflow:auto">
           <table id="endsKeyTable">
-            <thead><tr><th>Key</th><th style="text-align:right">Calls</th><th style="text-align:right">No picture</th><th style="text-align:right">Blank rate</th><th style="text-align:right">Seconds held</th><th>Accounts and machines</th><th></th></tr></thead>
+            <thead><tr><th>Key</th><th style="text-align:right">Calls</th><th style="text-align:right">No picture</th><th style="text-align:right">Line busy</th><th style="text-align:right">No-picture rate</th><th style="text-align:right">Seconds held</th><th>Accounts and machines</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -5387,7 +5391,7 @@
   let ENDS_KEYS = {};             // gateway_keys id -> its label, for the picture-line card
 
   // This page lists one row per paid call, so it grows taller every day while the figures above the
-  // lists are the same eight boxes either way. One press folds EVERY list on the tab away and the next
+  // lists are the same nine boxes either way. One press folds EVERY list on the tab away and the next
   // opens it back, and the position is remembered in this browser — the same way the Calls tab keeps
   // a separate fold for each of its own lists. Folding hides rows already in memory: it asks the
   // database nothing, draws no spinner, and blanks no figure.
@@ -5513,7 +5517,7 @@
       const big = said(/cause=photo_too_big|message too big/i);
       if (big) return mk("photo", "fail", "No " + kind + ": the photo was too big for the line to read", "our app's photo size", big);
       const ref = said(/cause=line_full|concurrent session limit|session_limit|at capacity|lines? (are )?(full|busy)|too many (concurrent )?(sessions|calls)/i);
-      if (ref) return mk("refused", "fail", "No " + kind + ": the video line refused the dial", "our video line", ref);
+      if (ref) return mk("refused", "busy", "Line busy: the video line refused the dial", "our video line", ref);
       const cam = said(/cause=camera_stalled/i);
       if (cam) return mk("camera", "fail", "No " + kind + ": his camera fed no frame", "his machine", cam);
       const nc = said(/cause=never_connected/i);
@@ -5551,7 +5555,7 @@
   function endsMatches(which, x) {
     if (which === "hand") return x.r.stopped_by === "user";
     if (which === "sudden") return endsSudden(x);
-    if (which === "blank") return !x.r.media_started_at && !!x.r.ended_at;
+    if (which === "blank") return !x.r.media_started_at && !!x.r.ended_at && x.why.key !== "refused";
     if (which === "mid") return x.why.key === "mid";
     if (which === "refused") return x.why.key === "refused";
     if (which === "unrecorded") return !x.r.stopped_by && !!x.r.ended_at;
@@ -5638,9 +5642,15 @@
     for (const r of ENDS_CALLS) {
       if (r.modality !== "video" && r.modality !== "video_audio") continue;
       const k = r[field] || "";
-      const b = (out[k] = out[k] || { key: k, calls: 0, blank: 0, secs: 0, accounts: new Set(), machines: new Set(), rows: [] });
+      const b = (out[k] = out[k] || { key: k, calls: 0, blank: 0, busy: 0, secs: 0, accounts: new Set(), machines: new Set(), rows: [] });
       b.calls++;
-      if (!r.media_started_at) { b.blank++; b.secs += endsSec(r); }
+      if (!r.media_started_at) {
+        b.blank++;
+        b.secs += endsSec(r);
+        // A busy line and a blank are two different answers, and they were never counted as one: the
+        // video line answered full for this call, so this row goes in the busy count, not the blank.
+        if (endsReason(r).key === "refused") b.busy++;
+      }
       b.accounts.add(r.user_id);
       b.machines.add(r.device_id || "—");
       b.rows.push(r);
@@ -5651,22 +5661,29 @@
   function endsLineTable(list, id, colspan) {
     const one = (n, word) => n + " " + word + (n === 1 ? "" : "s");
     $(id).querySelector("tbody").innerHTML = list.map((b) => {
-      const rate = b.calls ? Math.round(b.blank / b.calls * 1000) / 10 : null;
+      const rate = b.calls ? Math.round((b.blank - b.busy) / b.calls * 1000) / 10 : null;
       // The blanks are taken once, into a name, and not re-filtered inside the markup: the list is
       // capped at forty, and the line that counts the rest has to be added to whatever the first
       // forty produced. Written as one `||` and one `+` chain, JavaScript reads the whole tail as
       // the fallback branch and a group of forty-five blanks silently loses five of them.
       const blanks = b.rows.filter((r) => !r.media_started_at);
-      const listed = blanks.slice(0, 40).map((r) =>
-        '<div style="margin-top:6px"><b>' + esc(EMAIL_OF[r.user_id] || shortId(r.user_id)) + "</b> "
-        + '<span class="muted">' + esc(r.device_id || "—") + " · " + esc(ENDS_TAB[r.tab] || r.tab || "—")
-        + " · opened " + when(r.started_at) + " · " + endsSec(r) + " s held with nothing on screen</span></div>").join("");
-      const detail = (listed || '<div class="muted" style="margin-top:6px">No blank call in this group.</div>')
+      const listed = blanks.slice(0, 40).map((r) => {
+        const busy = endsReason(r).key === "refused";
+        return '<div style="margin-top:6px"><b>' + esc(EMAIL_OF[r.user_id] || shortId(r.user_id)) + "</b> "
+          + '<span class="muted">' + esc(r.device_id || "—") + " · " + esc(ENDS_TAB[r.tab] || r.tab || "—")
+          + " · opened " + when(r.started_at) + " · " + endsSec(r) + (busy
+            ? " s · the busy line refused"
+            : " s held with nothing on screen") + "</span></div>";
+      }).join("");
+      const detail = '<div style="margin-top:6px">' + one(b.blank - b.busy, "call") + " with no picture · "
+        + one(b.busy, "call") + " the line answered busy</div>"
+        + (listed || '<div class="muted" style="margin-top:6px">Neither kind of call in this group.</div>')
         + (blanks.length > 40
-          ? '<div class="muted">' + (blanks.length - 40) + " more blank call(s) not listed.</div>" : "");
+          ? '<div class="muted">' + (blanks.length - 40) + " more call(s) not listed.</div>" : "");
       return '<tr><td>' + esc(b.name) + "</td>"
         + '<td class="mono" style="text-align:right">' + b.calls + "</td>"
-        + '<td class="mono" style="text-align:right">' + b.blank + "</td>"
+        + '<td class="mono" style="text-align:right">' + (b.blank - b.busy) + "</td>"
+        + '<td class="mono" style="text-align:right">' + b.busy + "</td>"
         + '<td class="mono" style="text-align:right;color:' + (rate !== null && rate >= 25 ? "#fb7185" : "#35e0a0") + '">'
         + (rate === null ? "—" : rate.toFixed(1) + "%") + "</td>"
         + '<td class="mono" style="text-align:right">' + b.secs + " s</td>"
@@ -5690,23 +5707,28 @@
     const models = endsLineRows("video_model", (k) => k ? (VIDEO_MODEL_NAME[k] || k) : "Not recorded — a call from before the line was written down");
     const keys = endsLineRows("fal_key_id", (k) => k ? (ENDS_KEYS[k] || "key " + shortId(k)) : "Not recorded — a call from before the key was written down");
     const calls = models.reduce((n, b) => n + b.calls, 0);
-    const blank = models.reduce((n, b) => n + b.blank, 0);
+    const busy = models.reduce((n, b) => n + b.busy, 0);
+    // The four figures name the two bad events apart, because they are two different answers and he
+    // must not read one as the other: a line that is full is a crowd at the door, a blank is a
+    // picture that never came. A call is counted in one column only.
+    const np = (b) => b.blank - b.busy;
+    const nBlank = models.reduce((n, b) => n + np(b), 0);
     const withBoth = models.filter((b) => b.calls >= 10 && b.key);
-    const worst = withBoth.slice().sort((a, b) => (b.blank / b.calls) - (a.blank / a.calls))[0] || null;
-    const best = withBoth.slice().sort((a, b) => (a.blank / a.calls) - (b.blank / b.calls))[0] || null;
+    const worst = withBoth.slice().sort((a, b) => (np(b) / b.calls) - (np(a) / a.calls))[0] || null;
+    const best = withBoth.slice().sort((a, b) => (np(a) / a.calls) - (np(b) / b.calls))[0] || null;
     $("endsLineNote").innerHTML = withBoth.length < 2
-      ? "At least two picture lines need ten or more calls in this window before one can be called busier than the other, so the four figures count and nothing is compared yet. The gateway makes the same rule wait before it moves a customer off a line."
+      ? "At least two picture lines need ten or more calls in this window before one can be called worse than the other, so the four figures count and nothing is compared yet. The gateway makes the same rule wait before it moves a customer off a line."
       : worst && best && worst.key !== best.key
-        ? `In this window the quieter of the two was <b>${esc(best.name)}</b> at <b>${(best.blank / best.calls * 100).toFixed(1)}%</b> and the busier <b>${esc(worst.name)}</b> at <b>${(worst.blank / worst.calls * 100).toFixed(1)}%</b>. That gap is what a call after a blank is switched away from, and what the last line that gave this account a picture is switched back to.`
+        ? `In this window the line that lost fewer pictures was <b>${esc(best.name)}</b> at <b>${(np(best) / best.calls * 100).toFixed(1)}%</b> and the one that lost more <b>${esc(worst.name)}</b> at <b>${(np(worst) / worst.calls * 100).toFixed(1)}%</b>. That gap is what a call after a blank is switched away from, and what the last line that gave this account a picture is switched back to. The calls counted as <b>line busy</b> are in neither figure: they are a full line refusing a dial, not a picture that failed to arrive.`
         : "";
     stats.innerHTML = [
       [calls, "paid picture calls in the window"],
-      [blank, "of them put no picture on screen"],
-      [calls ? (blank / calls * 100).toFixed(1) + "%" : "—", "blank across both lines"],
-      [models.length, "picture lines dialled"],
+      [nBlank, "of them opened and gave no picture"],
+      [busy, "of them the line answered busy"],
+      [calls ? (nBlank / calls * 100).toFixed(1) + "%" : "—", "no-picture rate across both lines"],
     ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
-    endsLineTable(models, "endsLineTable", 7);
-    endsLineTable(keys, "endsKeyTable", 7);
+    endsLineTable(models, "endsLineTable", 8);
+    endsLineTable(keys, "endsKeyTable", 8);
   }
 
   function endsMini(v, l) {
@@ -5811,7 +5833,8 @@
       [by((x) => x.r.stopped_by === "user"), "he pressed Stop"],
       [by((x) => x.r.stopped_by === "app"), "the app closed it"],
       [by((x) => !x.r.stopped_by && !!x.r.ended_at), "not recorded by his build"],
-      [by((x) => !!x.r.ended_at && !x.r.media_started_at), "nothing was delivered"],
+      [by((x) => !!x.r.ended_at && !x.r.media_started_at && x.why.key !== "refused"), "nothing delivered, other cause"],
+      [by((x) => x.why.key === "refused"), "the line answered busy"],
       [by((x) => x.why.key === "mid"), "stopped mid-call"],
       [new Set(all.map((x) => x.r.user_id)).size, "accounts called"],
       [new Set(all.map((x) => x.r.device_id || "—")).size, "machines"],
@@ -5843,7 +5866,8 @@
         + endsMini(set.filter((x) => x.r.stopped_by === "user").length, "he pressed Stop")
         + endsMini(set.filter((x) => x.r.stopped_by === "app").length, "the app closed it")
         + endsMini(set.filter((x) => !x.r.stopped_by && !!x.r.ended_at).length, "not recorded by his build")
-        + endsMini(set.filter((x) => !!x.r.ended_at && !x.r.media_started_at).length, "nothing delivered")
+        + endsMini(set.filter((x) => !!x.r.ended_at && !x.r.media_started_at && x.why.key !== "refused").length, "nothing delivered, other cause")
+        + endsMini(set.filter((x) => x.why.key === "refused").length, "the line answered busy")
         + endsMini(set.filter((x) => x.why.key === "mid").length, "stopped mid-call")
         + "</div>";
     }).join("");
