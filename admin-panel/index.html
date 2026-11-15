@@ -3902,6 +3902,10 @@
   let CALL_BILL = null;
   let CALL_TODAY = [];
   let CALL_TODAY_CAPPED = false;
+  // session id -> the lines the app itself wrote down about this call, read alongside the list so a
+  // row can name its own reason. null means this browser has not read them - and a row is never
+  // given a reason from a guess, so while it is null every empty row keeps the single name it had.
+  let CALL_FAIL = null;
   // What a second of cloned voice costs the voice key, read beside the video figure so the two
   // lists can never price a call with the other kind's number.
   let CALL_VOICE_RATE = null;
@@ -3974,6 +3978,27 @@
       CALL_TODAY = p.todayRows || p.rows || [];
       CALL_TODAY_CAPPED = p.todayCapped === true;
       CALL_WHY = "";
+      // The list is the newest 150 calls, so the fault lines back to the oldest of them are the
+      // only ones this can honestly answer about. It is one read, and a failure leaves CALL_FAIL at
+      // null - which the list says out loud rather than quietly inventing a reason for a row.
+      CALL_FAIL = null;
+      if (CALL_ROWS.length) {
+        const oldest = String(CALL_ROWS[CALL_ROWS.length - 1].started_at || "");
+        if (oldest) {
+          try {
+            const fl = await sb.from("call_failures")
+              .select("session_id, stage, detail, created_at").gte("created_at", oldest).limit(4000);
+            if (!fl.error) {
+              const map = {};
+              for (const f of (fl.data || [])) {
+                if (!f.session_id) continue;
+                (map[f.session_id] = map[f.session_id] || []).push(f);
+              }
+              CALL_FAIL = map;
+            }
+          } catch { CALL_FAIL = null; }
+        }
+      }
       // One deliberate read with his own sign-in, so a card fed by the gateway can still
       // say out loud when the two disagree. That disagreement is the difference between a
       // quiet week and a permission that filters him, and it used to show as a blank card.
@@ -4175,13 +4200,38 @@
     // second the line opens, so a row with nothing in it is a call made before that stamp existed
     // - not a call that failed to send a picture, which is what the pill two columns over says.
     const modelOf = (m) => (m ? VIDEO_MODEL_NAME[m] || esc(String(m)) : "not recorded");
+    // What the pill in the Picture column is allowed to claim. It is the same one answer the Call
+    // Ends tab gives, from the same words the app wrote down - and when that log was not read, the
+    // row keeps the single name it always had and says why, rather than guessing which of the two
+    // this call was.
+    const pillNote = !meta.picture
+      ? ""
+      : CALL_FAIL
+        ? ` An empty row here carries the reason your own app wrote down for that call, printed as the log holds it - not the word <b>${meta.noneName}</b> standing in for every cause. <b>Line busy</b> is the video line answering that it was full, so the dial never started, and is not a picture that failed to arrive. Hover a row for what it means and who it blames. Only a call with nothing written down about it still reads <b>${meta.noneName}</b>, and the Call Ends tab counts the busy refusals apart too.`
+        : ` This list cannot yet name why an empty row is empty, because the log that answers that was not read with it - so an empty row keeps the single name it always had, rather than a guess.`;
+    // One row's honest reason, or "" when this page has no right to name one: the money columns are
+    // untouched either way, and a call with no line written down under it falls through to the plain
+    // name below exactly as it does today. Anything that is not a full line prints the words the log
+    // actually holds, verbatim - this page adds no reading of its own to somebody's error message.
+    const causePill = (x) => {
+      if (!CALL_FAIL || x.pic > 0 || x.r.media_started_at) return "";
+      const why = endsReason(x.r, CALL_FAIL);
+      const said = (why.why && why.why.detail) || (why.lines[0] && why.lines[0].detail) || "";
+      if (why.key === "refused") {
+        return `<span class="pill busy" title="${esc(said)}">Line busy</span>`;
+      }
+      if (!String(said).trim()) return "";
+      return `<span class="pill ${why.pill}" style="white-space:normal;display:inline-block;text-align:left;`
+        + `max-width:230px;line-height:1.35;font-size:11px" title="${esc(why.label)} - ${esc(why.side)}">`
+        + esc(String(said).trim()) + "</span>";
+    };
     const list = `
       <p class="muted" style="margin:10px 0 0">One line per call, newest first, for every ${meta.name} run on the paid video service${CALL_SKIPPED ? ` - the <b>${CALL_SKIPPED}</b> trial call(s) are not here` : ""}. The services bill by the second, so
         <b>what it cost</b> is the price on your Prices tab (${rateText}) times
         the seconds this call held - that is money leaving you, whatever you charge. <b>What it paid</b> is the minutes you charged times
         the price you set on that account's package on your Plans tab, which each row prints under the minutes. One pool of minutes funds all three
         kinds of call, so that selling price is the same figure on all three lists. These prices are read fresh
-        every time the card loads, so a package you re-price shows up on the next refresh.</p>
+        every time the card loads, so a package you re-price shows up on the next refresh.${pillNote}</p>
       <div style="overflow:auto;margin-top:10px">
         <table id="callsTable">
           <thead><tr><th>Account</th><th>Started</th>${meta.picture ? "<th>Picture model</th>" : ""}<th>Line held</th><th>${meta.picName}</th><th>What it cost</th><th>You charged</th><th>What it paid</th><th>Difference</th></tr></thead>
@@ -4190,7 +4240,8 @@
             <td class="muted">${when(x.r.started_at)}${x.r.ended_at ? "" : ' <span class="pill warn">on air</span>'}${x.r.settled ? "" : " · not settled"}</td>
             ${meta.picture ? `<td class="muted">${modelOf(x.r.video_model)}</td>` : ""}
             <td class="mono" style="text-align:right">${clock(x.line / 60)}</td>
-            <td class="mono" style="text-align:right">${x.pic > 0 ? clock(x.pic / 60) : `<span class="pill warn">${meta.noneName}</span>`}</td>
+            <td class="mono" style="text-align:right">${x.pic > 0 ? clock(x.pic / 60)
+              : causePill(x) || `<span class="pill warn">${meta.noneName}</span>`}</td>
             ${money(x.cost)}
             <td class="mono" style="text-align:right">${mins2(x.billed)} min<div class="muted" style="font-size:11px">${usd(x.sell)} a minute · ${esc(x.plan)}${x.noOrder ? " · never paid you" : ""}</div></td>
             ${money(x.paid)}
@@ -5469,9 +5520,15 @@
   // The app's own wording, sorted into the handful of answers a person can act on. Every string
   // tested here was WRITTEN by the desktop app (the four named blanks, the line's own close) or by
   // the video service inside the app's sentence — none of it is invented on this page.
-  function endsReason(r) {
+  //
+  // One regular expression, two tabs. The call list on the Calls tab names the same two facts on a
+  // single row, so it tests this; keeping it here rather than copying it is what stops the two
+  // tabs ever disagreeing about which refusal was a full line.
+  const LINE_BUSY_RE = /cause=line_full|concurrent session limit|session_limit|at capacity|lines? (are )?(full|busy)|too many (concurrent )?(sessions|calls)/i;
+
+  function endsReason(r, failMap) {
     const kind = ENDS_KIND[r.modality] || "picture";
-    const lines = (ENDS_FAIL[r.id] || []).slice()
+    const lines = ((failMap || ENDS_FAIL)[r.id] || []).slice()
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const said = (re) => lines.find((l) => re.test((l.stage || "") + " " + (l.detail || "")));
     const mk = (key, pill, label, side, why) => ({ key, pill, label, side, why, kind, lines });
@@ -5516,7 +5573,7 @@
       // handed the line a message it would not read.
       const big = said(/cause=photo_too_big|message too big/i);
       if (big) return mk("photo", "fail", "No " + kind + ": the photo was too big for the line to read", "our app's photo size", big);
-      const ref = said(/cause=line_full|concurrent session limit|session_limit|at capacity|lines? (are )?(full|busy)|too many (concurrent )?(sessions|calls)/i);
+      const ref = said(LINE_BUSY_RE);
       if (ref) return mk("refused", "busy", "Line busy: the video line refused the dial", "our video line", ref);
       const cam = said(/cause=camera_stalled/i);
       if (cam) return mk("camera", "fail", "No " + kind + ": his camera fed no frame", "his machine", cam);
