@@ -227,12 +227,12 @@
         <div id="unlAlert"></div>
         <div data-unlfold style="overflow:auto;margin-top:12px">
           <table id="unlTable">
-            <thead><tr><th>Account</th><th title="The sessions his total minutes group into, counted by the server from the minutes he has really spent: the number he is on now out of the total, and one segment per session. Nothing here is typed - it all comes from the cap above.">Sessions</th><th title="Sessions finished. The one he is on counts in neither column: it is the number in the Sessions cell.">Sessions used</th><th title="Sessions not finished yet, including the one he is standing in.">Sessions left</th><th>One call may spend</th><th>Total cap</th><th>Spent so far</th><th>Left of the cap</th><th>Right now</th><th>Calls 24h</th><th>On air 24h</th><th>Refused 24h</th></tr></thead>
+            <thead><tr><th>Account</th><th title="Which Unlimited this account is on. The picture pack keeps all three call tabs open; the Voice Clone Only pack opens that tab alone and keeps the two picture tabs grey until his last session is used up. A voice pack drains at your Voice Clone Only rate, so the minutes in the columns to the right are voice-call minutes spent at that rate.">Pack</th><th title="The sessions his total minutes group into, counted by the server from the minutes he has really spent: the number he is on now out of the total, and one segment per session. Nothing here is typed - it all comes from the cap above.">Sessions</th><th title="Sessions finished. The one he is on counts in neither column: it is the number in the Sessions cell.">Sessions used</th><th title="Sessions not finished yet, including the one he is standing in.">Sessions left</th><th>One call may spend</th><th>Total cap</th><th>Spent so far</th><th>Left of the cap</th><th>Right now</th><th>Calls 24h</th><th>On air 24h</th><th>Refused 24h</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
-        <p class="muted" data-unlfold style="margin:10px 0 0">What is spent is read off the calls that really happened, from the moment the package was granted — the same read that decides whether his next press is accepted. The minute columns are minutes <b>spent</b>, not minutes on screen: a minute of picture spends the figure on the <b>Unlimited dial</b> on the Burn rates tab, and a minute of voice spends your Voice Clone Only rate. So a window or a cap typed in minutes buys that much airtime at the rate in force, and a cap typed now comes down on everything he has already used, exactly as it should. <b>On air 24h</b> is the wall-clock time he really watched, before any rate. The <b>Refused</b> column counts presses the gateway turned away in the last day: a package that ran out, or an account with no video key attached to it.</p>
-        <p class="muted" data-unlfold style="margin:8px 0 0"><b>Sessions.</b> A session is one allowance of the length in the <b>One call may spend</b> column — 15 minutes on your pack — and the total you type is read in blocks of that length, so 120 minutes is 8 sessions and 95 is 7, the last one of 5 minutes. It is <b>not</b> reset when he stops early: 6 minutes used, stop, and his next call carries on with the 9 left in that session. A call always ends at the end of the session it is on, and never later than 15 minutes. The counts come from the calls he has really made, so an account already calling has its used sessions the moment you type the cap — nothing is given back, and nothing you save changes what he has already spent. Only his desktop card shows the sessions; the sessions themselves are derived here, never typed.</p>
+        <p class="muted" data-unlfold style="margin:10px 0 0">The <b>Pack</b> column says which Unlimited this account holds: the picture pack keeps all three call tabs open, the Voice Clone Only pack opens that one tab and keeps the two picture tabs grey on his desktop until his last session is used up. An account carries one pack at a time, so a picture pack with sessions left cannot be sold a voice pack, and the till does not offer it one. What is spent is read off the calls that really happened, from the moment the package was granted — the same read that decides whether his next press is accepted. The minute columns are minutes <b>spent</b>, not minutes on screen: a minute of picture spends the figure on the <b>Unlimited dial</b> on the Burn rates tab, and a minute of voice spends your Voice Clone Only rate. So a window or a cap typed in minutes buys that much airtime at the rate in force, and a cap typed now comes down on everything he has already used, exactly as it should. <b>On air 24h</b> is the wall-clock time he really watched, before any rate, and on a voice pack it counts his voice calls only. The <b>Refused</b> column counts presses the gateway turned away in the last day: a package that ran out, an account with no video key attached to it, or a picture call pressed on a Voice Clone Only pack.</p>
+        <p class="muted" data-unlfold style="margin:8px 0 0"><b>Sessions.</b> A session is one allowance of the length in the <b>One call may spend</b> column — 15 minutes on your pack — and the total you type is read in blocks of that length, so 120 minutes is 8 sessions and 95 is 7, the last one of 5 minutes. It is <b>not</b> reset when he stops early: 6 minutes used, stop, and his next call carries on with the 9 left in that session. A call always ends at the end of the session it is on. On the picture pack that is the 15 minutes; on the Voice Clone Only pack the session is 15 minutes <b>spent</b> at your voice rate, so one call may run its full airtime — at 0.4x, 37½ minutes on the line. The counts come from the calls he has really made, so an account already calling has its used sessions the moment you type the cap — nothing is given back, and nothing you save changes what he has already spent. Only his desktop card shows the sessions; the sessions themselves are derived here, never typed.</p>
         <div id="unlMsg"></div>
       </div>
 
@@ -272,6 +272,11 @@
           <div class="muted" id="gMinHint" style="margin:4px 0 0"></div>
           <div class="row" style="margin-top:10px;align-items:center">
             <div style="flex:0 0 auto"><label class="feat" style="margin:0"><input type="checkbox" id="gUnlimited" /> Set unlimited</label></div>
+            <div style="flex:0 0 175px" class="hidden" id="gUnlScopeBox"><label style="margin:0">This pack opens</label>
+              <select id="gUnlimitedScope" title="Which of his call tabs this Unlimited pack is for. The picture pack opens all three, as it always has. The Voice Clone Only pack opens that tab alone: the two picture tabs go grey on his desktop with the reason on them, and unlock themselves when his last session is used up. One account carries one pack at a time, so a voice pack is refused while a video pack still has sessions left.">
+                <option value="video">The picture tabs</option>
+                <option value="audio">Voice Clone Only only</option>
+              </select></div>
             <div style="flex:0 0 120px"><label style="margin:0">Minutes per call</label><input id="gUnlimitedWindow" type="number" min="1" step="1" value="15" title="The length of ONE session, in minutes at the rate on the Burn rates tab - your Unlimited dial for a picture call, your Voice Clone Only rate for a voice call. At 1x the figure is the time itself; at 1.25x it buys four-fifths as much on screen. Used with Set unlimited, the total cap is read in blocks of this length: one block carries on across his Stop presses until it is used up, and a call never runs past the block it is on. Raising it makes fewer, longer sessions - it never adds minutes." /></div>
             <div style="flex:0 0 130px"><label style="margin:0">Total cap (minutes)</label><input id="gUnlimitedCap" type="number" min="1" step="1" placeholder="not set" title="Everything this account uses counts against this total, in minutes spent at that same rate. Leave it empty and the account runs on the per-call window alone, with every minute still counted, so the cap you type later is a total and the minutes already used come out of it. Type it and the line under this box tells you the sessions it makes before you save." /></div>
             <div style="flex:0 0 auto"><label class="feat" style="margin:0"><input type="checkbox" id="gClearUnlimited" /> Clear unlimited</label></div>
@@ -658,7 +663,7 @@
             <button id="refreshFaults">Refresh</button>
           </div>
         </div>
-        <p class="muted" style="margin:6px 0 12px">What the customer's app saw when a call was refused. <b>engine</b> means the video line took the booking and then never produced a picture; <b>gateway</b> means the account itself was refused, and the reason is named in brackets. Either of those is a call that was <b>not</b> billed. <b>video line closed</b> is a different case: the call was running and the service ended it, and the sentence names how many seconds it held first.</p>
+        <p class="muted" style="margin:6px 0 12px">What the customer's app saw when a call was refused. <b>engine</b> means the video line took the booking and then never produced a picture; <b>gateway</b> means the account itself was refused, and the reason is named in brackets. Either of those is a call that was <b>not</b> billed. <b>video line closed</b> is a different case: the call was running and the service ended it, and the sentence names how many seconds it held first. A row named for an Unlimited pack is the <b>package</b> refusing, not a broken line — his minutes were used up, no video key was ticked for his pack, or he pressed a picture tab while on a Voice Clone Only pack. None of those took a minute off him, and the same figures are on the Unlimited accounts card.</p>
         <div style="overflow:auto">
           <table id="faultTable">
             <thead><tr><th>When</th><th>Stage</th><th>Account</th><th>What came back</th></tr></thead>
@@ -1766,6 +1771,24 @@
   };
   const usd = (v) => (N(v) < 0 ? "-$" : "$") + Math.abs(N(v)).toFixed(2);
   const bucket = (v) => (v.unlimited ? '<span class="pill yes">Unlimited</span>' : '<span class="mono">' + clock(v.balance) + "</span>");
+  /**
+   * Which Unlimited pack an account is on, named the way the app names its tabs.
+   *
+   * The wallet carries one unlimited flag for the whole pool, so the flag alone cannot tell the
+   * picture pack from the voice pack, and they are not the same promise: one keeps all three tabs
+   * open, the other opens Voice Clone Only alone and greys the two picture tabs. An account whose
+   * row was written before the voice pack existed has no scope stored, and the picture pack is the
+   * only pack that has ever been, so that is what it is on.
+   */
+  function unlPackNote(row) {
+    if (!row) return "";
+    if (row.finished_at) {
+      return ' <span class="pill n" title="his Unlimited sessions are used up: the pack is finished, he is back on prepaid minutes and all three tabs are open again">used up</span>';
+    }
+    return row.scope === "audio"
+      ? ' <span class="pill yes" title="Voice Clone Only pack: only that tab is open to him, the two picture tabs are grey until his last session is used up, and his calls drain at the Voice Clone Only rate">Voice Clone Only tab</span>'
+      : ' <span class="pill yes" title="Picture pack: all three call tabs are open to him and his picture calls drain at your Unlimited dial">all three tabs</span>';
+  }
   const shortId = (v) => (v ? String(v).slice(0, 8) : "—");
 
   let ADMIN_ID = null;
@@ -2327,10 +2350,22 @@
     // The credit window quotes a burn rate, and the Accounts tab never loads the rate history on
     // its own — asked here, or the column would print the default rather than his figure.
     await loadRates();
+    // Which Unlimited pack this account is on, off its own row. The wallet only carries one
+    // unlimited flag for the whole pool, so without this the account page cannot tell a picture
+    // pack from a voice pack — and the Set unlimited tick would open on the picture pack every
+    // time, which would move a voice customer onto picture tabs on a press meant only for minutes.
+    // The scope column arrived with the voice pack, so a database that has not run it yet still answers.
+    const packCols = "plan_id, window_minutes, cap_minutes, granted_at, finished_at";
+    const packWith = await sb.from("unlimited_accounts")
+      .select("scope, " + packCols).eq("user_id", userId).maybeSingle();
+    const packRow = packWith.error
+      ? (await sb.from("unlimited_accounts").select(packCols).eq("user_id", userId).maybeSingle()).data
+      : packWith.data;
     CUR = {
       ...snap, user_id: userId, email: EMAIL_OF[userId] || userId, pin: pin || null,
       joined_on: joinedOn, joined_at: joinedAt, came_from: cameFrom, machine: machine,
       took_here: tookHere, net: net, clone_own: ownClone, clone_global: globalClone,
+      unl_pack: packRow || null,
     };
     $("acctDetail").classList.remove("hidden");
     renderAccount();
@@ -2511,7 +2546,7 @@
         ? `· all three call tabs spend from here${hasStray ? ` <span class="pill warn">incl. ${clock(stray.balance)} left in the retired Video + Audio wallet — run migration 20261101120000 to move it into the pool</span>` : ""}`
         : `· a rate line, not a place minutes are kept${holdsSomething(m) ? ` <span class="pill warn">${clock(w.balance)} still standing here from before the fold — run migration 20261102120000 to move it into the pool</span>` : ""}`;
       return `<tr><td>${MOD_LABEL[m]} <span class="muted" title="${tip}">${note}</span></td><td>${bucket(w)}</td><td class="mono" title="${m === "video" ? (w.unlimited ? "Picture calls on this pack spend at your Unlimited dial on the Burn rates tab, not at the paid Video Call rate. This cell follows the dial." : "The multiplier a call started right now uses. It is not a column on the wallet — it is the rate row in force on the Burn rates tab.") : "The Voice Clone Only line's rate. It meters that call but spends the pool. An Unlimited account's voice calls spend this rate, because your Unlimited dial only covers picture."}">${rateCell(m, w)}</td>
-        <td>${w.unlimited ? '<span class="pill yes">yes</span>' : '<span class="pill n">no</span>'}</td>
+        <td>${w.unlimited ? `<span class="pill yes">yes</span>${m === "video" ? unlPackNote(c.unl_pack) : ""}` : '<span class="pill n">no</span>'}</td>
         <td class="mono">${mins1(w.total_credited)}</td><td class="mono">${mins1(w.total_spent)}</td></tr>`;
     }).join("");
 
@@ -2527,6 +2562,10 @@
     showPackageHint();
     $("gMinutes").value = ""; $("gReason").value = "";
     $("gUnlimited").checked = false; $("gClearUnlimited").checked = false;
+    // The tick opens on the pack this account already holds. Left on the picture pack it would make
+    // a press meant only for top-up minutes move a voice-pack customer onto the picture tabs.
+    $("gUnlimitedScope").value = c.unl_pack && c.unl_pack.scope === "audio" && !c.unl_pack.finished_at
+      ? "audio" : "video";
     refreshMinHint();
     paintUnlAuto();
 
@@ -2688,6 +2727,9 @@
       grant.unlimitedWindow = Math.max(1, Math.round(N($("gUnlimitedWindow").value, 15)));
       const cap = Math.max(0, Math.round(N($("gUnlimitedCap").value, 0)));
       grant.unlimitedCap = cap > 0 ? cap : null;
+      // The tab this pack opens is the third thing the tick owns. Left behind it would be a video
+      // pack every time, whatever the choice on screen said.
+      grant.unlimitedScope = $("gUnlimitedScope") && $("gUnlimitedScope").value === "audio" ? "audio" : "video";
     }
     return grant;
   }
@@ -2722,19 +2764,49 @@
   function paintUnlAuto() {
     const box = $("gUnlAuto");
     if (!box) return;
+    const scopeBox = $("gUnlScopeBox");
+    if (scopeBox) scopeBox.classList.toggle("hidden", !($("gUnlimited") && $("gUnlimited").checked));
     // With no account open there is no account to count this against, and a sentence that said
     // "on this account" about nobody would be a lie waiting to be read.
     if (!CUR) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+    const scope = ($("gUnlimitedScope") || {}).value === "audio" ? "audio" : "video";
+    const audio = scope === "audio";
+    const row = (UNL && (UNL.accounts || []).find((a) => a.user_id === (CUR && CUR.user_id))) || null;
+    const read = !!UNL;
+    // The voice pack is metered by the Voice Clone Only rate, the picture pack by the Unlimited dial.
+    // Both are the database's own figures; neither is guessed at here, and a cost line needs the rate
+    // the pack really drains at, so a missing read brings it in and repaints rather than printing 1x.
+    const eff = effectiveRates();
+    const burn = audio
+      ? (N(eff.audio && eff.audio.multiplier, 0) > 0 ? N(eff.audio.multiplier) : 1)
+      : (N(UNL_RATE && UNL_RATE.in_force, 0) > 0 ? N(UNL_RATE.in_force) : 1);
+    if (audio && (!PLAN_REALCOST || !RATE_READ_OK)) { try { void planRates().then(() => paintUnlAuto()); } catch { /* the sentence stays without its money */ } }
+    // One pack at a time, and said BEFORE he presses Credit: while this account still has sessions
+    // left on a picture pack, the database refuses the voice pack on it. A refusal after the minutes
+    // have moved would leave him an unlimited wallet with no pack behind it.
+    const sessRow = unlSess(row || {});
+    // The account's own row travels with the window that opened it, so it answers even when the
+    // Unlimited card has not been read on this visit. The card is the fallback, not the other way
+    // round: it lists the page it loaded, and an account opened from the search box may not be on it.
+    const pack = (CUR && CUR.unl_pack) || null;
+    const onVideo = pack ? !pack.finished_at && pack.scope !== "audio" : !!(row && row.active && row.scope !== "audio");
+    const blocked = audio && onVideo && (!sessRow.sessions || N(sessRow.sessions_left) > 0);
+    if (blocked) {
+      box.innerHTML = `<span style="color:#fb7185">This account is still on a <b>picture</b> Unlimited pack`
+        + (sessRow.sessions ? ` with <b>${N(sessRow.sessions_left)}</b> session(s) left on it` : " and has no total typed, so it is still running")
+        + `. The voice-only pack cannot be put on it until that one is used up — the gateway refuses the press, and so does the till. Let its sessions run out, or clear the picture pack below first.</span>`;
+      box.classList.remove("hidden");
+      return;
+    }
     const capRaw = ($("gUnlimitedCap").value || "").trim();
     const cap = capRaw === "" ? null : Math.round(N(capRaw));
     const win = Math.max(1, Math.round(N($("gUnlimitedWindow").value, 15)));
     if (cap === null || !(cap > 0)) { box.classList.add("hidden"); box.innerHTML = ""; return; }
-    const row = (UNL && (UNL.accounts || []).find((a) => a.user_id === (CUR && CUR.user_id))) || null;
-    const read = !!UNL;
     const used = row ? N(row.used_minutes) : 0;
     const s = sessOf(used, win, cap);
     const total = N(s.session_total);
     const lastLen = cap - (total - 1) * win;
+    const airEach = win / burn, airCap = cap / burn;
     const parts = [];
     if (lastLen === win) {
       parts.push(`That is <b>${total} session${total === 1 ? "" : "s"} of ${win} minutes</b>`);
@@ -2742,6 +2814,20 @@
       parts.push(`That is <b>one session of ${cap} minutes</b> — shorter than the ${win} you allow a call to run, so no minute you sold goes missing`);
     } else {
       parts.push(`That is <b>${total} sessions</b> — ${total - 1} of ${win} minutes and a last one of <b>${lastLen} minutes</b>, so no minute you sold goes missing`);
+    }
+    // The sentence he asked for: the same figure in minutes SPENT is a longer stretch of airtime, and
+    // on the voice pack a long stretch — the rate is below 1x, so a session buys more time than it says.
+    if (Math.abs(burn - 1) > 1e-9) {
+      parts.push(` — <b>${airEach.toFixed(1)} minutes ${audio ? "of his voice calls" : "on screen"} each</b> at the ${rateLabel(burn)}x ${audio ? "Voice Clone Only" : "Unlimited"} rate now in force`);
+      if (PLAN_REALCOST && N(PLAN_REALCOST[audio ? "audio" : "video"], 0) > 0) {
+        const perMin = N(PLAN_REALCOST[audio ? "audio" : "video"], 0);
+        parts.push(`, which costs you about <b>${pgUsd(perMin * airEach, 2)}</b> a session and <b>${pgUsd(perMin * airCap, 2)}</b> for the whole ${cap.toLocaleString("en-US")} minutes you are selling.`);
+      }
+    } else if (audio) {
+      parts.push(" — the Voice Clone Only rate was not read, so the airtime and cost figures below are worked out at 1x.");
+    }
+    if (audio) {
+      parts.push(" This pack opens the <b>Voice Clone Only</b> tab only: the two picture tabs go grey on his desktop and unlock themselves when his last session is used up.");
     }
     // How many of them he has had is read off the calls he really made, so an account already
     // calling shows its used sessions the moment the cap is typed - nothing is given back.
@@ -2755,7 +2841,7 @@
       parts.push(`<div>Change the cap and the session count moves with it; minutes already used stay counted. He sees the sessions on his card, never these minutes. A call never runs past the session it is on, and one session carries on across his Stop presses until it is used up.</div>`);
     }
     if (!$("gUnlimited").checked && !row) {
-      parts.push(`<div>Takes effect when you save with <b>Set unlimited</b> ticked.</div>`);
+      parts.push(`<div>Takes effect when you save with <b>Set unlimited</b> ticked${onVideo ? ", and it moves this account off the picture pack onto the voice pack" : ""}.</div>`);
     }
     box.innerHTML = parts.join(" ");
     box.classList.remove("hidden");
@@ -2763,6 +2849,7 @@
   $("gUnlimitedCap").oninput = paintUnlAuto;
   $("gUnlimitedWindow").oninput = paintUnlAuto;
   $("gUnlimited").onchange = paintUnlAuto;
+  $("gUnlimitedScope").onchange = paintUnlAuto;
 
   $("grantBtn").onclick = async () => {
     if (!CUR) return msg("grantMsg", "Open an account first.");
@@ -3906,6 +3993,10 @@
   // row can name its own reason. null means this browser has not read them - and a row is never
   // given a reason from a guess, so while it is null every empty row keeps the single name it had.
   let CALL_FAIL = null;
+  // user id -> the account's own Unlimited row, so a call can name the pack that ran it. The calls
+  // list is not the Unlimited card and must not wait for it, so this is its own read; an empty map
+  // means nobody is on a pack, which is what a database without that table really holds.
+  let UNL_OF = {};
   // What a second of cloned voice costs the voice key, read beside the video figure so the two
   // lists can never price a call with the other kind's number.
   let CALL_VOICE_RATE = null;
@@ -3952,6 +4043,38 @@
   // exists: an account you credited by hand, or your own test account, still cost you real fal
   // money, and leaving those out hid the very history this card is for.
   //
+  // One read of the pack table for the whole calls list. The scope column arrived with the Voice
+  // Clone Only pack, so a database that has not run that migration is asked without it and still
+  // answers — and every row it holds is then a picture pack, because nothing else has ever existed.
+  async function loadUnlimitedOf() {
+    const cols = "user_id, granted_at, finished_at";
+    const wide = await sb.from("unlimited_accounts").select("scope, " + cols).limit(5000);
+    const rows = wide.error
+      ? (await sb.from("unlimited_accounts").select(cols).limit(5000)).data
+      : wide.data;
+    UNL_OF = Object.fromEntries((rows || []).map((r) => [String(r.user_id), r]));
+  }
+
+  /**
+   * Which Unlimited pack ran this call, or nothing at all.
+   *
+   * A pack is written on one row per account, and the account moves from one to the other without
+   * the call rows changing, so only the grant stamp proves which one was running. Switching the pack
+   * on an account starts a new grant clock, which is exactly why a call that began BEFORE this stamp
+   * gets no label: it might have run on a pack this row no longer describes, and a wrong pack name
+   * on a money row is worse than no name.
+   */
+  function unlPackOf(uid, startedAt) {
+    const u = UNL_OF[String(uid || "")];
+    if (!u) return null;
+    const began = Date.parse(String(startedAt || ""));
+    const grant = Date.parse(String(u.granted_at || ""));
+    if (!Number.isFinite(began) || !Number.isFinite(grant) || began < grant) return null;
+    const end = u.finished_at ? Date.parse(String(u.finished_at)) : NaN;
+    if (Number.isFinite(end) && began > end) return null;
+    return u.scope === "audio" ? "audio" : "video";
+  }
+
   // The Plans tab is re-read on every load, including the 15-second tick, because his prices
   // are not constant: a package he re-prices must show at the new number without a redeploy.
   async function loadCalls() {
@@ -3999,6 +4122,9 @@
           } catch { CALL_FAIL = null; }
         }
       }
+      // Which Unlimited pack, if any, these calls ran on. One read for the whole list, and a failure
+      // leaves every row without a pack name rather than with a guessed one.
+      try { await loadUnlimitedOf(); } catch { UNL_OF = {}; }
       // One deliberate read with his own sign-in, so a card fed by the gateway can still
       // say out loud when the two disagree. That disagreement is the difference between a
       // quiet week and a permission that filters him, and it used to show as a blank card.
@@ -4169,6 +4295,7 @@
         cost: refused ? 0 : bill * perSecond,
         sell: rp.perMinute,
         plan: rp.plan,
+        pack: unlPackOf(r.user_id, r.started_at),
         noOrder: !rate.paidBy.has(String(r.user_id || "")),
         paid: billed * rp.perMinute,
       };
@@ -4244,12 +4371,20 @@
         + `max-width:230px;line-height:1.35;font-size:11px" title="${esc(why.label)} - ${esc(why.side)}">`
         + esc(String(said).trim()) + "</span>";
     };
+    // Which Unlimited ran this call, printed only when the account's own grant stamp proves one did.
+    // It matters because the minutes on an Unlimited row are minutes SPENT: on the Voice Clone Only
+    // pack 15 of them is 37 minutes and a half on the line, so the same figure means two different
+    // amounts of airtime depending on which pack this row belongs to.
+    const packOf = (x) => !x.pack ? ""
+      : x.pack === "audio"
+        ? `<div title="${esc("This call ran on this account's Voice Clone Only Unlimited pack, at your Voice Clone Only rate. The minutes you charged are minutes spent, so the time on the line was longer than that figure.")}">Unlimited · Voice Clone Only pack</div>`
+        : `<div title="${esc("This call ran on this account's picture Unlimited pack, at your Unlimited dial on the Burn rates tab. The minutes you charged are minutes spent, so a picture call ran shorter than that figure.")}">Unlimited · picture pack</div>`;
     const list = `
       <p class="muted" style="margin:10px 0 0">One line per call, newest first, for every ${meta.name} run on the paid video service${CALL_SKIPPED ? ` - the <b>${CALL_SKIPPED}</b> trial call(s) are not here` : ""}. The services bill by the second, so
         <b>what it cost</b> is the price on your Prices tab (${rateText}) times
         the seconds this call held - that is money leaving you, whatever you charge. <b>What it paid</b> is the minutes you charged times
         the price you set on that account's package on your Plans tab, which each row prints under the minutes. One pool of minutes funds all three
-        kinds of call, so that selling price is the same figure on all three lists. These prices are read fresh
+        kinds of call, so that selling price is the same figure on all three lists. Where a call ran on an Unlimited package the row names which pack under the minutes: an Unlimited minute is a minute <b>spent</b>, not time on the line, so a voice-pack call held the line longer than the figure you charged. These prices are read fresh
         every time the card loads, so a package you re-price shows up on the next refresh.${pillNote}${zeroNote}</p>
       <div style="overflow:auto;margin-top:10px">
         <table id="callsTable">
@@ -4264,7 +4399,7 @@
             ${x.refused
               ? `<td class="mono" style="text-align:right">${usd(0)}<div class="muted" style="font-size:11px">not charged</div></td>`
               : money(x.cost)}
-            <td class="mono" style="text-align:right">${mins2(x.billed)} min<div class="muted" style="font-size:11px">${usd(x.sell)} a minute · ${esc(x.plan)}${x.noOrder ? " · never paid you" : ""}</div></td>
+            <td class="mono" style="text-align:right">${mins2(x.billed)} min<div class="muted" style="font-size:11px">${usd(x.sell)} a minute · ${esc(x.plan)}${x.noOrder ? " · never paid you" : ""}${packOf(x)}</div></td>
             ${money(x.paid)}
             <td class="mono" style="text-align:right;color:${x.paid - x.cost < 0.005 ? "#fb7185" : "#35e0a0"}">${x.paid - x.cost >= 0 ? "+" : ""}${usd(x.paid - x.cost)}</td>
           </tr>`).join("")}</tbody>
@@ -4434,7 +4569,8 @@
     const act = list.filter((a) => a.active);
     const keys = p.keys || {};
     const leaks = N(p.fence_leaks);
-    const refused = list.reduce((s, a) => s + N(a.refused_used_up_24h) + N(a.refused_no_key_24h), 0);
+    const refused = list.reduce((s, a) => s + N(a.refused_used_up_24h) + N(a.refused_no_key_24h)
+      + N(a.refused_picture_on_audio_pack_24h), 0);
     const onAir = act.reduce((s, a) => s + N(a.airtime_24h), 0);
     // His two new questions, answered without arithmetic of its own: how much of what he sold
     // has gone, and how much is still sitting there. Both read the server's session figures, so
@@ -4473,10 +4609,11 @@
       const noCap = a.cap_minutes == null;
       const left = noCap ? null : N(a.remaining_minutes);
       const s = unlSess(a);
-      const n = N(a.refused_used_up_24h) + N(a.refused_no_key_24h);
+      const n = N(a.refused_used_up_24h) + N(a.refused_no_key_24h) + N(a.refused_picture_on_audio_pack_24h);
       const rows = [];
       if (N(a.refused_used_up_24h)) rows.push(`${a.refused_used_up_24h} package finished`);
       if (N(a.refused_no_key_24h)) rows.push(`${a.refused_no_key_24h} no key attached`);
+      if (N(a.refused_picture_on_audio_pack_24h)) rows.push(`${a.refused_picture_on_audio_pack_24h} picture call on a voice-only pack`);
       // The session cell is the customer's own card read from the seller's side: which one he is
       // on, how many the total bought, and one segment per session. "Used" counts finished
       // sessions only, so the one in progress belongs to neither figure and the count says it.
@@ -4486,15 +4623,25 @@
           + `${N(s.sessions_used)} used · ${N(s.sessions_left) ? N(s.sessions_left) + " left" : "none left"}`
           + `${s.last_session ? " · the last one" : ""}</div>`
         : '<span class="muted" title="no total typed yet, so nothing is grouped into sessions: he calls on the per-call window alone. Type a cap and the sessions appear here and on his screen.">no sessions</span>';
+      // A voice pack drains at the Voice Clone Only line's own rate, never at the Unlimited dial -
+      // that figure covers picture only. So every typed minute on this row buys more time on the
+      // line than the column says, and "300 min" read as 300 minutes on air would be wrong by two
+      // and a half times. Only the two figures he types carry the hint; the rest are spends.
+      const voiceAir = a.scope === "audio" ? N(effectiveRates().audio && effectiveRates().audio.multiplier, 0) : 0;
+      const airHint = (m) => voiceAir > 0 && Math.abs(voiceAir - 1) > 1e-9
+        ? `<div class="muted" style="font-size:11px">${mins1(m / voiceAir)} min on the line</div>` : "";
       return `<tr${a.over_cap ? ' style="background:#2a1215"' : (a.near_cap ? ' style="background:#241f0d"' : "")}>
         <td><b>${esc(a.email || shortId(a.user_id))}</b>${a.active ? "" : ' <span class="pill no">finished</span>'}${a.calling_now ? ' <span class="pill yes">on air</span>' : ""}<div class="muted">since ${when(a.granted_at)}</div></td>
+        <td class="muted">${a.scope === "audio"
+          ? '<span title="Voice Clone Only pack: only that tab is open to him, the two picture tabs are grey on his desktop until his last session is used up, and his calls drain at the Voice Clone Only rate">Voice Clone Only</span>'
+          : '<span title="Picture pack: all three call tabs are open to him and his picture calls drain at your Unlimited dial on the Burn rates tab">Picture tabs</span>'}</td>
         <td class="sbx mono">${sessCell}</td>
         <td class="mono">${s.sessions ? N(s.sessions_used) : '<span class="muted">—</span>'}</td>
         <td class="mono">${s.sessions
           ? `<span${s.sessions_left <= 1 ? ' style="color:#fbbf24"' : ""}>${N(s.sessions_left)}</span>`
           : '<span class="muted">—</span>'}</td>
-        <td class="mono">${N(a.window_minutes, 15)} min</td>
-        <td class="mono">${noCap ? '<span class="muted" title="no total typed yet: this buyer calls on the per-call window alone, and every minute he uses comes off the cap the moment you type one">not set</span>' : mins(a.cap_minutes)}</td>
+        <td class="mono">${N(a.window_minutes, 15)} min${airHint(N(a.window_minutes, 15))}</td>
+        <td class="mono">${noCap ? '<span class="muted" title="no total typed yet: this buyer calls on the per-call window alone, and every minute he uses comes off the cap the moment you type one">not set</span>' : mins(a.cap_minutes) + airHint(N(a.cap_minutes))}</td>
         <td class="mono">${mins1(a.used_minutes)}${a.over_cap ? ' <span class="pill fail">over cap</span>' : (a.near_cap ? ' <span class="pill warn">near cap</span>' : "")}</td>
         <td class="mono">${left == null ? '<span class="muted">—</span>' : `<span${a.near_cap ? ' style="color:#fbbf24"' : ""}>${mins1(left)}</span>`}</td>
         <td class="muted">${a.calling_now
@@ -4504,7 +4651,7 @@
         <td class="mono">${clock(a.airtime_24h)}</td>
         <td class="mono">${n ? `<span class="pill fail" title="${esc(rows.join(", "))}">${n}</span>` : '<span class="pill ok">0</span>'}</td>
       </tr>`;
-    }).join("") || '<tr><td colspan="12" class="muted">Nobody is on the Unlimited package yet. Sell one from the Plans tab, or tick <b>Set unlimited</b> when you credit an account.</td></tr>';
+    }).join("") || '<tr><td colspan="13" class="muted">Nobody is on the Unlimited package yet. Sell one from the Plans tab, or tick <b>Set unlimited</b> when you credit an account.</td></tr>';
 
     stamp("unlWhen");
     paintFoldUnl();
@@ -4587,6 +4734,21 @@
   // The app's own account of a refused call. This is the only place the video line's
   // raw answer is kept — the customer never sees it — so "the app said cannot start"
   // from a support message can be read against a real row instead of guessed at.
+  // A package refusal is not a broken service, and the raw token a stage is stored under says which.
+  // Only the unlimited stages get translated; every other stage is the app's own word and is printed
+  // exactly as the app wrote it, so a support message can still be matched to a row.
+  const FAULT_WORDS = {
+    unlimited_used_up: "Unlimited minutes used up",
+    unlimited_key_missing: "Unlimited, no video key ticked",
+    unlimited_audio_only: "picture call on a Voice Clone Only pack",
+  };
+  function faultStage(stage) {
+    const word = FAULT_WORDS[stage];
+    if (word) return `<span class="pill warn">${esc(word)}</span>`;
+    const warn = stage === "gateway" || stage === "video line closed" || stage === "voice_unplayed";
+    return `<span class="pill ${warn ? "warn" : "fail"}">${esc(stage)}</span>`;
+  }
+
   async function loadCallFailures() {
     const cutoff = new Date(serverNowMs() - 864e5).toISOString();
     const { data, error } = await sb.from("call_failures")
@@ -4598,7 +4760,7 @@
     await emailsOf((data || []).map((r) => r.user_id));
     $("faultTable").querySelector("tbody").innerHTML = (data || []).map((r) => `<tr>
       <td class="muted">${when(r.created_at)}</td>
-      <td><span class="pill ${r.stage === "gateway" || r.stage === "video line closed" || r.stage === "voice_unplayed" ? "warn" : "fail"}">${esc(r.stage)}</span></td>
+      <td>${faultStage(r.stage)}</td>
       <td class="muted">${esc(EMAIL_OF[r.user_id] || shortId(r.user_id))}</td>
       <td class="muted">${esc(r.detail || "")}</td></tr>`).join("")
       || '<tr><td colspan="4" class="muted">No call has been refused or lost in the last 24 hours.</td></tr>';
@@ -6307,6 +6469,7 @@
   let PLAN_DIRTY = false;   // that editor holds changes that were never saved
   let PLAN_HOLD = {};       // package id -> how many accounts hold it
   let PLAN_MINCOST = null;  // bucket -> $ per SOLD minute, from the live rates
+  let PLAN_REALCOST = null; // bucket -> $ per minute of real airtime, which is what a pack uses
   let PLAN_TARGET = NaN;    // the profit percent he set on the Prices tab
 
   // The Prices tab's arithmetic, applied to a whole package, and read from the stored
@@ -6321,6 +6484,11 @@
     const video = N(data?.lucy_video_per_sec_cost, PG_DEFAULT.falMin / 60) * 60;
     const voice = N(data?.voice_cloning_per_sec_cost, PG_DEFAULT.voiceMin / 60) * 60;
     const perReal = { video, audio: voice, video_audio: video + voice };
+    // What one minute of real airtime costs, kept beside the per-sold-minute figure. An Unlimited
+    // pack sells no minutes, so its cost is always airtime times this, never airtime times the
+    // divided figure below — at 0.4x the division runs the other way and overstates his cost by
+    // more than twice, which is exactly the pack he is now selling for the voice tab.
+    PLAN_REALCOST = perReal;
     const eff = effectiveRates(), out = {};
     MODALITIES.forEach((m) => { out[m] = perReal[m] / Math.max(0.05, N(eff[m]?.multiplier, 1)); });
     PLAN_MINCOST = out;
@@ -6340,8 +6508,12 @@
       if (force) msg("plansMsg", "There are unsaved changes on the open package. Press Save, or Discard, first.", "err");
       return;
     }
+    // The four Unlimited columns are read with the rest of the row. They were left out once, and the
+    // editor then opened an Unlimited package with its tick OFF — so pressing Save turned a sold
+    // Unlimited pack back into a zero-minute package. A catalogue row cannot be edited from a read
+    // that hides the fields the editor writes.
     const { data, error } = await sb.from("plans")
-      .select("id, name, price_cents, blurb, includes, max_devices, features, active, video_minutes, audio_minutes, video_audio_minutes, market, mirror_of")
+      .select("id, name, price_cents, blurb, includes, max_devices, features, active, video_minutes, audio_minutes, video_audio_minutes, market, mirror_of, unlimited, unlimited_window_minutes, unlimited_cap_minutes, unlimited_scope")
       .order("price_cents", { ascending: true });
     if (error) return msg("plansMsg", error.message, "err");
     PLAN_ROWS = data || [];
@@ -6352,7 +6524,7 @@
       const { data: subs, error: se } = await sb.from("subscriptions").select("plan_id");
       if (!se) (subs || []).forEach((s) => { if (s.plan_id) PLAN_HOLD[s.plan_id] = (PLAN_HOLD[s.plan_id] || 0) + 1; });
     } catch { PLAN_HOLD = {}; }
-    try { await planRates(); } catch { PLAN_MINCOST = null; }
+    try { await planRates(); } catch { PLAN_MINCOST = null; PLAN_REALCOST = null; }
     planSummary();
     renderPlans();
   }
@@ -6374,7 +6546,7 @@
     const priceOf = (p) => N(p.price_cents) / 100;
     const live = PLAN_ROWS.filter((p) => p.active);
     const prices = PLAN_ROWS.map(priceOf).filter((v) => v > 0).sort((a, b) => a - b);
-    const bare = PLAN_ROWS.filter((p) => !CALL_MODALITIES.some((m) => planMinutes(p)[m] > 0));
+    const bare = PLAN_ROWS.filter((p) => !p.unlimited && !CALL_MODALITIES.some((m) => planMinutes(p)[m] > 0));
     const deadAudio = PLAN_ROWS.filter((p) => planMinutes(p).audio > 0);
     const under = PLAN_MINCOST ? PLAN_ROWS.filter((p) => priceOf(p) > 0 && priceOf(p) < planCost({ minutes: planMinutes(p) })) : [];
     const gh = PLAN_ROWS.filter((p) => p.market === "intl").length ? PLAN_ROWS.filter((p) => p.market !== "intl") : PLAN_ROWS;
@@ -6417,7 +6589,12 @@
   function planRow(p) {
     const a = planMinutes(p);
     const price = N(p.price_cents) / 100;
-    const cost = planCost({ minutes: a });
+    // An Unlimited package sells no minutes, so the two columns that price minutes have nothing to
+    // price here. A cost of $0.00 beside a real price would read as pure profit; what this pack
+    // actually costs is the airtime the buyer really uses, and the editor under the row works that
+    // out at the rate in force.
+    const unl = !!p.unlimited;
+    const cost = unl ? null : planCost({ minutes: a });
     const keep = cost === null ? null : price - cost;
     const held = PLAN_HOLD[p.id] || 0;
     const dash = '<span class="muted">—</span>';
@@ -6432,6 +6609,7 @@
       <td><div class="pname">${esc(p.name || p.id)}</div>
         ${p.blurb ? `<div class="pblurb">${esc(p.blurb)}</div>` : ""}
         <div class="ptags">${(p.features || []).map((f) => `<span class="ptag">${esc(FEATURE_LABEL[f] || f)}</span>`).join("")}
+          ${unl ? `<span class="ptag" style="background:rgba(250,204,21,.16);color:#facc15" title="This package sells no minutes. The buyer is shown the word UNLIMITED and no figure; what bounds him is the session length and the total cap in its editor, and the tab named here is the only one this pack opens.">UNLIMITED · ${p.unlimited_scope === "audio" ? "Voice Clone Only tab only" : "picture tabs"}</span>` : ""}
           <span class="ptag">${devices === 1 ? "1 device" : devices + " devices"}</span></div></td>
       <td style="white-space:nowrap">${shelf}${planCopied(p) ? '<div class="muted" style="font-size:11px">price still copied</div>' : ""}</td>
       <td class="num">${pgUsd(price)}</td>
@@ -6453,11 +6631,12 @@
       includes: (p.includes || []).join("\n"), devices: N(p.max_devices, 1), feats: p.features || [],
       min_video: N(p.video_minutes, 0), min_audio: N(p.audio_minutes, 0), min_video_audio: N(p.video_audio_minutes, 0),
       unlimited: !!p.unlimited, window: N(p.unlimited_window_minutes, 15), cap: p.unlimited_cap_minutes == null ? "" : N(p.unlimited_cap_minutes),
+      scope: p.unlimited_scope === "audio" ? "audio" : "video",
       market: p.market === "intl" ? "intl" : "gh",
     } : {
       name: "", price: "", blurb: "", includes: "Minutes never expire\nWorks on every device you sign in to",
       devices: 2, feats: ["video"], min_video: 0, min_audio: 0, min_video_audio: 0, market: "gh",
-      unlimited: false, window: 15, cap: "",
+      unlimited: false, window: 15, cap: "", scope: "video",
     };
     return `
       <div class="row">
@@ -6477,7 +6656,16 @@
         <div><label style="margin-top:0">${MOD_LABEL.video} <span class="muted">· all three call tabs</span></label><input data-f="min_video" type="number" min="0" step="1" value="${v.min_video}" /></div>
       </div>
       <label class="feat" style="margin:10px 0 6px"><input type="checkbox" data-f="unlimited" ${v.unlimited ? "checked" : ""} /> This package sells <b>UNLIMITED</b> instead of minutes</label>
-      <div class="grid2" data-unlimited style="${v.unlimited ? "" : "display:none"}">
+      <div class="row" data-unlimited data-unl-only style="${v.unlimited ? "" : "display:none"};align-items:flex-start;margin-top:0">
+        <div style="flex:0 0 330px"><label style="margin-top:0">Which tab this pack opens</label>
+          <select data-f="unl_scope">
+            <option value="video"${v.scope === "audio" ? "" : " selected"}>Picture tabs — Video Call and Video + Audio Cloning</option>
+            <option value="audio"${v.scope === "audio" ? " selected" : ""}>Voice Clone Only tab only</option>
+          </select></div>
+        <div class="muted" data-unl-scope="video" style="flex:1 1 260px;margin-top:26px">All three call tabs stay open to him, and every call is metered by the pack rather than by his minutes.</div>
+        <div class="muted" data-unl-scope="audio" style="flex:1 1 260px;margin-top:26px;display:none">Only the <b>Voice Clone Only</b> tab is open to him. The two picture tabs go grey on his screen with the reason written on them, and they unlock themselves the moment his last session is used up. His voice calls spend your Voice Clone Only rate off the pool, so nothing of this pack touches the picture line.</div>
+      </div>
+      <div class="grid2" data-unlimited data-unl-only style="${v.unlimited ? "" : "display:none"}">
         <div><label style="margin-top:0">Minutes one call may spend</label><input data-f="window" type="number" min="1" step="1" value="${v.window}" /></div>
         <div><label style="margin-top:0">Total cap on the buyer's account (minutes)</label><input data-f="cap" type="number" min="1" step="1" value="${esc(String(v.cap))}" placeholder="set it per account later" /></div>
       </div>
@@ -6553,30 +6741,45 @@
     // which is the one thing this product is not. What bounds his cost is the cap, so that is what
     // is costed, and the window is named because it is what stops one long call eating a day.
     if (v.unlimited) {
-      const rate = N(PLAN_MINCOST.video, 0);
+      const audio = v.scope === "audio";
+      const eff = effectiveRates();
+      // What one minute of this pack's airtime costs him, and the multiplier that turns the minutes
+      // he types into that airtime. The picture pack is metered by the Unlimited dial; the voice pack
+      // is metered by the Voice Clone Only line's own rate, because that dial only ever covers
+      // picture and an audio call carries the rate of the service it ran on.
+      const perReal = N(PLAN_REALCOST && PLAN_REALCOST[audio ? "audio" : "video"], 0);
+      const burn = audio
+        ? (N(eff.audio && eff.audio.multiplier, 0) > 0 ? N(eff.audio.multiplier) : 1)
+        : (N(UNL_RATE && UNL_RATE.in_force, 0) > 0 ? N(UNL_RATE.in_force) : 1);
+      const read = audio ? !!(eff.audio || RATE_LIVE) : !!UNL_RATE;
       const w = Math.max(1, Math.round(v.window || 15));
       const cap = Math.max(0, Math.round(v.cap || 0));
-      // The window and the cap are minutes SPENT, and what turns them into airtime is the Unlimited
-      // dial, which the database answers. Costing them as wall-clock minutes would overstate his cost
-      // at any rate above 1x, so the division happens here; and when that dial was not read the figure
-      // is costed at 1x with that said out loud, never guessed at.
-      const burn = N(UNL_RATE && UNL_RATE.in_force, 0) > 0 ? N(UNL_RATE.in_force) : 1;
-      const read = !!UNL_RATE;
       const airW = w / burn, airCap = cap / burn;
+      const tab = audio ? "voice" : "video";
       const at = read && Math.abs(burn - 1) > 1e-9
         ? ` at the ${rateLabel(burn)}x this pack spends at`
         : (read ? " — this pack spends at 1x, so window and cap are the time itself"
-                : " (the Unlimited rate was not read, so this is costed at 1x)");
+                : ` (the ${tab} rate was not read, so this is costed at 1x)`);
+      // The sessions the cap makes, counted the same way the database counts them once the buyer is
+      // calling: whole blocks of the window, and a short last one for whatever is left.
+      const total = cap > 0 ? Math.max(1, Math.ceil(cap / w)) : 0;
+      const sess = cap > 0
+        ? ` That is <b>${total} session${total === 1 ? "" : "s"}</b> of ${airW.toFixed(1)} minutes ${audio ? "of his voice calls" : "on screen"} each${(cap % w) ? `, the last one short at ${(airCap - (total - 1) * airW).toFixed(1)} minutes` : ""}.`
+        : "";
       return "<b>No minutes, so no fixed cost.</b> This package costs you the airtime your buyer really uses, at about "
-        + pgUsd(rate, 3) + " a video minute. His window is " + w + " minutes spent" + at
-        + ", so one call is at most " + airW.toFixed(1) + " minutes on screen and the worst a single forgotten call does is "
-        + pgUsd(rate * airW, 2) + ". A voice call on the same pack spends your Voice Clone Only rate instead; this is the picture line, the expensive one."
+        + pgUsd(perReal, 3) + " a " + tab + " minute. His window is " + w + " minutes spent" + at
+        + ", so one session is at most " + airW.toFixed(1) + " minutes " + (audio ? "of voice on the line" : "on screen")
+        + " and the worst a single forgotten call does is " + pgUsd(perReal * airW, 2) + "."
+        + (audio
+          ? " This pack opens the Voice Clone Only tab only, so every call on it is a voice call and none of it touches your picture line."
+          : " A voice call on the same pack spends your Voice Clone Only rate instead; this is the picture line, the expensive one.")
+        + sess
         + (cap > 0
-          ? ` The cap of ${cap.toLocaleString("en-US")} minutes spent is ${airCap.toFixed(1)} minutes on screen, which bounds the whole account at about <b>${pgUsd(rate * airCap, 2)}</b> against a price of ${pgUsd(v.price)} — `
-            + (rate * airCap > v.price
+          ? ` The cap of ${cap.toLocaleString("en-US")} minutes spent is ${airCap.toFixed(1)} minutes ${audio ? "of voice" : "on screen"}, which bounds the whole account at about <b>${pgUsd(perReal * airCap, 2)}</b> against a price of ${pgUsd(v.price)} — `
+            + (perReal * airCap > v.price
               ? '<span style="color:#fb7185">so a buyer who uses every capped minute costs you more than he paid. Lower the cap or raise the price.</span>'
               : '<span style="color:#4ade80">you keep the difference even if he uses all of it.</span>')
-          : ' <span style="color:#fbbf24">No cap typed yet: this buyer calls on the ' + w + '-minute window alone, with no total, until you set one on the Accounts tab.</span>');
+          : ` <span style="color:#fbbf24">No cap typed yet: this buyer calls on the ${w}-minute window alone, with no total, until you set one on the Accounts tab.</span>`);
     }
     const cost = planCost(v), keep = v.price - cost;
     const parts = CALL_MODALITIES.filter((m) => v.minutes[m] > 0)
@@ -6602,6 +6805,7 @@
       features: FEATURES.filter((f) => get("feat_" + f)?.checked),
       market: get("market")?.value === "intl" ? "intl" : "gh",
       unlimited: !!get("unlimited")?.checked,
+      scope: get("unl_scope")?.value === "audio" ? "audio" : "video",
       window: Math.max(1, Math.round(num("window") || 15)),
       cap: Math.max(0, Math.round(num("cap"))),
     };
@@ -6625,6 +6829,10 @@
       // warning: a package that says UNLIMITED and also says a figure is exactly the card he
       // does not want his buyers to see.
       unlimited: !!v.unlimited,
+      // Which tab the pack is for travels with the tick, and is put back to the picture tabs without
+      // it: a minutes package has no scope to carry, and leaving "audio" sitting on a row that no
+      // longer sells a pack would tell the checkout it was refusing picture calls for nothing.
+      unlimited_scope: v.unlimited && v.scope === "audio" ? "audio" : "video",
       unlimited_window_minutes: v.window,
       unlimited_cap_minutes: v.unlimited && v.cap > 0 ? v.cap : null,
       features: v.features,
@@ -6638,6 +6846,20 @@
     return row;
   }
 
+  // The window, the cap and the tab choice belong to the Unlimited tick, so they appear with it and
+  // go without it — in the editor and in the new-package form both. Leaving a cap box visible under a
+  // minutes package would invite a number that nothing can read.
+  function paintUnlFields(host) {
+    const v = readPlanForm(host);
+    const on = v.unlimited ? "" : "none";
+    host.querySelectorAll("[data-unlimited], [data-unlimited-hint]").forEach((el) => { el.style.display = on; });
+    // Exactly one of the two tab sentences is true of the package he is describing, and which one
+    // changes the moment he moves the dropdown — the boxes below stay for both kinds of pack.
+    host.querySelectorAll("[data-unl-scope]").forEach((el) => {
+      el.style.display = on === "" && el.dataset.unlScope === v.scope ? "" : "none";
+    });
+  }
+
   function bindEditor() {
     const host = $("plansEditor");
     if (!host.firstElementChild) return;
@@ -6646,11 +6868,7 @@
       host.querySelector("[data-prev]").innerHTML = planPreview(v);
       host.querySelector("[data-money]").innerHTML = planMoney(v);
       host.querySelector("[data-dirty]").hidden = !PLAN_DIRTY;
-      // The window and the cap belong to one package type, so they appear with its tick and are
-      // taken away without it. Leaving a cap box visible under a minutes package would invite a
-      // number that nothing can read.
-      const on = v.unlimited ? "" : "none";
-      host.querySelectorAll("[data-unlimited], [data-unlimited-hint]").forEach((el) => { el.style.display = on; });
+      paintUnlFields(host);
     };
     host.querySelectorAll("[data-f]").forEach((el) => el.addEventListener("input", () => { PLAN_DIRTY = true; paint(); }));
     paint();
@@ -6712,7 +6930,10 @@
       </div>
     </div>`;
     const prev = box.querySelector("[data-prev]");
-    const paint = () => { prev.innerHTML = `<div class="prev">${planPreview(readPlanForm(box))}</div><p class="phint">${planMoney(readPlanForm(box))}</p>`; };
+    const paint = () => {
+      prev.innerHTML = `<div class="prev">${planPreview(readPlanForm(box))}</div><p class="phint">${planMoney(readPlanForm(box))}</p>`;
+      paintUnlFields(box);
+    };
     box.querySelectorAll("[data-f]").forEach((el) => el.addEventListener("input", paint));
     paint();
   };
@@ -6767,6 +6988,11 @@
         video_minutes: N(p.video_minutes, 0), audio_minutes: N(p.audio_minutes, 0),
         video_audio_minutes: N(p.video_audio_minutes, 0), features: p.features ?? [], active: false,
         market: p.market === "intl" ? "intl" : "gh",
+        // A copy of an Unlimited pack is a copy of an Unlimited pack. These four were left out once,
+        // and pressing Copy on one made a package with no minutes and no UNLIMITED — nothing at all.
+        unlimited: !!p.unlimited, unlimited_window_minutes: N(p.unlimited_window_minutes, 15),
+        unlimited_cap_minutes: p.unlimited_cap_minutes ?? null,
+        unlimited_scope: p.unlimited_scope === "audio" ? "audio" : "video",
       };
       const { error } = await sb.from("plans").insert(row);
       if (error) return msg("plansMsg", error.message, "err");
@@ -6793,6 +7019,9 @@
         video_minutes: N(p.video_minutes, 0), audio_minutes: N(p.audio_minutes, 0),
         video_audio_minutes: N(p.video_audio_minutes, 0), features: p.features ?? [],
         market: "intl", mirror_of: p.id, active: false,
+        unlimited: !!p.unlimited, unlimited_window_minutes: N(p.unlimited_window_minutes, 15),
+        unlimited_cap_minutes: p.unlimited_cap_minutes ?? null,
+        unlimited_scope: p.unlimited_scope === "audio" ? "audio" : "video",
       });
       if (error) return msg("plansMsg", error.message, "err");
       PLAN_EDIT = null; PLAN_DIRTY = false;
