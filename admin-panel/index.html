@@ -2483,8 +2483,18 @@
     const queuedRate = (m) => RATE_ROWS
       .filter((r) => r.modality === m && !r.retired_at && new Date(r.effective_from).getTime() > serverNowMs())
       .sort((a, b) => new Date(a.effective_from) - new Date(b.effective_from))[0];
-    const rateCell = (m) => {
+    const rateCell = (m, w) => {
       if (!RATE_READ_OK) return '<span class="pill warn" title="the rate history did not load, so this page will not guess at it">not read</span>';
+      // An Unlimited account's picture calls never obey the paid video line: they spend at his own
+      // Unlimited dial, which is a separate figure with its own history. Printing the paid rate on a
+      // row whose Unlimited column already says yes is a number he then acts on — so this row prints
+      // the dial the meter really uses for him, and says which of the two it is.
+      if (m === "video" && w.unlimited) {
+        if (!UNL_RATE) return '<span class="pill warn" title="your Unlimited multiplier was not read, so this page will not guess at it">Unlimited rate not read</span>';
+        return `<span class="mono">${rateLabel(UNL_RATE.in_force)}x</span> <span class="pill ${UNL_RATE.set ? "warn" : "active"}" title="${esc(UNL_RATE.set
+          ? `Picture calls on this pack spend ${rateLabel(UNL_RATE.in_force)} of the window and of his cap per minute on his screen. It is the figure on the Burn rates tab under "Multiplier for Unlimited picture calls", not your paid Video Call rate.`
+          : `You have not typed an Unlimited figure, so this pack follows your paid Video Call rate at ${rateLabel(UNL_RATE.in_force)}x. Type one on the Burn rates tab to separate them.`)}">${UNL_RATE.set ? "Unlimited dial" : "follows paid video"}</span>`;
+      }
       const r = inForce[m];
       const q = queuedRate(m);
       return `${rateLabel(r ? r.multiplier : SEED_RATE[m])}x`
@@ -2496,7 +2506,7 @@
       const note = m === "video"
         ? `· all three call tabs spend from here${hasStray ? ` <span class="pill warn">incl. ${clock(stray.balance)} left in the retired Video + Audio wallet — run migration 20261101120000 to move it into the pool</span>` : ""}`
         : `· a rate line, not a place minutes are kept${holdsSomething(m) ? ` <span class="pill warn">${clock(w.balance)} still standing here from before the fold — run migration 20261102120000 to move it into the pool</span>` : ""}`;
-      return `<tr><td>${MOD_LABEL[m]} <span class="muted" title="${tip}">${note}</span></td><td>${bucket(w)}</td><td class="mono" title="${m === "video" ? "The multiplier a call started right now uses. It is not a column on the wallet — it is the rate row in force on the Burn rates tab." : "The Voice Clone Only line's rate. It meters that call but spends the pool."}">${rateCell(m)}</td>
+      return `<tr><td>${MOD_LABEL[m]} <span class="muted" title="${tip}">${note}</span></td><td>${bucket(w)}</td><td class="mono" title="${m === "video" ? (w.unlimited ? "Picture calls on this pack spend at your Unlimited dial on the Burn rates tab, not at the paid Video Call rate. This cell follows the dial." : "The multiplier a call started right now uses. It is not a column on the wallet — it is the rate row in force on the Burn rates tab.") : "The Voice Clone Only line's rate. It meters that call but spends the pool. An Unlimited account's voice calls spend this rate, because your Unlimited dial only covers picture."}">${rateCell(m, w)}</td>
         <td>${w.unlimited ? '<span class="pill yes">yes</span>' : '<span class="pill n">no</span>'}</td>
         <td class="mono">${mins1(w.total_credited)}</td><td class="mono">${mins1(w.total_spent)}</td></tr>`;
     }).join("");
