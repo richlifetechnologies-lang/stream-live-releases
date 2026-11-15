@@ -4079,6 +4079,14 @@
   // and history must not vanish from the list just because it predates the column.
   const kindOf = (r) => r.modality || "video";
 
+  // A dial the video line refused as full never opened, so the service ran nothing for it and bills
+  // nothing for it. Only the app's own log says which blank was that, so with the log unread this
+  // answers no - the row keeps the price its held line always showed rather than a guess at free.
+  function lineRefused(r) {
+    if (!CALL_FAIL || r.media_started_at) return false;
+    return endsReason(r, CALL_FAIL).key === "refused";
+  }
+
   function renderCalls() {
     const box = $("fcBody");
     const meta = CALL_KIND_META[CALL_KIND];
@@ -4155,9 +4163,10 @@
       const { line, pic, bill } = callSeconds(r, now);
       const billed = N(r.billed_minutes);
       const rp = rateOf(r.user_id);
+      const refused = lineRefused(r);
       return {
-        r, line, pic, billed,
-        cost: bill * perSecond,
+        r, line, pic, billed, refused,
+        cost: refused ? 0 : bill * perSecond,
         sell: rp.perMinute,
         plan: rp.plan,
         noOrder: !rate.paidBy.has(String(r.user_id || "")),
@@ -4169,10 +4178,11 @@
       cost: a.cost + x.cost, paid: a.paid + x.paid,
     }), { line: 0, pic: 0, billed: 0, cost: 0, paid: 0 });
     const money = (v) => `<td class="mono" style="text-align:right">${usd(v)}</td>`;
-    const red = rows.filter((x) => x.paid - x.cost < 0.005).length;
+    const refusals = rows.filter((x) => x.refused).length;
+    const red = rows.filter((x) => !x.refused && x.paid - x.cost < 0.005).length;
     // Folded, this one line is the whole list: what these calls cost, what they paid,
     // how many lost. The figures never blank - only the list does.
-    const brief = `<p class="muted" style="margin:10px 0 0">These <b>${rows.length}</b> ${meta.name}(s) on the paid video service cost <b>${usd(sum.cost)}</b> and paid <b>${usd(sum.paid)}</b> — that is <b>${sum.paid - sum.cost >= 0 ? "+" : ""}${usd(sum.paid - sum.cost)}</b>, over <b>${mins2(sum.billed)}</b> minutes you charged${red ? `, with <b style="color:#fb7185">${red}</b> of them costing more than they paid` : ""}${CALL_SKIPPED && CALL_KIND === "video" ? `, plus <b>${CALL_SKIPPED}</b> trial call(s) that are not listed` : ""}.</p>`;
+    const brief = `<p class="muted" style="margin:10px 0 0">These <b>${rows.length}</b> ${meta.name}(s) on the paid video service cost <b>${usd(sum.cost)}</b> and paid <b>${usd(sum.paid)}</b> — that is <b>${sum.paid - sum.cost >= 0 ? "+" : ""}${usd(sum.paid - sum.cost)}</b>, over <b>${mins2(sum.billed)}</b> minutes you charged${refusals ? `, with <b>${refusals}</b> refused dial(s) the service never billed` : ""}${red ? `, with <b style="color:#fb7185">${red}</b> of them costing more than they paid` : ""}${CALL_SKIPPED && CALL_KIND === "video" ? `, plus <b>${CALL_SKIPPED}</b> trial call(s) that are not listed` : ""}.</p>`;
     // Both sides of this line come from the same server read: fal.ai's own bill for the
     // day, added across every stored account, against the calls the gateway booked inside
     // that same day. The window is the server's and never worked out in this browser, whose
@@ -4183,7 +4193,8 @@
       ? CALL_TODAY.filter((r) => Date.parse(String(r.started_at)) >= Date.parse(bill.start))
       : CALL_TODAY;
     const picOfDay = dayRows.filter((r) => { const k = kindOf(r); return k === "video" || k === "video_audio"; });
-    const picCost = picOfDay.reduce((a, r) => a + callSeconds(r, now).bill, 0) * rate.perSecond;
+    const picRefused = picOfDay.filter(lineRefused).length;
+    const picCost = picOfDay.reduce((a, r) => a + (lineRefused(r) ? 0 : callSeconds(r, now).bill), 0) * rate.perSecond;
     const named = ((bill && bill.parts) || []).map((x) => `${esc(x.label)} ${usd(x.cost)}`).join(" · ");
     const gap = bill ? N(bill.cost) - picCost : null;
     const gapNote = !meta.picture
@@ -4193,6 +4204,7 @@
         : `fal.ai says today's whole bill is <b>${usd(N(bill.cost))}</b> for <b>${mins(N(bill.seconds) / 60)} min</b> of compute`
           + `${N(bill.accounts) > 1 ? `, added across your <b>${N(bill.accounts)}</b> stored accounts` : " for the stored account"}`
           + `${named ? ` (${named})` : ""}. All <b>${picOfDay.length}</b> picture calls in that same window add up to <b>${usd(picCost)}</b>`
+          + `${picRefused ? `, counting its <b>${picRefused}</b> refused dial(s) at nothing because the line never opened for them` : ""}`
           + ` — a difference of <b>${usd(Math.abs(gap))}</b> is ${gap >= 0.005 ? "calls still settling on fal.ai's side, calls outside this window, or spending by a key that is not in the pool" : "within reading distance"}`
           + `${bill.read === false ? " — and one or more accounts gave no answer, so that bill is the accounts that did." : "."}`
           + `${CALL_TODAY_CAPPED ? " The day's list is capped at 2,000 calls, so the difference can be larger than it looks." : ""}`;
@@ -4209,9 +4221,16 @@
       : CALL_FAIL
         ? ` An empty row here carries the reason your own app wrote down for that call, printed as the log holds it - not the word <b>${meta.noneName}</b> standing in for every cause. <b>Line busy</b> is the video line answering that it was full, so the dial never started, and is not a picture that failed to arrive. Hover a row for what it means and who it blames. Only a call with nothing written down about it still reads <b>${meta.noneName}</b>, and the Call Ends tab counts the busy refusals apart too.`
         : ` This list cannot yet name why an empty row is empty, because the log that answers that was not read with it - so an empty row keeps the single name it always had, rather than a guess.`;
-    // One row's honest reason, or "" when this page has no right to name one: the money columns are
-    // untouched either way, and a call with no line written down under it falls through to the plain
-    // name below exactly as it does today. Anything that is not a full line prints the words the log
+    // A refused dial prints a price of nothing, which is the sort of figure a bare column cannot
+    // explain to itself. Said once above the list, and only when the log that names a refusal was
+    // actually read: with it unread no row here is allowed to claim it was free.
+    const zeroNote = !meta.picture || !CALL_FAIL
+      ? ""
+      : ` A row that reads <b>${usd(0)}</b> with <b>not charged</b> under it is a dial the video line refused as full: nothing opened on the paid service, so nothing is billed for it, and it is left out of today's cost and of the bill this list is set against below.`;
+    // One row's honest reason, or "" when this page has no right to name one. What a reason is
+    // allowed to change is this one cell and, for a refusal, the cost beside it - nothing else moves.
+    // A call with no line written down under it falls through to the plain name below exactly as it
+    // does today. Anything that is not a full line prints the words the log
     // actually holds, verbatim - this page adds no reading of its own to somebody's error message.
     const causePill = (x) => {
       if (!CALL_FAIL || x.pic > 0 || x.r.media_started_at) return "";
@@ -4231,7 +4250,7 @@
         the seconds this call held - that is money leaving you, whatever you charge. <b>What it paid</b> is the minutes you charged times
         the price you set on that account's package on your Plans tab, which each row prints under the minutes. One pool of minutes funds all three
         kinds of call, so that selling price is the same figure on all three lists. These prices are read fresh
-        every time the card loads, so a package you re-price shows up on the next refresh.${pillNote}</p>
+        every time the card loads, so a package you re-price shows up on the next refresh.${pillNote}${zeroNote}</p>
       <div style="overflow:auto;margin-top:10px">
         <table id="callsTable">
           <thead><tr><th>Account</th><th>Started</th>${meta.picture ? "<th>Picture model</th>" : ""}<th>Line held</th><th>${meta.picName}</th><th>What it cost</th><th>You charged</th><th>What it paid</th><th>Difference</th></tr></thead>
@@ -4242,7 +4261,9 @@
             <td class="mono" style="text-align:right">${clock(x.line / 60)}</td>
             <td class="mono" style="text-align:right">${x.pic > 0 ? clock(x.pic / 60)
               : causePill(x) || `<span class="pill warn">${meta.noneName}</span>`}</td>
-            ${money(x.cost)}
+            ${x.refused
+              ? `<td class="mono" style="text-align:right">${usd(0)}<div class="muted" style="font-size:11px">not charged</div></td>`
+              : money(x.cost)}
             <td class="mono" style="text-align:right">${mins2(x.billed)} min<div class="muted" style="font-size:11px">${usd(x.sell)} a minute · ${esc(x.plan)}${x.noOrder ? " · never paid you" : ""}</div></td>
             ${money(x.paid)}
             <td class="mono" style="text-align:right;color:${x.paid - x.cost < 0.005 ? "#fb7185" : "#35e0a0"}">${x.paid - x.cost >= 0 ? "+" : ""}${usd(x.paid - x.cost)}</td>
