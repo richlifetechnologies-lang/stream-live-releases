@@ -308,13 +308,15 @@
             <div>
               <label style="margin-top:0">Calls he may make</label>
               <label class="feat" style="margin:2px 0 10px"><input type="checkbox" id="swVideo" /> Video Call</label>
+              <label class="feat" style="margin:2px 0 10px"><input type="checkbox" id="swAudioLock" /> Voice Clone Only only — picture calls refused</label>
               <label>Devices calling at once</label>
               <input id="detMaxConc" type="number" min="1" step="1" />
               <div class="muted" style="margin-top:6px">Each device holds its own lease.</div>
+              <div class="muted" id="acctLockNow" style="margin-top:6px"></div>
             </div>
           </div>
           <div class="btns" style="margin-top:12px"><button id="detSaveSwitches" class="primary">Save what it may use</button></div>
-          <div class="muted" style="margin-top:8px">His screen has three call tabs. This line decides two of them — <b>Video + Audio Cloning</b> and <b>Voice Clone Only</b>. The third, <b>Video Call</b>, carries no cloned voice, so this line never touches it; the <b>Video Call</b> box beside it is what decides that one. This line can only close further than the Gateway tab's line, never open it. A free trial is refused cloning whatever is set here.</div>
+          <div class="muted" style="margin-top:8px">His screen has three call tabs. This line decides two of them — <b>Video + Audio Cloning</b> and <b>Voice Clone Only</b>. The third, <b>Video Call</b>, carries no cloned voice, so this line never touches it; the <b>Video Call</b> box beside it is what decides that one. This line can only close further than the Gateway tab's line, never open it. A free trial is refused cloning whatever is set here. The <b>Voice Clone Only only</b> box beside <b>Video Call</b> is a different question from both of them: ticked, it refuses his two picture tabs at the dial whatever this line, that box, his plan or his minutes say. It opens nothing and closes nothing else — a voice call he is allowed today stays allowed.</div>
 
           <div style="border-top:1px solid #1d2733;margin-top:12px;padding-top:12px">
             <div class="row" style="align-items:center">
@@ -1601,6 +1603,20 @@
     hasCloneModeSub = true;
     return acctCloneMode(withMode.data);
   }
+  // The administrator's lock on one account, off the column the tick moves. Asked of the row and
+  // not of the snapshot: the snapshot answers with the door already folded in, and this box edits
+  // the lock by itself, so a folded answer would show a state he never ticked. A database that has
+  // not run the lock migration fails this read, which is how the box learns it has nothing to write
+  // into — and then says so rather than offering a tick that would do nothing.
+  async function readAudioLock(userId) {
+    const q = await sb.from("subscriptions").select("audio_cloning_only").eq("user_id", userId).maybeSingle();
+    if (q.error) {
+      hasAudioLockCol = false;
+      return null;
+    }
+    hasAudioLockCol = true;
+    return q.data?.audio_cloning_only === true;
+  }
   // One pool: a Video + Audio call pays its minutes out of the video wallet, so that wallet is
   // the only place minutes go in. A bucket the panel offers but no call reads is a trap, so the
   // credit box states the one bucket instead of offering a choice.
@@ -1824,6 +1840,7 @@
   let CLONING_MODE = null;
   let hasCloneModeCfg = false;   // app_config.cloning_mode exists on this database
   let hasCloneModeSub = false;   // subscriptions.cloning_mode exists on this database
+  let hasAudioLockCol = false;   // subscriptions.audio_cloning_only exists on this database
   let DEV_OF = {};
   let DEV_SEEN = {};
   let REG_BY_DEV = {};
@@ -2315,7 +2332,9 @@
     // his account, so opening it while the gateway is closed must not write "closed" into a line
     // he had left open. The gateway line comes along too, so the note under the box can say which
     // of the two is holding the door.
-    const [ownClone, globalClone] = await Promise.all([readAccountClone(userId), readGlobalClone()]);
+    const [ownClone, globalClone, lock] = await Promise.all([
+      readAccountClone(userId), readGlobalClone(), readAudioLock(userId),
+    ]);
     // The computer this account was created on, and whoever drew that machine's one free
     // minute. Asked directly, because the account may have been opened from anywhere.
     // The join date comes along with it: a register minute drawn AFTER this account joined
@@ -2365,6 +2384,7 @@
       ...snap, user_id: userId, email: EMAIL_OF[userId] || userId, pin: pin || null,
       joined_on: joinedOn, joined_at: joinedAt, came_from: cameFrom, machine: machine,
       took_here: tookHere, net: net, clone_own: ownClone, clone_global: globalClone,
+      audio_lock: lock,
       unl_pack: packRow || null,
     };
     $("acctDetail").classList.remove("hidden");
@@ -2472,6 +2492,22 @@
       : `${bought === false ? "He is refused cloning at the dial whatever is set here, because a free trial does not clone. " : ""}On his screen right now: <b>${CLONE_LABEL[effCloneMode]}</b>${effCloneMode !== ownCloneMode
           ? ` — this account is set to ${CLONE_LABEL[ownCloneMode]}, but the gateway-wide line is ${CLONE_LABEL[globalCloneMode]}, and that can only close further, never open.`
           : ""}`;
+    // The lock, and what it does to his screen. It is a different question from the box above it
+    // (his licence for the picture tab) and from the cloning line beside it (whether cloning dials at
+    // all): this decides what the server answers when a picture is dialled, whatever those two say.
+    // Drawn disabled on a database without the column, because a tick that writes nothing would read
+    // as a switch he forgot to press. The sentence names the one case the tick itself cannot show: an
+    // account locked AND shut out of cloning has no open call at all, because this lock only ever
+    // refuses a picture dial and never opens a door.
+    $("swAudioLock").checked = c.audio_lock === true;
+    $("swAudioLock").disabled = !hasAudioLockCol;
+    $("acctLockNow").innerHTML = !hasAudioLockCol
+      ? "The Voice Clone Only lock has not reached this database yet — run the migration, then reload this page. Until it has, no account can be closed to the voice cloning call alone from here."
+      : c.audio_lock === true
+        ? `Locked. His <b>Video Call</b> and <b>Video + Audio Cloning</b> dials are refused at the server — before his minutes are looked at, so nothing he holds is spent on them, and before a call exists, so he leaves no half-started call in his records. ${effCloneMode === "off"
+            ? "<b>His cloning line is closed too, so right now he has no open call at all:</b> this lock never opens a door, so untick it or open that line."
+            : "His <b>Voice Clone Only</b> tab is his open call, at the ordinary voice rate — this lock sets no price and gives no minutes."} It ends when you untick it and never by itself: no minutes, sessions or purchases run it down.`
+        : "Not locked: no dial of his is refused for being a picture call. What his screen offers is decided by the cloning line and the boxes above, exactly as it was before this box existed. Ticking needs no package — an account that never bought anything can be locked, and one sitting on a live Unlimited pack can be locked beside it.";
     // 1 is what a call start falls back to when an account has no subscription row - the
     // summary line above already says "of 1 allowed", so the box must not claim 2.
     $("detMaxConc").value = c.max_concurrent_sessions ?? 1;
@@ -2643,6 +2679,12 @@
     // opened into both cloning tabs, because nothing here may give a man a door the panel cannot price.
     if (hasCloneModeSub) patch.cloning_mode = mode;
     else patch.video_audio_enabled = mode === "voice_video";
+    // The lock is its own column, and the door's trigger has never touched it: that is what keeps
+    // the Video Call box and this tick from both reaching for `video_enabled` and the later write
+    // silently winning. Written only when the column exists, because naming a column this database
+    // has not been given fails the whole save — including the two switches he did touch.
+    const lock = $("swAudioLock").checked;
+    if (hasAudioLockCol) patch.audio_cloning_only = lock;
     const { data: saved, error } = await sb.from("subscriptions").update(patch)
       .eq("user_id", CUR.user_id).select("user_id");
     if (error) return msg("detMsg", error.message);
@@ -2653,6 +2695,11 @@
         ? `voice cloning ${CLONE_LABEL[mode]}`
         : `voice cloning ${mode === "voice_video" ? "open on both cloning tabs — Video + Audio Cloning and Voice Clone Only" : "closed — neither the Video + Audio Cloning tab nor the Voice Clone Only tab dials"}`
           + " — this database has no middle position yet, so " + (mode === "voice_only" ? "a Voice Clone Only choice could only be written as closed" : "it holds the two positions it always had"),
+      hasAudioLockCol
+        ? (lock
+            ? "and nothing else — his picture dials are refused at the server, and this stays true until you untick it"
+            : "as the tabs his licences decide — the lock is off, so no dial is refused for being a picture")
+        : "(this database has no Voice Clone Only lock yet, so his picture tabs were left exactly as they were)",
     ].join(", and ") + ".", "ok");
     await openAccount(CUR.user_id);
   };
@@ -4741,6 +4788,7 @@
     unlimited_used_up: "Unlimited minutes used up",
     unlimited_key_missing: "Unlimited, no video key ticked",
     unlimited_audio_only: "picture call on a Voice Clone Only pack",
+    audio_only_lock: "picture call on an account locked to Voice Clone Only",
   };
   function faultStage(stage) {
     const word = FAULT_WORDS[stage];
