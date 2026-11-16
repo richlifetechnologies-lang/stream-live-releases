@@ -227,7 +227,7 @@
         <div id="unlAlert"></div>
         <div data-unlfold style="overflow:auto;margin-top:12px">
           <table id="unlTable">
-            <thead><tr><th>Account</th><th title="Which Unlimited this account is on. The picture pack keeps all three call tabs open; the Voice Clone Only pack opens that tab alone and keeps the two picture tabs grey until his last session is used up. A voice pack drains at your Voice Clone Only rate, so the minutes in the columns to the right are voice-call minutes spent at that rate.">Pack</th><th title="The sessions his total minutes group into, counted by the server from the minutes he has really spent: the number he is on now out of the total, and one segment per session. Nothing here is typed - it all comes from the cap above.">Sessions</th><th title="Sessions finished. The one he is on counts in neither column: it is the number in the Sessions cell.">Sessions used</th><th title="Sessions not finished yet, including the one he is standing in.">Sessions left</th><th>One call may spend</th><th>Total cap</th><th>Spent so far</th><th>Left of the cap</th><th>Right now</th><th>Calls 24h</th><th>On air 24h</th><th>Refused 24h</th></tr></thead>
+            <thead><tr><th>Account</th><th title="Which Unlimited this account is on. The picture pack keeps all three call tabs open; the Voice Clone Only pack opens that tab alone and keeps the two picture tabs grey until his last session is used up. A voice pack drains at your Voice Clone Only rate, so the minutes in the columns to the right are voice-call minutes spent at that rate.">Pack</th><th title="The sessions his total minutes group into, counted by the server from the minutes he has really spent: the number he is on now out of the total, and one segment per session. Nothing here is typed - it all comes from the cap above.">Sessions</th><th title="Sessions finished. The one he is on counts in neither column: it is the number in the Sessions cell.">Sessions used</th><th title="Sessions not finished yet, including the one he is standing in.">Sessions left</th><th>One call may spend</th><th>Total cap</th><th>Spent so far</th><th>Left of the cap</th><th>Right now</th><th title="The video lines this account is actually allowed to dial: every key ticked unlimited accounts on the Key pool tab, PLUS the key attached to this account on its own page. The first number is how many of those still have minutes today; zero of them is the fault the customer saw as not open for video calling yet. A Voice Clone Only pack makes no picture call, so this column says voice tab only and asks for no video line at all.">Video line</th><th>Calls 24h</th><th>On air 24h</th><th>Refused 24h</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -595,7 +595,7 @@
           <div style="flex:0 0 auto;display:flex;align-items:center">
             <label class="feat" style="margin:0"><input type="checkbox" id="kEnabled" checked /> enabled</label>
             <label class="feat" style="margin:0 0 0 16px"><input type="checkbox" id="kDefault" /> global default</label>
-            <label class="feat" style="margin:0 0 0 16px" title="Ticked: every Unlimited account is served by this key and by no other. Unticked: ordinary minute-buying customers use it, and Unlimited accounts never touch it. Video only — voice keys are not fenced."><input type="checkbox" id="kForUnlimited" /> unlimited accounts</label>
+            <label class="feat" style="margin:0 0 0 16px" title="Ticked: every Unlimited account is served by this key and by no other. Unticked: ordinary minute-buying customers use it, and an Unlimited account only touches it when you attach it to that account on its own page. Video only — voice keys are not fenced."><input type="checkbox" id="kForUnlimited" /> unlimited accounts</label>
           </div>
         </div>
         <div class="btns" style="margin-top:12px">
@@ -612,7 +612,7 @@
         <p class="muted" style="margin:6px 0 12px">Only the last four characters ever reach this page. <b>Verify</b> re-checks the stored copy against the provider; <span class="pill ok">live</span> means no failure was recorded against it in the last 24 hours.</p>
         <div style="overflow:auto">
           <table id="keysTable">
-            <thead><tr><th>Label</th><th>Video · fal.ai</th><th title="Which of your own keys did the burning. fal.ai is asked for this at most every ten minutes, because asking on every glance is what made it refuse to answer; the running-call line under the figure counts forward from that reading.">Spent on fal.ai today</th><th id="thTrialKey">Trial · DeCart</th><th id="thTrialLeft">Trial left</th><th>Voice · ElevenLabs</th><th>Enabled</th><th id="thForUnl" title="Ticked: this key is one of the keys Unlimited accounts are allowed to dial. Unticked: ordinary minute-buyers use it and Unlimited accounts never touch it. Video only — voice keys are never fenced.">For unlimited</th><th>Priority</th><th>Today / cap</th><th>Failures 24h</th><th>Last error</th><th></th></tr></thead>
+            <thead><tr><th>Label</th><th>Video · fal.ai</th><th title="Which of your own keys did the burning. fal.ai is asked for this at most every ten minutes, because asking on every glance is what made it refuse to answer; the running-call line under the figure counts forward from that reading.">Spent on fal.ai today</th><th id="thTrialKey">Trial · DeCart</th><th id="thTrialLeft">Trial left</th><th>Voice · ElevenLabs</th><th>Enabled</th><th id="thForUnl" title="Ticked: this key is one of the keys Unlimited accounts are allowed to dial. Unticked: ordinary minute-buyers use it, and an Unlimited account dials it only when you attach it to that account on its own page. Video only — voice keys are never fenced.">For unlimited</th><th>Priority</th><th>Today / cap</th><th>Failures 24h</th><th>Last error</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -665,7 +665,7 @@
             <button id="refreshFaults">Refresh</button>
           </div>
         </div>
-        <p class="muted" style="margin:6px 0 12px">What the customer's app saw when a call was refused. <b>engine</b> means the video line took the booking and then never produced a picture; <b>gateway</b> means the account itself was refused, and the reason is named in brackets. Either of those is a call that was <b>not</b> billed. <b>video line closed</b> is a different case: the call was running and the service ended it, and the sentence names how many seconds it held first. A row named for an Unlimited pack is the <b>package</b> refusing, not a broken line — his minutes were used up, no video key was ticked for his pack, or he pressed a picture tab while on a Voice Clone Only pack. None of those took a minute off him, and the same figures are on the Unlimited accounts card.</p>
+        <p class="muted" style="margin:6px 0 12px">What the customer's app saw when a call was refused. <b>engine</b> means the video line took the booking and then never produced a picture; <b>gateway</b> means the account itself was refused, and the reason is named in brackets. Either of those is a call that was <b>not</b> billed. <b>video line closed</b> is a different case: the call was running and the service ended it, and the sentence names how many seconds it held first. A row named for an Unlimited pack is the <b>package</b> refusing, not a broken line — his minutes were used up, no video line pointed at his account, every line attached had used its minutes for today, or he pressed a picture tab while on a Voice Clone Only pack. None of those took a minute off him, and the same figures are on the Unlimited accounts card.</p>
         <div style="overflow:auto">
           <table id="faultTable">
             <thead><tr><th>When</th><th>Stage</th><th>Account</th><th>What came back</th></tr></thead>
@@ -4567,7 +4567,7 @@
         <td style="white-space:nowrap">${k.enabled === false ? '<span class="pill no">disabled</span>' : '<span class="pill yes">enabled</span>'} <button data-act="toggle" data-id="${k.id}">${k.enabled === false ? "enable" : "disable"}</button></td>
         ${hasUnlCol ? `<td>${k.for_unlimited_accounts
           ? `<span class="pill yes" title="${k.video_key_tail ? "Unlimited accounts dial this key and no other" : "ticked, but this row holds no video key, so no Unlimited account can dial it"}">unlimited</span>`
-          : '<span class="muted" title="ordinary minute-buying customers use this key; Unlimited accounts never touch it">—</span>'}</td>` : ""}
+          : '<span class="muted" title="ordinary minute-buying customers use this key; an Unlimited account only touches it if you attach it to that account on its own page">—</span>'}</td>` : ""}
         <td class="mono">${N(k.priority, 100)}</td>
         <td class="mono" data-usage="${k.id}">${cap == null ? "uncapped" : mins(used) + " / " + mins(cap)}${cap != null && used >= N(cap) ? ' <span class="pill warn">capped</span>' : ""}</td>
         <td class="mono">${N(k.recent_failures) ? `<span class="pill fail">${k.recent_failures}</span>` : '<span class="pill ok">0</span>'}</td>
@@ -4617,7 +4617,7 @@
     const keys = p.keys || {};
     const leaks = N(p.fence_leaks);
     const refused = list.reduce((s, a) => s + N(a.refused_used_up_24h) + N(a.refused_no_key_24h)
-      + N(a.refused_picture_on_audio_pack_24h), 0);
+      + N(a.refused_key_spent_24h) + N(a.refused_picture_on_audio_pack_24h), 0);
     const onAir = act.reduce((s, a) => s + N(a.airtime_24h), 0);
     // His two new questions, answered without arithmetic of its own: how much of what he sold
     // has gone, and how much is still sitting there. Both read the server's session figures, so
@@ -4635,20 +4635,32 @@
       [refused ? `<span style="color:#fbbf24">${refused}</span>` : refused, "presses refused in 24h"],
     ].map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
 
-    // Nothing about a fence is quiet on this card. An Unlimited account with no key of its own is
-    // refused by design, and a refusal the seller cannot see looks exactly like a fault in his
-    // video line.
+    // Nothing about a fence is quiet on this card. An Unlimited account with no video line of its
+    // own is refused by design, and a refusal the seller cannot see looks exactly like a fault in
+    // his video line.
+    //
+    // The warning is counted per account now, not off the ticked keys alone. A key attached to one
+    // account on its own page serves that account whatever the tick says, so a system with nothing
+    // ticked is not necessarily a system that refuses - and an account whose attached line has run
+    // out for today needs a different sentence from an account nobody has pointed a line at.
     const box = [];
-    if (!N(keys.usable_now)) {
+    const stuck = act.filter((a) => a.scope !== "audio");
+    const spentToday = stuck.filter((a) => N(a.lines_attached) && !N(a.lines_open));
+    const noLine = stuck.filter((a) => !N(a.lines_attached));
+    if (spentToday.length) {
+      box.push(`<div class="presult show fail"><b>${spentToday.length} picture-pack account${spentToday.length > 1 ? "s have" : " has"} a video line attached, and every line attached to ${spentToday.length > 1 ? "them" : "it"} has used its minutes for today.</b> The customers press Start and are refused until the day turns over. Raise the daily minutes on the Key pool tab, or attach another line to the account.</div>`);
+    }
+    if (noLine.length) {
       const why = !N(keys.ticked)
-        ? "Not one key carries the <b>unlimited accounts</b> tick, so an Unlimited buyer is refused the moment he presses Start — nothing dials and nothing is spent. Tick it on a video key on the Key pool tab."
-        : "The keys you ticked cannot be dialled right now — switched off, holding no video key, or past their daily minutes. An Unlimited buyer is refused until one of them is free.";
-      box.push(`<div class="presult show ${act.length ? "fail" : ""}">${act.length
-        ? `<b>${act.length} account${act.length > 1 ? "s are" : " is"} on Unlimited with no key to call on.</b> ` + why
-        : why + " Nothing to fix until someone buys the package."}</div>`);
+        ? "Not one key carries the <b>unlimited accounts</b> tick, and these accounts have no key of their own either, so they are refused the moment they press Start — nothing dials and nothing is spent. Tick it on a video key on the Key pool tab, or attach a key to the account on its own page."
+        : "These accounts have no key attached to them and none of the keys you ticked can be dialled right now — switched off, holding no video key, or past their daily minutes. They are refused until one of them is free.";
+      box.push(`<div class="presult show fail"><b>${noLine.length} picture-pack account${noLine.length > 1 ? "s are" : " is"} on Unlimited with no video line of its own.</b> ` + why + "</div>");
+    }
+    if (!spentToday.length && !noLine.length && stuck.length && !N(keys.ticked)) {
+      box.push(`<div class="presult show ok">Every picture-pack account can dial right now, on the key you attached to it rather than on a ticked key. ${stuck.length} account${stuck.length > 1 ? "s are" : " is"} covered this way — tick a key on the Key pool tab if you want new Unlimited buyers covered before you attach one by hand.</div>`);
     }
     box.push(leaks
-      ? `<div class="presult show fail"><b>${leaks} paid picture call${leaks > 1 ? "s were" : " was"} run for an Unlimited account on a key that is not ticked for unlimited accounts.</b> That is the one thing the fence exists to prevent: those accounts must spend only their own keys. The calls are listed on the Calls tab.</div>`
+      ? `<div class="presult show fail"><b>${leaks} paid picture call${leaks > 1 ? "s were" : " was"} run for an Unlimited account on a key that is neither ticked for unlimited accounts nor attached to that account.</b> That is the one thing the fence exists to prevent: those accounts must spend only their own keys. The calls are listed on the Calls tab.</div>`
       : '<div class="presult show ok">Fence holding: <b>0</b> picture calls have run for an Unlimited account on a key outside its own. Voice calls are never fenced — an Unlimited buyer uses any voice key, like everyone else.</div>');
     $("unlAlert").innerHTML = box.join("");
 
@@ -4656,10 +4668,12 @@
       const noCap = a.cap_minutes == null;
       const left = noCap ? null : N(a.remaining_minutes);
       const s = unlSess(a);
-      const n = N(a.refused_used_up_24h) + N(a.refused_no_key_24h) + N(a.refused_picture_on_audio_pack_24h);
+      const n = N(a.refused_used_up_24h) + N(a.refused_no_key_24h) + N(a.refused_key_spent_24h)
+        + N(a.refused_picture_on_audio_pack_24h);
       const rows = [];
       if (N(a.refused_used_up_24h)) rows.push(`${a.refused_used_up_24h} package finished`);
-      if (N(a.refused_no_key_24h)) rows.push(`${a.refused_no_key_24h} no key attached`);
+      if (N(a.refused_no_key_24h)) rows.push(`${a.refused_no_key_24h} no video line pointed at this account`);
+      if (N(a.refused_key_spent_24h)) rows.push(`${a.refused_key_spent_24h} every line attached was spent for today`);
       if (N(a.refused_picture_on_audio_pack_24h)) rows.push(`${a.refused_picture_on_audio_pack_24h} picture call on a voice-only pack`);
       // The session cell is the customer's own card read from the seller's side: which one he is
       // on, how many the total bought, and one segment per session. "Used" counts finished
@@ -4677,6 +4691,18 @@
       const voiceAir = a.scope === "audio" ? N(effectiveRates().audio && effectiveRates().audio.multiplier, 0) : 0;
       const airHint = (m) => voiceAir > 0 && Math.abs(voiceAir - 1) > 1e-9
         ? `<div class="muted" style="font-size:11px">${mins1(m / voiceAir)} min on the line</div>` : "";
+      // The answer to "I attached a key to this customer and he was still refused": the video lines
+      // pointed at THIS account and how many of them can be dialled this minute. A picture pack with
+      // a line open never refuses for the line; one that is spent for today and one with nothing
+      // attached are two different fixes, so they are said apart.
+      const lineCell = a.scope === "audio"
+        ? '<span class="muted" title="A Voice Clone Only pack makes no picture call, so no video line is asked for on this account. His voice calls use any voice key, like everyone else.">voice tab only</span>'
+        : (N(a.lines_open)
+          ? `<span style="color:#22c55e">${N(a.lines_open)}</span> <span class="muted">of ${N(a.lines_attached)} can dial now</span>`
+          : N(a.lines_attached)
+            ? `<span style="color:#fbbf24">0 of ${N(a.lines_attached)}</span> <span class="muted">— every line attached has used its minutes for today</span>`
+            : '<span style="color:#f87171">none</span> <span class="muted">— no ticked key and no key attached to this account</span>')
+          + (a.attached_key ? `<div class="muted" style="font-size:11px">${esc(a.attached_key)}</div>` : "");
       return `<tr${a.over_cap ? ' style="background:#2a1215"' : (a.near_cap ? ' style="background:#241f0d"' : "")}>
         <td><b>${esc(a.email || shortId(a.user_id))}</b>${a.active ? "" : ' <span class="pill no">finished</span>'}${a.calling_now ? ' <span class="pill yes">on air</span>' : ""}<div class="muted">since ${when(a.granted_at)}</div></td>
         <td class="muted">${a.scope === "audio"
@@ -4694,11 +4720,12 @@
         <td class="muted">${a.calling_now
           ? mmss(a.window_left_seconds) + (s.sessions ? " of this session left" : " of this call left")
           : (a.active ? "not calling" : "ended " + when(a.finished_at))}</td>
+        <td>${lineCell}</td>
         <td class="mono">${N(a.calls_24h)}</td>
         <td class="mono">${clock(a.airtime_24h)}</td>
         <td class="mono">${n ? `<span class="pill fail" title="${esc(rows.join(", "))}">${n}</span>` : '<span class="pill ok">0</span>'}</td>
       </tr>`;
-    }).join("") || '<tr><td colspan="13" class="muted">Nobody is on the Unlimited package yet. Sell one from the Plans tab, or tick <b>Set unlimited</b> when you credit an account.</td></tr>';
+    }).join("") || '<tr><td colspan="14" class="muted">Nobody is on the Unlimited package yet. Sell one from the Plans tab, or tick <b>Set unlimited</b> when you credit an account.</td></tr>';
 
     stamp("unlWhen");
     paintFoldUnl();
@@ -4786,7 +4813,10 @@
   // exactly as the app wrote it, so a support message can still be matched to a row.
   const FAULT_WORDS = {
     unlimited_used_up: "Unlimited minutes used up",
-    unlimited_key_missing: "Unlimited, no video key ticked",
+    unlimited_key_missing: "Unlimited, no video line for this account",
+    // The two are different faults with different fixes, so they must not print the same words: a
+    // spent line turns over by itself at midnight UTC, a missing line never does until he ticks one.
+    unlimited_key_spent: "Unlimited, every video line spent for today",
     unlimited_audio_only: "picture call on a Voice Clone Only pack",
     audio_only_lock: "picture call on an account locked to Voice Clone Only",
   };
@@ -6717,7 +6747,7 @@
         <div><label style="margin-top:0">Minutes one call may spend</label><input data-f="window" type="number" min="1" step="1" value="${v.window}" /></div>
         <div><label style="margin-top:0">Total cap on the buyer's account (minutes)</label><input data-f="cap" type="number" min="1" step="1" value="${esc(String(v.cap))}" placeholder="set it per account later" /></div>
       </div>
-      <p class="phint" data-unlimited-hint style="${v.unlimited ? "" : "display:none"}">A buyer of this package is shown the word UNLIMITED and <b>no minutes figure anywhere</b>, so nothing he reads looks like a cap. Two things bound him, both yours: one call may spend the number of minutes you type above and the window starts again whenever he presses Stop or his network drops; and the total cap is what he can spend altogether. Both are minutes <b>spent</b>, not minutes on screen — the rate that turns them into airtime is the Unlimited dial on the Burn rates tab for a picture call, and your Voice Clone Only rate for a voice call. At 1x the window is the time itself. Leave the cap empty and he can call straight away on the window alone — every minute he uses is still being counted, so the cap you type later is a <b>total</b> and his earlier calls come out of it. Do not forget to tick a video key for unlimited accounts on the Keys tab, or his video calls are refused with nothing spent.</p>
+      <p class="phint" data-unlimited-hint style="${v.unlimited ? "" : "display:none"}">A buyer of this package is shown the word UNLIMITED and <b>no minutes figure anywhere</b>, so nothing he reads looks like a cap. Two things bound him, both yours: one call may spend the number of minutes you type above and the window starts again whenever he presses Stop or his network drops; and the total cap is what he can spend altogether. Both are minutes <b>spent</b>, not minutes on screen — the rate that turns them into airtime is the Unlimited dial on the Burn rates tab for a picture call, and your Voice Clone Only rate for a voice call. At 1x the window is the time itself. Leave the cap empty and he can call straight away on the window alone — every minute he uses is still being counted, so the cap you type later is a <b>total</b> and his earlier calls come out of it. Do not forget to tick a video key for unlimited accounts on the Keys tab, or attach one to this account on its own page, or his video calls are refused with nothing spent.</p>
       <input type="hidden" data-f="min_video_audio" value="${v.min_video_audio}" />
       ${v.min_video_audio > 0 ? `<p class="phint" style="margin-top:6px">This package still holds ${mins(v.min_video_audio)} on the retired Video + Audio line, from when that tab drew from a bucket of its own. There is one pool now, so a buyer who pays this gets ${mins(v.min_video + v.min_video_audio)} min to spend on either call tab — the figure stays on the record, and no box here can change it.</p>` : ""}
       ${v.min_audio > 0 ? `<p class="phint" style="margin-top:6px">This package also holds ${mins(v.min_audio)} of Audio Call minutes from when the app kept a separate audio bucket. Every call now, the Voice Clone Only one included, pays from the one video pool, so they are kept on the record and left out when the package is credited — no box here can change them.</p>` : ""}
