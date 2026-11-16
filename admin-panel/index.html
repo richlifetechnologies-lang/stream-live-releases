@@ -1065,12 +1065,15 @@
               <option value="7" selected>Last 7 days</option>
               <option value="30">Last 30 days</option>
             </select>
-            <select id="endsFilter" style="max-width:210px">
+            <select id="endsFilter" style="max-width:330px">
               <option value="all" selected>Every paid call</option>
               <option value="sudden">Only the ones he did not stop</option>
               <option value="hand">Only the ones he stopped</option>
               <option value="blank">Only calls with nothing delivered (not busy)</option>
               <option value="refused">Only the ones the busy line refused</option>
+              <option value="busy_self">Only Busy – he was already on a call</option>
+              <option value="busy_seat">Only Busy – his seat had not been released yet</option>
+              <option value="busy_full">Only Busy – the video service was full</option>
               <option value="mid">Only calls that stopped mid-way</option>
               <option value="unrecorded">Only the ones not recorded</option>
             </select>
@@ -1114,10 +1117,25 @@
           the seconds its line was held open, and to the customer for nothing, so this is our
           money, sat there.
         </p>
+        <p class="muted" style="margin:0 0 12px">
+          <b>Line busy is three different faults wearing one word</b>, and they are mended in three
+          different places, so each press below is named as one of them:
+          <b>Busy – he was already on a call</b> is our own gate refusing a second call on the same
+          account before anything was dialled — an account colliding with itself, and the reason the
+          30-day audit found behind 161 of the 165 paid refusals;
+          <b>Busy – his seat had not been released yet</b> is a dial that was made and came back
+          quoting a session count, his call closed here and the line not yet let go of it there;
+          <b>Busy – the video service was full</b> is the service's own capacity answer, a crowd at
+          the door with nothing about this account involved. A refusal a build did not name is counted
+          apart as <b>did not say why</b>, never folded into one of the three.
+          Presses our gate refused before it booked a call are in the counts and in the rows, but they
+          held no line and cost nothing — that is what makes them worth separating.
+        </p>
         <div class="grid4" id="endsRefusedStats"></div>
+        <p class="muted" id="endsRefusedKinds" style="margin:10px 0 0"></p>
         <div data-endsfold style="overflow:auto;margin-top:12px">
           <table id="endsRefusedTable">
-            <thead><tr><th>Day</th><th style="text-align:right">Refused</th><th style="text-align:right">Seconds held</th><th style="text-align:right">Cost</th><th>Accounts and machines</th><th></th></tr></thead>
+            <thead><tr><th>Day</th><th style="text-align:right">Refused</th><th>Which kind of busy</th><th style="text-align:right">Seconds held</th><th style="text-align:right">Cost</th><th>Accounts and machines</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -4411,7 +4429,13 @@
       const why = endsReason(x.r, CALL_FAIL);
       const said = (why.why && why.why.detail) || (why.lines[0] && why.lines[0].detail) || "";
       if (why.key === "refused") {
-        return `<span class="pill busy" title="${esc(said)}">Line busy</span>`;
+        // "Line busy" used to be one word covering three different faults, two of which are ours to
+        // fix in two different places. This cell now names which one this dial met, and it reads it
+        // off the same words the Call Ends tab reads, so the two tabs cannot sort one refusal twice.
+        const b = busyOf(why.why);
+        return `<span class="pill busy" style="white-space:normal;display:inline-block;text-align:left;`
+          + `max-width:230px;line-height:1.35;font-size:11px" title="${esc(BUSY_KINDS[b.key].side + " - " + said)}">`
+          + esc(BUSY_KINDS[b.key].label) + "</span>";
       }
       if (!String(said).trim()) return "";
       return `<span class="pill ${why.pill}" style="white-space:normal;display:inline-block;text-align:left;`
@@ -5698,6 +5722,12 @@
   const ENDS_KIND = { video: "picture", video_audio: "picture", audio: "cloned voice" };
   let ENDS_CALLS = [];
   let ENDS_FAIL = {}; // session id -> the lines that app wrote down about this call
+  // Fault lines written with NO call behind them. Until v1.8.92 every refusal was a dial, so a
+  // refusal always had a session row and this list was empty; from that build the gate can refuse a
+  // press before it books anything, and a press that books nothing has no row in the calls table to
+  // be listed under. Without this the busy line would look as though it had gone quiet the moment we
+  // started catching refusals earlier, which is the opposite of what is happening.
+  let ENDS_GATE = [];
   let ENDS_TRUNC = "";
   let ENDS_HAS_LINE_COLS = false; // these rows carry video_model and fal_key_id
   let ENDS_KEYS = {};             // gateway_keys id -> its label, for the picture-line card
@@ -5740,7 +5770,7 @@
           .order("started_at", { ascending: false }).limit(1000);
       })(),
       sb.from("call_failures")
-        .select("session_id, stage, detail, created_at").gte("created_at", since).limit(4000),
+        .select("user_id, session_id, stage, detail, created_at").gte("created_at", since).limit(4000),
       // Only so a key can be named the way the Key pool tab names it. A pool this tab cannot
       // read is not a reason to show no card at all — the rows fall back to the short id.
       sb.from("gateway_keys").select("id, label").limit(200),
@@ -5749,15 +5779,16 @@
     if (fls.error) return msg("endsMsg", "Could not read what the apps wrote down: " + fls.error.message);
     ENDS_CALLS = ses.data || [];
     ENDS_FAIL = {};
+    ENDS_GATE = [];
     for (const f of (fls.data || [])) {
-      if (!f.session_id) continue;
+      if (!f.session_id) { ENDS_GATE.push(f); continue; }
       (ENDS_FAIL[f.session_id] = ENDS_FAIL[f.session_id] || []).push(f);
     }
     ENDS_TRUNC = (ENDS_CALLS.length >= 1000 ? "The window holds more than 1,000 paid calls, so the oldest are not read. " : "")
       + ((fls.data || []).length >= 4000 ? "More than 4,000 fault lines fell in the window, so a call's earliest lines may be missing from its detail. " : "");
     ENDS_KEYS = {};
     for (const k of (keys && !keys.error ? keys.data || [] : [])) ENDS_KEYS[k.id] = k.label || "";
-    await emailsOf(ENDS_CALLS.map((r) => r.user_id));
+    await emailsOf(ENDS_CALLS.map((r) => r.user_id).concat(ENDS_GATE.map((f) => f.user_id)));
     renderEnds();
     renderLines();
   }
@@ -5785,7 +5816,46 @@
   // One regular expression, two tabs. The call list on the Calls tab names the same two facts on a
   // single row, so it tests this; keeping it here rather than copying it is what stops the two
   // tabs ever disagreeing about which refusal was a full line.
-  const LINE_BUSY_RE = /cause=line_full|concurrent session limit|session_limit|at capacity|lines? (are )?(full|busy)|too many (concurrent )?(sessions|calls)/i;
+  const LINE_BUSY_RE = /cause=line_full|concurrent session limit|session_limit|at capacity|lines? (are )?(full|busy)|too many (concurrent )?(sessions|calls)|concurrent_limit|lines_busy/i;
+
+  // The busy line is three different events wearing one word, and they are fixed in three different
+  // places, so this tab names them separately from v1.8.92:
+  //
+  //   self  - OUR gate refused the press before a dial was ever asked, because this account already
+  //           held a live session. The 30-day audit found 161 of the 165 paid "line busy" refusals
+  //           were exactly this: our own table allowed each account two live sessions and the video
+  //           service sells one, so a customer dialling beside his own open call collided with
+  //           himself. It is fixed by the number of sessions an account may hold, not by capacity.
+  //   seat  - the refusal came back FROM the dial, quoting a session count: either the service's own
+  //           "Concurrent session limit reached", or our `lines_busy` gate saying the line he needs is
+  //           still being released from the last call. His call row says it is closed, and the line
+  //           has not let go of it yet.
+  //   full  - the service answered its capacity refusal ("Server at capacity", `busy=capacity`, close
+  //           1013): a crowd at the door, nothing to do with this account, and the one kind a third
+  //           key or a second billing account would answer.
+  //   unk   - a busy refusal written by a build that did not yet quote the service's class. It is
+  //           shown as its own figure rather than folded into one of the three, because the difference
+  //           between "0 of this kind" and "we were never told" is the difference he acts on.
+  //
+  // The order of the tests is the strength of the evidence: the app's own `[busy=…]` mark, then the
+  // service's words, then our gate's reason code, and only last the loose prose that predates them.
+  const BUSY_KINDS = {
+    self: { label: "Busy – he was already on a call", short: "already on a call", side: "our gate, before the dial" },
+    seat: { label: "Busy – his seat had not been released yet", short: "seat not released", side: "the line, still holding his last call" },
+    full: { label: "Busy – the video service was full", short: "service full", side: "the video service" },
+    unk: { label: "Busy – the line refused and did not say why", short: "not named", side: "not on record" },
+  };
+
+  function busyOf(line) {
+    const t = String((line && ((line.stage || "") + " " + (line.detail || ""))) || "");
+    let key = "unk";
+    if (/busy=capacity|at capacity|overloaded|\b1013\b/i.test(t)) key = "full";
+    else if (/busy=session_limit|concurrent session limit|\bsession_limit\b|too many (concurrent )?(sessions|calls)/i.test(t)) key = "seat";
+    else if (/\bconcurrent_limit\b/i.test(t)) key = "self";
+    else if (/\blines_busy\b|still being released/i.test(t)) key = "seat";
+    const k = BUSY_KINDS[key];
+    return { key, label: k.label, side: k.side };
+  }
 
   function endsReason(r, failMap) {
     const kind = ENDS_KIND[r.modality] || "picture";
@@ -5835,7 +5905,14 @@
       const big = said(/cause=photo_too_big|message too big/i);
       if (big) return mk("photo", "fail", "No " + kind + ": the photo was too big for the line to read", "our app's photo size", big);
       const ref = said(LINE_BUSY_RE);
-      if (ref) return mk("refused", "busy", "Line busy: the video line refused the dial", "our video line", ref);
+      if (ref) {
+        // The busy line is three different events wearing one word, and each is fixed somewhere else,
+        // so the row names WHICH one this call met off the words the app and the service wrote down -
+        // never a guess on this page. The filters, the busy card and the Calls tab pill all read the
+        // `busy` field below, so the two tabs cannot sort one refusal two ways.
+        const b = busyOf(ref);
+        return Object.assign(mk("refused", "busy", b.label, b.side, ref), { busy: b.key });
+      }
       const cam = said(/cause=camera_stalled/i);
       if (cam) return mk("camera", "fail", "No " + kind + ": his camera fed no frame", "his machine", cam);
       const nc = said(/cause=never_connected/i);
@@ -5876,6 +5953,9 @@
     if (which === "blank") return !x.r.media_started_at && !!x.r.ended_at && x.why.key !== "refused";
     if (which === "mid") return x.why.key === "mid";
     if (which === "refused") return x.why.key === "refused";
+    if (which === "busy_self") return x.why.busy === "self";
+    if (which === "busy_seat") return x.why.busy === "seat";
+    if (which === "busy_full") return x.why.busy === "full";
     if (which === "unrecorded") return !x.r.stopped_by && !!x.r.ended_at;
     return true;
   }
@@ -5900,48 +5980,103 @@
     return Math.max(0, Math.round((to - new Date(r.started_at)) / 1000));
   }
 
+  // One refusal, whichever half of the card it belongs to, in the same shape: when it happened, which
+  // of the three kinds of busy it was, what the line or the gate actually said, and how many seconds
+  // of our held line it cost. A press our gate refused before booking a call has no call row and no
+  // line ever opened, so it carries no seconds and no cost - which is the fact that makes it worth
+  // listing beside the refusals that do cost money rather than hidden inside them.
+  function endsRefusalEntries(all) {
+    const out = [];
+    for (const x of all.filter((e) => e.why.key === "refused")) {
+      out.push({
+        at: x.r.started_at || (x.why.lines[0] && x.why.lines[0].created_at),
+        busy: x.why.busy || "unk",
+        secs: endsSec(x.r),
+        who: x.r.user_id,
+        where: x.r.device_id || "—",
+        tab: ENDS_TAB[x.r.tab] || x.r.tab || "—",
+        opened: "opened " + when(x.r.started_at),
+        said: (x.why.why && x.why.why.detail) || "",
+        booked: true,
+      });
+    }
+    for (const f of ENDS_GATE) {
+      if (!LINE_BUSY_RE.test((f.stage || "") + " " + (f.detail || ""))) continue;
+      out.push({
+        at: f.created_at,
+        busy: busyOf(f).key,
+        secs: 0,
+        who: f.user_id,
+        where: "—",
+        tab: "—",
+        opened: "no call was booked",
+        said: String(f.detail || ""),
+        booked: false,
+      });
+    }
+    return out;
+  }
+
   function renderRefused(all) {
-    const rows = all.filter((x) => x.why.key === "refused");
-    const sec = rows.reduce((n, x) => n + endsSec(x.r), 0);
-    const accounts = new Set(rows.map((x) => x.r.user_id));
-    const machines = new Set(rows.map((x) => x.r.device_id || "—"));
+    const entries = endsRefusalEntries(all);
+    const gates = entries.filter((e) => !e.booked);
+    const sec = entries.reduce((n, e) => n + e.secs, 0);
+    const accounts = new Set(entries.map((e) => e.who).filter(Boolean));
+    const machines = new Set(entries.filter((e) => e.booked).map((e) => e.where));
+    const counts = { self: 0, seat: 0, full: 0, unk: 0 };
+    for (const e of entries) counts[e.busy]++;
+
     $("endsRefusedStats").innerHTML = [
-      [rows.length, "calls the busy line refused"],
+      [entries.length, "presses the busy line refused"],
+      [gates.length, "of them refused before a line was dialled"],
       [sec, "seconds its line was held for nothing"],
       ["$" + (sec * REFUSAL_SEC_USD).toFixed(2), "ours, at 2 cents a second"],
-      [accounts.size + " / " + machines.size, "accounts / machines hit"],
+      [accounts.size + " / " + machines.size, "accounts / machines named"],
     ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
 
+    // The three kinds, in figures, before anything is clicked - because the sentence he acted on
+    // ("reduce the number of line is busy we get") cannot be followed up on one total when two of the
+    // three kinds have nothing to do with capacity.
+    $("endsRefusedKinds").innerHTML = Object.keys(BUSY_KINDS).map((k) =>
+      "<b>" + esc(BUSY_KINDS[k].label) + ":</b> " + counts[k]).join(" &nbsp;·&nbsp; ")
+      + (gates.length
+        ? ' &nbsp;·&nbsp; <b>' + gates.length + "</b> of these were refused by our own gate before a "
+          + "call was booked, so they held no line and cost nothing."
+        : "");
+
     const days = {};
-    for (const x of rows) {
-      const at = x.r.started_at || (x.why.lines[0] && x.why.lines[0].created_at);
-      const d = String(new Date(at).toISOString()).slice(0, 10);
-      (days[d] = days[d] || []).push(x);
+    for (const e of entries) {
+      const d = String(new Date(e.at).toISOString()).slice(0, 10);
+      (days[d] = days[d] || []).push(e);
     }
     const one = (n, word) => n + " " + word + (n === 1 ? "" : "s");
     $("endsRefusedTable").querySelector("tbody").innerHTML = Object.keys(days).sort().reverse().map((d) => {
       const set = days[d];
-      const s = set.reduce((n, x) => n + endsSec(x.r), 0);
-      const who = new Set(set.map((x) => EMAIL_OF[x.r.user_id] || shortId(x.r.user_id)));
-      const where = new Set(set.map((x) => x.r.device_id || "—"));
-      const detail = set.map((x) => {
-        const said = (x.why.why && x.why.why.detail) || "";
-        return '<div style="margin-top:6px"><b>' + esc(EMAIL_OF[x.r.user_id] || shortId(x.r.user_id)) + "</b> "
-          + '<span class="muted">' + esc(x.r.device_id || "—") + " · " + esc(ENDS_TAB[x.r.tab] || x.r.tab || "—")
-          + " · opened " + when(x.r.started_at) + " · " + endsSec(x.r) + " s held</span>"
-          + (said ? '<div class="muted mono" style="margin-top:2px;white-space:normal">' + esc(said) + "</div>"
-                  : '<div class="muted" style="margin-top:2px">His app wrote no words from the line against this call.</div>')
+      const s = set.reduce((n, e) => n + e.secs, 0);
+      const who = new Set(set.map((e) => EMAIL_OF[e.who] || shortId(e.who)));
+      const where = new Set(set.filter((e) => e.booked).map((e) => e.where));
+      const byKind = Object.keys(BUSY_KINDS).filter((k) => set.some((e) => e.busy === k))
+        .map((k) => BUSY_KINDS[k].short + ": " + set.filter((e) => e.busy === k).length)
+        .join(" · ");
+      const detail = set.map((e) => {
+        return '<div style="margin-top:6px"><b>' + esc(EMAIL_OF[e.who] || shortId(e.who)) + "</b> "
+          + '<span class="muted">' + esc(e.where) + " · " + esc(e.tab)
+          + " · " + esc(e.opened) + " · " + (e.booked ? e.secs + " s held" : "nothing held")
+          + ' · <b>' + esc(BUSY_KINDS[e.busy].label) + "</b> (" + esc(BUSY_KINDS[e.busy].side) + ")</span>"
+          + (e.said ? '<div class="muted mono" style="margin-top:2px;white-space:normal">' + esc(e.said) + "</div>"
+                    : '<div class="muted" style="margin-top:2px">His app wrote no words from the line against this call.</div>')
           + "</div>";
       }).join("");
       return '<tr><td class="mono">' + esc(d) + "</td>"
         + '<td class="mono" style="text-align:right">' + set.length + "</td>"
+        + '<td class="muted">' + esc(byKind) + "</td>"
         + '<td class="mono" style="text-align:right">' + s + " s</td>"
         + '<td class="mono" style="text-align:right">$' + (s * REFUSAL_SEC_USD).toFixed(2) + "</td>"
         + '<td class="muted">' + one(who.size, "account") + " · " + one(where.size, "machine") + "</td>"
         + '<td style="white-space:nowrap"><button data-act="ends-detail">+</button></td></tr>'
-        + '<tr data-ends-detail class="hidden"><td colspan="6" class="muted">' + detail + "</td></tr>";
+        + '<tr data-ends-detail class="hidden"><td colspan="7" class="muted">' + detail + "</td></tr>";
     }).join("")
-      || '<tr><td colspan="6" class="muted">No call in this window was refused for a busy line. That is the honest zero, not a missing read.</td></tr>';
+      || '<tr><td colspan="7" class="muted">No call in this window was refused for a busy line. That is the honest zero, not a missing read.</td></tr>';
   }
 
   // ══ The picture-line card ═════════════════───────────────────────────────
