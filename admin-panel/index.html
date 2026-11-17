@@ -1072,7 +1072,8 @@
               <option value="blank">Only calls with nothing delivered (not busy)</option>
               <option value="refused">Only the ones the busy line refused</option>
               <option value="busy_self">Only Busy – he was already on a call</option>
-              <option value="busy_seat">Only Busy – his seat had not been released yet</option>
+              <option value="busy_wait">Only Busy – our gate refused before the dial</option>
+              <option value="busy_limit">Only Busy – the video line was at its session limit</option>
               <option value="busy_full">Only Busy – the video service was full</option>
               <option value="mid">Only calls that stopped mid-way</option>
               <option value="unrecorded">Only the ones not recorded</option>
@@ -1118,16 +1119,25 @@
           money, sat there.
         </p>
         <p class="muted" style="margin:0 0 12px">
-          <b>Line busy is three different faults wearing one word</b>, and they are mended in three
+          <b>Line busy is four different faults wearing one word</b>, and they are mended in four
           different places, so each press below is named as one of them:
           <b>Busy – he was already on a call</b> is our own gate refusing a second call on the same
           account before anything was dialled — an account colliding with itself, and the reason the
           30-day audit found behind 161 of the 165 paid refusals;
-          <b>Busy – his seat had not been released yet</b> is a dial that was made and came back
-          quoting a session count, his call closed here and the line not yet let go of it there;
+          <b>Busy – our gate refused before the dial</b> is a press stopped by a rule of ours before
+          the video line was asked for anything: a ceiling we set on how many of our calls run at
+          once, no trial line free, or this machine's waiting rule after a call with nothing
+          delivered. The customer is told the line is still being released from his last call, and the
+          audit of 247 refused presses found not one of our calls live on the line at 240 of them and
+          a single one at the other 7, against a ceiling of eight — the line was never the reason;
+          <b>Busy – the video line was at its session limit</b> is a dial that was made and the video
+          line answered quoting its own session count. Those words do not say whose sessions filled
+          that count, and one video line serves every customer, so this names the line and not the
+          man. It used to read "his seat had not been released yet", which nothing on this page has
+          ever proved;
           <b>Busy – the video service was full</b> is the service's own capacity answer, a crowd at
           the door with nothing about this account involved. A refusal a build did not name is counted
-          apart as <b>did not say why</b>, never folded into one of the three.
+          apart as <b>did not say why</b>, never folded into one of the four.
           Presses our gate refused before it booked a call are in the counts and in the rows, but they
           held no line and cost nothing — that is what makes them worth separating.
         </p>
@@ -4429,8 +4439,8 @@
       const why = endsReason(x.r, CALL_FAIL);
       const said = (why.why && why.why.detail) || (why.lines[0] && why.lines[0].detail) || "";
       if (why.key === "refused") {
-        // "Line busy" used to be one word covering three different faults, two of which are ours to
-        // fix in two different places. This cell now names which one this dial met, and it reads it
+        // "Line busy" used to be one word covering four different faults, several of which are ours to
+        // fix in several different places. This cell now names which one this dial met, and it reads it
         // off the same words the Call Ends tab reads, so the two tabs cannot sort one refusal twice.
         const b = busyOf(why.why);
         return `<span class="pill busy" style="white-space:normal;display:inline-block;text-align:left;`
@@ -5818,30 +5828,40 @@
   // tabs ever disagreeing about which refusal was a full line.
   const LINE_BUSY_RE = /cause=line_full|concurrent session limit|session_limit|at capacity|lines? (are )?(full|busy)|too many (concurrent )?(sessions|calls)|concurrent_limit|lines_busy/i;
 
-  // The busy line is three different events wearing one word, and they are fixed in three different
-  // places, so this tab names them separately from v1.8.92:
+  // The busy line is four different events wearing one word, and they are fixed in four different
+  // places, so this tab names them separately:
   //
   //   self  - OUR gate refused the press before a dial was ever asked, because this account already
   //           held a live session. The 30-day audit found 161 of the 165 paid "line busy" refusals
   //           were exactly this: our own table allowed each account two live sessions and the video
   //           service sells one, so a customer dialling beside his own open call collided with
   //           himself. It is fixed by the number of sessions an account may hold, not by capacity.
-  //   seat  - the refusal came back FROM the dial, quoting a session count: either the service's own
-  //           "Concurrent session limit reached", or our `lines_busy` gate saying the line he needs is
-  //           still being released from the last call. His call row says it is closed, and the line
-  //           has not let go of it yet.
+  //   wait  - OUR gate refused before the dial for its other reasons: our own ceiling on how many
+  //           video calls run at once, no trial key free, or this machine's waiting rule after a
+  //           blank. Every one of them is a rule WE chose, written on this page as ours because the
+  //           sentence the customer gets ("the line is still being released") was measured against
+  //           247 refused dials, and migration 20261120120000's own reading of that audit is that
+  //           the line was empty at every one of them - the refusals were this gate.
+  //   limit - the dial was asked and the video service came back quoting a SESSION COUNT: "Concurrent
+  //           session limit reached", our `[busy=session_limit]`. Whose sessions filled that count
+  //           the service never says, and one video line serves every customer, so this page names
+  //           the line and not the man. It used to be labelled "his seat had not been released yet",
+  //           which no record on this page has ever proved - on the three asks of 2026-11-20
+  //           02:17-02:18 UTC that started this change, that customer's own call rows had shown
+  //           nothing of his open since 02:04, thirteen minutes before the first of them.
   //   full  - the service answered its capacity refusal ("Server at capacity", `busy=capacity`, close
   //           1013): a crowd at the door, nothing to do with this account, and the one kind a third
   //           key or a second billing account would answer.
   //   unk   - a busy refusal written by a build that did not yet quote the service's class. It is
-  //           shown as its own figure rather than folded into one of the three, because the difference
+  //           shown as its own figure rather than folded into one of the four, because the difference
   //           between "0 of this kind" and "we were never told" is the difference he acts on.
   //
   // The order of the tests is the strength of the evidence: the app's own `[busy=…]` mark, then the
   // service's words, then our gate's reason code, and only last the loose prose that predates them.
   const BUSY_KINDS = {
     self: { label: "Busy – he was already on a call", short: "already on a call", side: "our gate, before the dial" },
-    seat: { label: "Busy – his seat had not been released yet", short: "seat not released", side: "the line, still holding his last call" },
+    wait: { label: "Busy – our gate refused before the dial", short: "our gate", side: "our gate, before the dial: our own ceiling or waiting rule" },
+    limit: { label: "Busy – the video line was at its session limit", short: "line session limit", side: "the video line, quoting its own session count - whose sessions, it does not say" },
     full: { label: "Busy – the video service was full", short: "service full", side: "the video service" },
     unk: { label: "Busy – the line refused and did not say why", short: "not named", side: "not on record" },
   };
@@ -5850,9 +5870,9 @@
     const t = String((line && ((line.stage || "") + " " + (line.detail || ""))) || "");
     let key = "unk";
     if (/busy=capacity|at capacity|overloaded|\b1013\b/i.test(t)) key = "full";
-    else if (/busy=session_limit|concurrent session limit|\bsession_limit\b|too many (concurrent )?(sessions|calls)/i.test(t)) key = "seat";
+    else if (/busy=session_limit|concurrent session limit|\bsession_limit\b|too many (concurrent )?(sessions|calls)/i.test(t)) key = "limit";
     else if (/\bconcurrent_limit\b/i.test(t)) key = "self";
-    else if (/\blines_busy\b|still being released/i.test(t)) key = "seat";
+    else if (/\blines_busy\b|still being released/i.test(t)) key = "wait";
     const k = BUSY_KINDS[key];
     return { key, label: k.label, side: k.side };
   }
@@ -5906,7 +5926,7 @@
       if (big) return mk("photo", "fail", "No " + kind + ": the photo was too big for the line to read", "our app's photo size", big);
       const ref = said(LINE_BUSY_RE);
       if (ref) {
-        // The busy line is three different events wearing one word, and each is fixed somewhere else,
+        // The busy line is four different events wearing one word, and each is fixed somewhere else,
         // so the row names WHICH one this call met off the words the app and the service wrote down -
         // never a guess on this page. The filters, the busy card and the Calls tab pill all read the
         // `busy` field below, so the two tabs cannot sort one refusal two ways.
@@ -5954,7 +5974,8 @@
     if (which === "mid") return x.why.key === "mid";
     if (which === "refused") return x.why.key === "refused";
     if (which === "busy_self") return x.why.busy === "self";
-    if (which === "busy_seat") return x.why.busy === "seat";
+    if (which === "busy_wait") return x.why.busy === "wait";
+    if (which === "busy_limit") return x.why.busy === "limit";
     if (which === "busy_full") return x.why.busy === "full";
     if (which === "unrecorded") return !x.r.stopped_by && !!x.r.ended_at;
     return true;
@@ -5981,7 +6002,7 @@
   }
 
   // One refusal, whichever half of the card it belongs to, in the same shape: when it happened, which
-  // of the three kinds of busy it was, what the line or the gate actually said, and how many seconds
+  // of the four kinds of busy it was, what the line or the gate actually said, and how many seconds
   // of our held line it cost. A press our gate refused before booking a call has no call row and no
   // line ever opened, so it carries no seconds and no cost - which is the fact that makes it worth
   // listing beside the refusals that do cost money rather than hidden inside them.
@@ -6023,7 +6044,7 @@
     const sec = entries.reduce((n, e) => n + e.secs, 0);
     const accounts = new Set(entries.map((e) => e.who).filter(Boolean));
     const machines = new Set(entries.filter((e) => e.booked).map((e) => e.where));
-    const counts = { self: 0, seat: 0, full: 0, unk: 0 };
+    const counts = { self: 0, wait: 0, limit: 0, full: 0, unk: 0 };
     for (const e of entries) counts[e.busy]++;
 
     $("endsRefusedStats").innerHTML = [
@@ -6034,9 +6055,9 @@
       [accounts.size + " / " + machines.size, "accounts / machines named"],
     ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
 
-    // The three kinds, in figures, before anything is clicked - because the sentence he acted on
-    // ("reduce the number of line is busy we get") cannot be followed up on one total when two of the
-    // three kinds have nothing to do with capacity.
+    // The four kinds, in figures, before anything is clicked - because the sentence he acted on
+    // ("reduce the number of line is busy we get") cannot be followed up on one total when three of the
+    // four kinds have nothing to do with the video service running out of room.
     $("endsRefusedKinds").innerHTML = Object.keys(BUSY_KINDS).map((k) =>
       "<b>" + esc(BUSY_KINDS[k].label) + ":</b> " + counts[k]).join(" &nbsp;·&nbsp; ")
       + (gates.length
