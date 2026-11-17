@@ -1213,8 +1213,7 @@
           <b>Line busy is four different faults wearing one word</b>, and they are mended in four
           different places, so each press below is named as one of them:
           <b>Busy – he was already on a call</b> is our own gate refusing a second call on the same
-          account before anything was dialled — an account colliding with itself, and the reason the
-          30-day audit found behind 161 of the 165 paid refusals;
+          account before anything was dialled — an account colliding with itself;
           <b>Busy – our gate refused before the dial</b> is a press stopped by a rule of ours before
           the video line was asked for anything: a ceiling we set on how many of our calls run at
           once, no trial line free, or this machine's waiting rule after a call with nothing
@@ -1251,6 +1250,29 @@
           </table>
         </div>
         <div id="busyMsg"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h2 style="font-size:14px;margin:0 0 6px">Presses before a picture shows</h2>
+        <p class="muted" style="margin:0 0 12px">
+          The figure the waiting rules are judged by, standing on the page instead of buried in an audit:
+          how many presses one machine needs before one of them actually puts a picture on the screen.
+          A press is a paid picture call this line booked; when one of them shows a picture that run is
+          over and the machine's next run starts again at one. It is counted per machine because that is
+          the hand pressing, and the rows below are drawn from <b>the same paid call rows the card
+          above counts</b> — this asks the database nothing new, so the two cards can never disagree
+          about what a press was. The four figures stay on the page whatever the list under them is
+          doing, and the
+          <b><span style="font-weight:800">−</span></b> at the top of this tab folds both lists together.
+        </p>
+        <div class="grid4" id="pressStats"></div>
+        <p class="muted" id="pressLine" style="margin:10px 0 0"></p>
+        <div data-endsfold style="overflow:auto;margin-top:12px">
+          <table id="pressTable">
+            <thead><tr><th>Account</th><th style="text-align:right">Machines</th><th style="text-align:right">Presses booked</th><th style="text-align:right">Pictures</th><th style="text-align:right">Median presses</th><th style="text-align:right">Worst run</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -5878,6 +5900,7 @@
   // called before the card moved, so the four figures and the day rows are one piece of writing.
   function renderBusy() {
     renderRefused(endsAll());
+    renderPresses(N($("busyWindow").value) || 7);
     msg("busyMsg", ENDS_TRUNC.trim(), ENDS_TRUNC ? "ok" : "err");
     paintBusyFold();
   }
@@ -5920,10 +5943,11 @@
   // places, so this tab names them separately:
   //
   //   self  - OUR gate refused the press before a dial was ever asked, because this account already
-  //           held a live session. The 30-day audit found 161 of the 165 paid "line busy" refusals
-  //           were exactly this: our own table allowed each account two live sessions and the video
-  //           service sells one, so a customer dialling beside his own open call collided with
-  //           himself. It is fixed by the number of sessions an account may hold, not by capacity.
+  //           held a live session: the customer collided with himself, not with a crowd of other
+  //           buyers. No audit figure is quoted for this kind here any more - the read that produced
+  //           one counted the refused dial's own row as the call still open, so every refusal sat
+  //           behind itself. It is fixed by the number of sessions an account may hold, not by
+  //           capacity.
   //   wait  - OUR gate refused before the dial for its other reasons: our own ceiling on how many
   //           video calls run at once, no trial key free, or this machine's waiting rule after a
   //           blank. Every one of them is a rule WE chose, written on this page as ours because the
@@ -6220,6 +6244,144 @@
         + '<tr data-ends-detail class="hidden"><td colspan="7" class="muted">' + grouped + "</td></tr>";
     }).join("")
       || '<tr><td colspan="7" class="muted">No call in this window was refused for a busy line. That is the honest zero, not a missing read.</td></tr>';
+  }
+
+  // ══ Presses before a picture ═════════════════────────────────────────────
+  // Asked for as a standing line on this page rather than something to re-run in an audit, because it
+  // is the only number that answers "is the waiting rule earning anything": a customer never complains
+  // about being refused, he complains about pressing five times before his caller appears.
+  //
+  // One run = one machine's paid picture presses up to and including the one that showed a picture.
+  // That is deliberately the same shape as the audit read this stands in for — engine `fal` (which is
+  // what this tab already filters to), the two picture modalities, grouped by device_id, counted off
+  // started_at — so a figure here can be put beside the figures quoted from that read without a
+  // footnote. A press that books nothing is not here: this counts calls the line booked, which is the
+  // population the refusal card above also ends on.
+  function pressRuns() {
+    const byDev = {};
+    let nameless = 0;
+    for (const r of ENDS_CALLS) {
+      if (r.modality !== "video" && r.modality !== "video_audio") continue;
+      if (!r.started_at) continue;
+      if (!r.device_id) { nameless++; continue; }
+      (byDev[r.device_id] = byDev[r.device_id] || []).push(r);
+    }
+    const done = []; // runs that ended in a picture
+    const open = []; // presses so far with no picture inside this window yet
+    for (const dev of Object.keys(byDev)) {
+      let run = byDev[dev].slice()
+        .sort((a, b) => new Date(a.started_at) - new Date(b.started_at));
+      let set = [];
+      for (const r of run) {
+        set.push(r);
+        if (!r.media_started_at) continue;
+        done.push({ dev, presses: set.length, call: r, first: set[0] });
+        set = [];
+      }
+      if (set.length) open.push({ dev, presses: set.length, first: set[0], last: set[set.length - 1] });
+    }
+    return { done, open, nameless };
+  }
+
+  // percentile_cont(0.5) and (0.9), the same interpolation the database read used, so the median on
+  // this page is the median in the audit rather than the middle row of an even list.
+  function pressNumbers(list) {
+    const n = list.map((x) => x.presses).sort((a, b) => a - b);
+    if (!n.length) return null;
+    const pick = (q) => {
+      const i = (n.length - 1) * q;
+      const lo = Math.floor(i);
+      const hi = Math.ceil(i);
+      return n[lo] + (n[hi] - n[lo]) * (i - lo);
+    };
+    return {
+      runs: n.length,
+      median: pick(0.5),
+      avg: n.reduce((a, b) => a + b, 0) / n.length,
+      p90: pick(0.9),
+      worst: n[n.length - 1],
+      machines: new Set(list.map((x) => x.dev)).size,
+    };
+  }
+
+  function renderPresses(days) {
+    const g = pressRuns();
+    const s = pressNumbers(g.done);
+    const sum = (list) => list.reduce((n, x) => n + x.presses, 0);
+    const openPresses = sum(g.open);
+    // A run is a machine's presses up to one picture, so the presses booked is the presses in every
+    // run, not the number of runs: five pictures reached on eight presses is eight presses.
+    const booked = sum(g.done) + openPresses;
+    const all = g.done.concat(g.open);
+
+    $("pressStats").innerHTML = [
+      [s ? s.median.toFixed(2) : "—", "presses before a picture shows (median)"],
+      [s ? s.avg.toFixed(2) : "—", "the same average, over those runs"],
+      [s ? s.worst : "—", "presses on the worst run that got through"],
+      [s ? s.runs + " / " + s.machines : "0 / 0", "pictures counted / machines"],
+    ].map((t) => '<div class="stat"><div class="v">' + esc(t[0]) + '</div><div class="l">'
+      + esc(t[1]) + "</div></div>").join("");
+
+    $("pressLine").innerHTML = "Last " + days + " day(s): <b>" + booked + "</b> paid picture press"
+      + (booked === 1 ? "" : "es") + " booked"
+      + (s ? ", of which <b>" + s.runs + "</b> ended in a picture" : ", none of them ending in a picture")
+      + (openPresses ? " and <b>" + openPresses + "</b> are presses still waiting for one — a machine's"
+        + " run that has not painted inside this window is counted in its own row below, never in the"
+        + " four figures above"
+        : "")
+      + (g.nameless ? ", and " + g.nameless + " press(es) carry no machine name so they sit outside this"
+        + " count"
+        : "")
+      + ". Fewer presses is the win; the refusal counts above can stay level or rise while it falls.";
+
+    const acct = {};
+    for (const x of all) {
+      const k = x.call ? x.call.user_id : x.first.user_id;
+      const b = (acct[k] = acct[k] || { who: k, runs: [], open: [], presses: 0, machines: new Set() });
+      b.machines.add(x.dev);
+      b.presses += x.presses;
+      (x.call ? b.runs : b.open).push(x);
+    }
+    const rows = Object.values(acct).map((b) => {
+      const n = pressNumbers(b.runs);
+      return { ...b, pictures: b.runs.length, median: n ? n.median : null, worst: n ? n.worst : null };
+    }).sort((a, b) => (b.worst || 0) - (a.worst || 0) || b.presses - a.presses
+      || (b.median || 0) - (a.median || 0));
+
+    // The tab's usual `one` helper adds a plain "s", which writes "3 presss" for this word.
+    const pressesOf = (n) => n + " press" + (n === 1 ? "" : "es");
+    $("pressTable").querySelector("tbody").innerHTML = rows.map((b) => {
+      const long = b.runs.filter((x) => x.presses > 1)
+        .sort((x, y) => new Date(y.call.started_at) - new Date(x.call.started_at));
+      const listed = long.slice(0, 40).map((x) => '<div style="margin-top:6px"><b>'
+        + esc(EMAIL_OF[b.who] || shortId(b.who)) + "</b> "
+        + '<span class="muted">' + esc(x.dev) + " · " + esc(ENDS_TAB[x.call.tab] || x.call.tab || "—")
+        + " · " + pressesOf(x.presses) + " before this picture · opened " + when(x.first.started_at)
+        + " · picture " + when(x.call.started_at) + "</span></div>").join("");
+      const waiting = b.open.sort((x, y) => new Date(y.last.started_at) - new Date(x.last.started_at))
+        .slice(0, 40).map((x) => '<div style="margin-top:6px"><b>'
+          + esc(EMAIL_OF[b.who] || shortId(b.who)) + "</b> "
+          + '<span class="muted">' + esc(x.dev) + " · " + esc(ENDS_TAB[x.last.tab] || x.last.tab || "—")
+          + " · " + pressesOf(x.presses) + " so far with no picture inside this window · opened "
+          + when(x.first.started_at) + " · newest " + when(x.last.started_at) + "</span></div>").join("");
+      const detail = (listed || '<div class="muted" style="margin-top:6px">Every picture this account'
+        + " got in the window came on the first press.</div>")
+        + waiting
+        + (long.length > 40 ? '<div class="muted">' + (long.length - 40)
+          + " more multi-press picture(s) not listed.</div>" : "");
+      return '<tr><td>' + esc(EMAIL_OF[b.who] || shortId(b.who)) + "</td>"
+        + '<td class="mono" style="text-align:right">' + b.machines.size + "</td>"
+        + '<td class="mono" style="text-align:right">' + b.presses + "</td>"
+        + '<td class="mono" style="text-align:right">' + b.pictures + "</td>"
+        + '<td class="mono" style="text-align:right;color:'
+        + (b.median !== null && b.median > 2 ? "#fb7185" : "#35e0a0") + '">'
+        + (b.median === null ? "—" : b.median.toFixed(2)) + "</td>"
+        + '<td class="mono" style="text-align:right">' + (b.worst === null ? "—" : b.worst) + "</td>"
+        + '<td style="white-space:nowrap"><button data-act="ends-detail">+</button></td></tr>'
+        + '<tr data-ends-detail class="hidden"><td colspan="7" class="muted">' + detail + "</td></tr>";
+    }).join("")
+      || '<tr><td colspan="7" class="muted">No paid picture press fell in this window. That is the honest'
+        + " zero, not a missing read.</td></tr>";
   }
 
   // ══ The picture-line card ═════════════════───────────────────────────────
