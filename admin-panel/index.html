@@ -1237,6 +1237,10 @@
           apart as <b>did not say why</b>, never folded into one of the four.
           Presses our gate refused before it booked a call are in the counts and in the rows, but they
           held no line and cost nothing — that is what makes them worth separating.
+          The rows under a day are <b>grouped under the kind they were counted in</b>, each group
+          headed with its own figure, so the rows behind a number above are the rows under it. Before
+          this, the list carried every refused press of the day in one run, and a reader who came to it
+          from the gate figure found the video line's own refusals mixed in with no dividing line.
         </p>
         <div class="grid4" id="endsRefusedStats"></div>
         <p class="muted" id="endsRefusedKinds" style="margin:10px 0 0"></p>
@@ -6145,6 +6149,10 @@
     const machines = new Set(entries.filter((e) => e.booked).map((e) => e.where));
     const counts = { self: 0, wait: 0, limit: 0, full: 0, unk: 0 };
     for (const e of entries) counts[e.busy]++;
+    // The unbooked figure is BOTH of our gate's kinds, and a reader who takes it for the waiting rule
+    // alone will look for holds in the rows and find "already on a call" there instead.
+    const gateSplit = { wait: 0, self: 0, named: 0 };
+    for (const e of gates) gateSplit[e.busy === "self" ? "self" : e.busy === "wait" ? "wait" : "named"]++;
 
     $("endsRefusedStats").innerHTML = [
       [entries.length, "presses the busy line refused"],
@@ -6161,7 +6169,12 @@
       "<b>" + esc(BUSY_KINDS[k].label) + ":</b> " + counts[k]).join(" &nbsp;·&nbsp; ")
       + (gates.length
         ? ' &nbsp;·&nbsp; <b>' + gates.length + "</b> of these were refused by our own gate before a "
-          + "call was booked, so they held no line and cost nothing."
+          + "call was booked"
+          + (gateSplit.wait || gateSplit.self
+            ? " — " + gateSplit.wait + " of them by our waiting rule and " + gateSplit.self
+              + " because he was already on a call"
+            : " — for a reason this build did not name")
+          + ", so they held no line and cost nothing."
         : "");
 
     const days = {};
@@ -6178,14 +6191,24 @@
       const byKind = Object.keys(BUSY_KINDS).filter((k) => set.some((e) => e.busy === k))
         .map((k) => BUSY_KINDS[k].short + ": " + set.filter((e) => e.busy === k).length)
         .join(" · ");
-      const detail = set.map((e) => {
-        return '<div style="margin-top:6px"><b>' + esc(EMAIL_OF[e.who] || shortId(e.who)) + "</b> "
-          + '<span class="muted">' + esc(e.where) + " · " + esc(e.tab)
-          + " · " + esc(e.opened) + " · " + (e.booked ? e.secs + " s held" : "nothing held")
-          + ' · <b>' + esc(BUSY_KINDS[e.busy].label) + "</b> (" + esc(BUSY_KINDS[e.busy].side) + ")</span>"
-          + (e.said ? '<div class="muted mono" style="margin-top:2px;white-space:normal">' + esc(e.said) + "</div>"
-                    : '<div class="muted" style="margin-top:2px">His app wrote no words from the line against this call.</div>')
-          + "</div>";
+      const rowOf = (e) => '<div style="margin-top:6px"><b>' + esc(EMAIL_OF[e.who] || shortId(e.who)) + "</b> "
+        + '<span class="muted">' + esc(e.where) + " · " + esc(e.tab)
+        + " · " + esc(e.opened) + " · " + (e.booked ? e.secs + " s held" : "nothing held")
+        + ' · <b>' + esc(BUSY_KINDS[e.busy].label) + "</b> (" + esc(BUSY_KINDS[e.busy].side) + ")</span>"
+        + (e.said ? '<div class="muted mono" style="margin-top:2px;white-space:normal">' + esc(e.said) + "</div>"
+                  : '<div class="muted" style="margin-top:2px">His app wrote no words from the line against this call.</div>')
+        + "</div>";
+      // Every refused press of the day in one list, sorted into the kinds the figures above counted,
+      // each group headed with its own figure. Without the headings this list answered "what were the
+      // gate's 17?" with the video line's refusals printed beside them and nothing dividing the two,
+      // which is exactly how one figure came to look like it contradicted the other.
+      const grouped = Object.keys(BUSY_KINDS).map((k) => {
+        const rows = set.filter((e) => e.busy === k).map(rowOf);
+        return rows.length
+          ? '<div style="margin-top:10px"><b>' + esc(BUSY_KINDS[k].label) + ":</b> " + rows.length
+            + (rows.length === 1 ? " press" : " presses")
+            + ' <span class="muted">· ' + esc(BUSY_KINDS[k].side) + "</span></div>" + rows.join("")
+          : "";
       }).join("");
       return '<tr><td class="mono">' + esc(d) + "</td>"
         + '<td class="mono" style="text-align:right">' + set.length + "</td>"
@@ -6194,7 +6217,7 @@
         + '<td class="mono" style="text-align:right">$' + (s * REFUSAL_SEC_USD).toFixed(2) + "</td>"
         + '<td class="muted">' + one(who.size, "account") + " · " + one(where.size, "machine") + "</td>"
         + '<td style="white-space:nowrap"><button data-act="ends-detail">+</button></td></tr>'
-        + '<tr data-ends-detail class="hidden"><td colspan="7" class="muted">' + detail + "</td></tr>";
+        + '<tr data-ends-detail class="hidden"><td colspan="7" class="muted">' + grouped + "</td></tr>";
     }).join("")
       || '<tr><td colspan="7" class="muted">No call in this window was refused for a busy line. That is the honest zero, not a missing read.</td></tr>';
   }
