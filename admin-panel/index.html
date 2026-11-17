@@ -1129,7 +1129,13 @@
           once, no trial line free, or this machine's waiting rule after a call with nothing
           delivered. The customer is told the line is still being released from his last call, and the
           audit of 247 refused presses found not one of our calls live on the line at 240 of them and
-          a single one at the other 7, against a ceiling of eight — the line was never the reason;
+          a single one at the other 7, against a ceiling of eight — the line was never the reason.
+          This count now carries the presses our waiting rule itself wrote down on the server ("held
+          107s of a 120s window on this machine"), which it has logged all along and this page never
+          read: none of them cost anything, because no line was ever dialled, and the change of
+          16 November — a blank the video line caused now lets the app ask the line again before the
+          hold is served — is meant to shrink this group. A press logged by both the server and his
+          app counts once, as the server's;
           <b>Busy – the video line was at its session limit</b> is a dial that was made and the video
           line answered quoting its own session count. Those words do not say whose sessions filled
           that count, and one video line serves every customer, so this names the line and not the
@@ -5828,6 +5834,15 @@
   // tabs ever disagreeing about which refusal was a full line.
   const LINE_BUSY_RE = /cause=line_full|concurrent session limit|session_limit|at capacity|lines? (are )?(full|busy)|too many (concurrent )?(sessions|calls)|concurrent_limit|lines_busy/i;
 
+  // Our own waiting rule writes a press down on the server, in its own words: stage `paced`, "held
+  // 107s of a 120s window on machine b53d64…, 2 of its last 6 passes showed no picture". Those words
+  // name no line and quote no refusal, so LINE_BUSY_RE above cannot see them and this page used to
+  // drop every one of them - which hid the single largest group of refused presses, because that rule
+  // was refusing far more dials than the video line ever did. It is kept as its own test rather than
+  // folded into the shared one, because the shared one also decides a call row's reason on the Calls
+  // tab, and a machine hold is not something to blame a booked call for.
+  const PACED_HOLD_RE = /^paced\b|held \d+s of a \d+s window/i;
+
   // The busy line is four different events wearing one word, and they are fixed in four different
   // places, so this tab names them separately:
   //
@@ -5873,6 +5888,7 @@
     else if (/busy=session_limit|concurrent session limit|\bsession_limit\b|too many (concurrent )?(sessions|calls)/i.test(t)) key = "limit";
     else if (/\bconcurrent_limit\b/i.test(t)) key = "self";
     else if (/\blines_busy\b|still being released/i.test(t)) key = "wait";
+    else if (PACED_HOLD_RE.test(t)) key = "wait";
     const k = BUSY_KINDS[key];
     return { key, label: k.label, side: k.side };
   }
@@ -6022,7 +6038,21 @@
       });
     }
     for (const f of ENDS_GATE) {
-      if (!LINE_BUSY_RE.test((f.stage || "") + " " + (f.detail || ""))) continue;
+      const line = (f.stage || "") + " " + (f.detail || "");
+      if (!LINE_BUSY_RE.test(line) && !PACED_HOLD_RE.test(line)) continue;
+      // One press can reach this page twice: from today's builds the app writes the refusal it was
+      // handed ("refused before the call (lines_busy)") and the server writes the hold it imposed
+      // ("held 107s of a 120s window"). Both are the same press, seconds apart, on one account. The
+      // server's line wins because it is the only one naming the machine and the seconds, and the
+      // app's twin is dropped - otherwise the figure he is watching is the same refusal counted
+      // twice. An app-only refusal keeps its row: concurrent_limit is written nowhere else.
+      if (!PACED_HOLD_RE.test(line) && /\blines_busy\b/i.test(line)) {
+        const at = new Date(f.created_at).getTime();
+        const twin = ENDS_GATE.some((g) => g !== f && g.user_id === f.user_id
+          && PACED_HOLD_RE.test((g.stage || "") + " " + (g.detail || ""))
+          && Math.abs(new Date(g.created_at).getTime() - at) <= 5000);
+        if (twin) continue;
+      }
       out.push({
         at: f.created_at,
         busy: busyOf(f).key,
