@@ -2003,12 +2003,28 @@
 
   function msg(el, text, cls = "err") { $(el).innerHTML = text ? `<div class="${cls}">${esc(text)}</div>` : ""; }
 
+  // A card that cannot be re-read must not turn into an empty card. That is how a panel full of
+  // figures went blank about a minute after opening: the sign-in was dropped, every automatic
+  // re-read then failed, and the failure paths threw the rows away. So a lost sign-in is its own
+  // kind of failure, and a reader that hits one keeps the figures it last had.
+  class SignedOut extends Error {}
+
+  // The client gives up on a sign-in whose expiry it misreads, and this machine's clock is hours
+  // off, so that happens with a page full of cards already open. One forced refresh is what the
+  // next automatic tick would have asked for anyway; asking it before a whole tab is discarded is
+  // what keeps the numbers on the screen.
+  async function liveToken() {
+    const { data } = await sb.auth.getSession();
+    if (data?.session?.access_token) return data.session.access_token;
+    const r = await sb.auth.refreshSession().catch(() => null);
+    return r?.data?.session?.access_token || null;
+  }
+
   // Every balance-changing operation goes through admin-api: the money RPCs are
   // service-role only, so a browser JWT calling them gets a 403.
   async function api(payload) {
-    const { data } = await sb.auth.getSession();
-    const token = data?.session?.access_token;
-    if (!token) throw new Error("You are signed out — sign in again.");
+    const token = await liveToken();
+    if (!token) throw new SignedOut("You are signed out — sign in again.");
     let res, body;
     try {
       res = await fetch(SUPABASE_URL + "/functions/v1/admin-api", {
@@ -2022,6 +2038,12 @@
     }
     if (!res.ok || body.ok === false) {
       const why = body.error || body.reason || body.message || (res.status >= 500 ? "gateway error" : "refused");
+      // The gateway turning this panel's own token away is the same fault as having no token: the
+      // sign-in is stale, not the data gone. 403 with any other reason stays an ordinary refusal,
+      // because "you are not an admin" must never be hidden behind last week's figures.
+      if (res.status === 401 || (res.status === 403 && /expired|invalid_jwt|signature/i.test(String(why)))) {
+        throw new SignedOut("Your sign-in is no longer accepted: " + why);
+      }
       throw new Error(why + (body.reason && body.error ? ` (${body.reason})` : ""));
     }
     return body;
@@ -4349,8 +4371,12 @@
       renderCalls();
       stamp("fcWhen");
     } catch (err) {
-      // Nothing above is allowed to fail quietly any more: a throw used to leave this card
-      // exactly as it was found - no rows, no +, and no sentence saying why.
+      // Nothing above is allowed to fail quietly any more: a throw used to leave this card exactly
+      // as it was found - no rows, no +, and no sentence saying why. A lost sign-in is different:
+      // its read never reached the gateway, so it says nothing about the calls, and the card keeps
+      // its rows with the "read … UTC" stamp still naming when they were taken. The sign-in card
+      // at the top of the page is where that failure is announced.
+      if (err instanceof SignedOut) return;
       CALL_ROWS = [];
       CALL_WHY = (err && err.message) ? err.message : String(err);
       renderCalls();
@@ -4967,8 +4993,10 @@
       renderUnlimited(await api({ action: "unlimited_accounts" }));
       msg("unlMsg", "");
     } catch (err) {
-      // An empty table would read as an empty product. Say what could not be read instead, and
-      // leave the last figures out rather than showing a stale ones as if they were now.
+      // A read that never reached the gateway says nothing about who is on the package, so the
+      // rows already standing stay standing and the card says they are old. Only a read that
+      // came back and was refused on the merits is honest grounds for clearing the figures.
+      if (err instanceof SignedOut) return msg("unlMsg", err.message + " The table above is the last one read.");
       UNL = null;
       $("unlStats").innerHTML = "";
       $("unlAlert").innerHTML = "";
@@ -5322,14 +5350,19 @@
   // this page can never report a different amount of free video than a call
   // start will actually find.
   async function loadSupply() {
-    $("supplyCards").innerHTML = '<div class="stat"><div class="v">…</div><div class="l">asking the gateway</div></div>';
+    const cards = $("supplyCards");
+    // Only a first read may show a placeholder. Once figures are standing, the automatic re-read
+    // leaves them there until the answer arrives, so the card cannot blank itself for the seconds
+    // a round trip takes — which is what made a healthy tab look empty a minute after opening.
+    const first = !cards.innerHTML.trim();
+    if (first) cards.innerHTML = '<div class="stat"><div class="v">…</div><div class="l">asking the gateway</div></div>';
     msg("supplyMsg", "");
     let supply;
     try {
       supply = await api({ action: "trial_supply" });
     } catch (err) {
-      $("supplyCards").innerHTML = "";
-      return msg("supplyMsg", err.message);
+      if (first) cards.innerHTML = "";
+      return msg("supplyMsg", err.message + (err instanceof SignedOut ? " — the numbers above are the last ones read." : ""));
     }
     const { data: open } = await sb.from("admin_live_sessions").select("engine");
     const onTrial = (open || []).filter((r) => r.engine === "decart").length;
@@ -8391,7 +8424,25 @@
     await showDash(data.user);
   };
   $("signOut").onclick = async () => { await sb.auth.signOut(); location.reload(); };
-  sb.auth.onAuthStateChange((_event, session) => { if (!session) $("dash").classList.add("hidden"); });
+  // Losing the sign-in used to blank the whole window: the dashboard was hidden and the sign-in
+  // card stayed hidden, so a panel that had been full of figures showed nothing, and the only way
+  // back was a reload that lost his place. The figures stay where they are, the card comes back
+  // beside them saying what happened, and a sign-in that returns on its own (the tick below, or a
+  // refresh that succeeds) puts the panel back without him touching anything.
+  sb.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      if (ADMIN_ID && $("dash").classList.contains("hidden")) {
+        $("dash").classList.remove("hidden");
+        $("authCard").classList.add("hidden");
+      }
+      return;
+    }
+    // Only an admin who was shown the dashboard has anything to lose. A refused sign-in (not an
+    // admin) signs itself out through this same event, and its own sentence must stay on screen.
+    if (!ADMIN_ID || $("authMsg").innerHTML.trim()) return;
+    $("authCard").classList.remove("hidden");
+    msg("authMsg", "Your sign-in stopped being accepted, so the panel stopped reading. Nothing about your data changed, and the figures on the tabs are the last ones it read. Sign in again to refresh them.");
+  });
 
   // The strip is the point: next time a tab looks empty you can read off this line
   // whether the machine's clock moved, instead of assuming the panel broke.
