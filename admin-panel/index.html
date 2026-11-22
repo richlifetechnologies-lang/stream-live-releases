@@ -36,6 +36,7 @@
   .pill.canceled, .pill.expired, .pill.no, .pill.rejected, .pill.fail, .pill.none { background: #3a1620; color: #fb7185; }
   .pill.n { background: #1a2430; color: #6b8296; }
   .pill.busy { background: #3a2210; color: #fb9a4a; }
+  .pill.line3 { background: #0d2740; color: #5ab8f0; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
   .row > div { flex: 1; min-width: 150px; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -548,12 +549,12 @@
         <div id="poolMsg"></div>
         <div class="grid4" style="margin-top:12px" id="keyStats"></div>
         <div id="poolAlert"></div>
-        <p class="muted" style="margin:12px 0 0">For every call the gateway tries the key assigned to that account first, then every enabled key by ascending <b>priority</b>, skipping any that already hit its daily cap, and only then the env secret. A key that fails is logged and the next one is tried in the same request, so one bad key never takes the product down. Users never see, send or store any of this.</p>
+        <p class="muted" style="margin:12px 0 0">For every call the gateway tries the key assigned to that account first, then every enabled key by ascending <b>priority</b>, skipping any that already hit its daily cap, and only then the env secret. That order is asked per provider, so a picture call looks for a fal.ai key and a Reactor key as two separate lists. A key that fails is logged and the next one is tried in the same request, so one bad key never takes the product down. Users never see, send or store any of this.</p>
       </div>
 
       <div class="card">
         <h2 style="font-size:14px;margin:0 0 4px">Add a key pair</h2>
-        <p class="muted" style="margin:0 0 14px">Paste each provider's key and press <b>Verify</b> — that asks the provider itself, right now, without billing a single second of inference. When every box you filled turns green, save. <b>DeCart trial keys have their own tab</b>; a row stored here can still carry one, and its tail shows in the table below so nothing is hidden.</p>
+        <p class="muted" style="margin:0 0 14px">Paste each provider's key and press <b>Verify</b> — that asks the provider itself, right now, without billing a single second of inference. When every box you filled turns green, save. One row can carry all three, and the table below shows the tail of each so nothing is hidden. <b>DeCart trial keys have their own tab</b>; a row stored here can still carry one too.</p>
         <input type="hidden" id="kId" />
         <div class="grid2">
           <div class="prov">
@@ -589,6 +590,22 @@
           </div>
         </div>
 
+        <div class="prov" style="margin-top:14px">
+          <div class="phead">
+            <span class="pdot" id="newDot"></span>
+            <b>New line</b><span class="pmeta">Reactor · opens when Lucy turns a press away</span>
+            <span class="chip" id="newChip">not tested</span>
+          </div>
+          <label>Reactor API key</label>
+          <div class="secret">
+            <input id="kReactor" type="password" autocomplete="off" spellcheck="false" placeholder="blank = keep the stored key" />
+            <button type="button" data-show="kReactor">show</button>
+            <button type="button" id="testReactor" class="primary">Verify</button>
+          </div>
+          <p class="phint">Where: your Reactor account's API key page. What it does: the gateway signs a short-lived pass with it and your app opens the picture call with that pass — the key itself never leaves the server. Several rows can each hold one, and the pool tries them in the same <b>priority</b> order as the fal.ai keys above, so this line rotates like the others. A call on it takes the camera only: the two cloning tabs need a line that carries a microphone, and only Lucy has one.</p>
+          <div class="presult" id="newResult"></div>
+        </div>
+
         <div class="row" style="margin-top:14px">
           <div><label>Label</label><input id="kLabel" placeholder="e.g. Primary keys" /></div>
           <div><label>Priority (lower tried first)</label><input id="kPriority" type="number" min="0" step="1" value="100" /></div>
@@ -596,7 +613,7 @@
           <div style="flex:0 0 auto;display:flex;align-items:center">
             <label class="feat" style="margin:0"><input type="checkbox" id="kEnabled" checked /> enabled</label>
             <label class="feat" style="margin:0 0 0 16px"><input type="checkbox" id="kDefault" /> global default</label>
-            <label class="feat" style="margin:0 0 0 16px" title="Ticked: every Unlimited account is served by this key and by no other. Unticked: ordinary minute-buying customers use it, and an Unlimited account only touches it when you attach it to that account on its own page. Video only — voice keys are not fenced."><input type="checkbox" id="kForUnlimited" /> unlimited accounts</label>
+            <label class="feat" style="margin:0 0 0 16px" title="Ticked: every Unlimited account is served by this key and by no other — and on a row that holds both picture keys, the fence covers both lines. Unticked: ordinary minute-buying customers use it, and an Unlimited account only touches it when you attach it to that account on its own page. Picture keys only — voice keys are not fenced."><input type="checkbox" id="kForUnlimited" /> unlimited accounts</label>
           </div>
         </div>
         <div class="btns" style="margin-top:12px">
@@ -613,7 +630,7 @@
         <p class="muted" style="margin:6px 0 12px">Only the last four characters ever reach this page. <b>Verify</b> re-checks the stored copy against the provider; <span class="pill ok">live</span> means no failure was recorded against it in the last 24 hours.</p>
         <div style="overflow:auto">
           <table id="keysTable">
-            <thead><tr><th>Label</th><th>Video · fal.ai</th><th title="Which of your own keys did the burning. fal.ai is asked for this at most every ten minutes, because asking on every glance is what made it refuse to answer; the running-call line under the figure counts forward from that reading.">Spent on fal.ai today</th><th id="thTrialKey">Trial · DeCart</th><th id="thTrialLeft">Trial left</th><th>Voice · ElevenLabs</th><th>Enabled</th><th id="thForUnl" title="Ticked: this key is one of the keys Unlimited accounts are allowed to dial. Unticked: ordinary minute-buyers use it, and an Unlimited account dials it only when you attach it to that account on its own page. Video only — voice keys are never fenced.">For unlimited</th><th>Priority</th><th>Today / cap</th><th>Failures 24h</th><th>Last error</th><th></th></tr></thead>
+            <thead><tr><th>Label</th><th>Video · fal.ai</th><th title="Which of your own keys did the burning. fal.ai is asked for this at most every ten minutes, because asking on every glance is what made it refuse to answer; the running-call line under the figure counts forward from that reading.">Spent on fal.ai today</th><th id="thReactorKey" title="The third picture line. It opens when Lucy turns a press away, or first if the Gateway tab says Lucy is off. Several rows can each hold one of these keys — the pool tries them in priority order, exactly like the fal.ai column beside it.">New line · Reactor</th><th id="thTrialKey">Trial · DeCart</th><th id="thTrialLeft">Trial left</th><th>Voice · ElevenLabs</th><th>Enabled</th><th id="thForUnl" title="Ticked: this key is one of the keys Unlimited accounts are allowed to dial, on whichever picture line it carries. Unticked: ordinary minute-buyers use it, and an Unlimited account dials it only when you attach it to that account on its own page. Picture keys only — voice keys are never fenced.">For unlimited</th><th>Priority</th><th>Today / cap</th><th>Failures 24h</th><th>Last error</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -627,7 +644,7 @@
         <p class="muted" style="margin:6px 0 12px">Assign one key per provider to one account (e.g. a customer who bought their own ElevenLabs voice). Assigned keys are tried first for that account; everything else still fails over to the pool.</p>
         <div class="row">
           <div><label>User email</label><input id="asEmail" type="email" placeholder="customer@domain.com" /></div>
-          <div><label>Provider</label><select id="asProvider"><option value="fal">fal (paid video)</option><option value="decart">decart (trial video)</option><option value="elevenlabs">elevenlabs (voice)</option></select></div>
+          <div><label>Provider</label><select id="asProvider"><option value="fal">fal (paid video)</option><option value="reactor">reactor (new picture line)</option><option value="decart">decart (trial video)</option><option value="elevenlabs">elevenlabs (voice)</option></select></div>
           <div><label>Key</label><select id="asKey"></select></div>
           <div style="flex:0 0 auto"><button id="addAssignment">Assign</button></div>
         </div>
@@ -1076,6 +1093,7 @@
               <option value="busy_wait">Only Busy – our gate refused before the dial</option>
               <option value="busy_limit">Only Busy – the video line was at its session limit</option>
               <option value="busy_full">Only Busy – the video service was full</option>
+              <option value="busy_nodes">Only Busy – the new picture line had no server free</option>
               <option value="mid">Only calls that stopped mid-way</option>
               <option value="unrecorded">Only the ones not recorded</option>
             </select>
@@ -1085,8 +1103,9 @@
           </div>
         </div>
         <p class="muted" style="margin:6px 0 12px">
-          The paid line only — every call that ran on the video service you pay for, from the app's
-          three tabs. Two questions are answered in separate columns, because they are not the same
+          Every paid call — the ones that ran on the picture line you pay for and the ones that ran on
+          the new line, from the app's three tabs. No trial call is listed here.
+          Two questions are answered in separate columns, because they are not the same
           question: <b>who closed it</b> is this machine reporting the customer's own hand on Stop, and
           <b>what the app wrote down</b> is the reason it saw. A call can have both: he pressed Stop a
           few seconds after the line refused him.
@@ -1115,13 +1134,16 @@
         <h2 style="font-size:14px;margin:0 0 6px">Which line gave no picture, and which answered busy</h2>
         <p class="muted" style="margin:0 0 12px">
           The paid picture calls in the window, split by the two things that decide which line a
-          call actually ran on: the picture model it dialled and the key that paid for it. The two
+          call actually ran on: the picture model it dialled and the key that paid for it. Both are
+          read from the call row itself, so a call that ran on the new line is counted on the new
+          line and never beside the old one. The two
           columns of bad calls are two different events, and a call is counted in one of them only:
           <b>No picture</b> is a call that opened and never put a picture on his screen — the black
           box he complains about, and the only event that moves the next call to a different line.
           <b>Line busy</b> is the video line answering that it is full, so the dial never started; it
-          is a crowd at the door, not a fault in the picture. Both lines cost the same per second, so
-          the one taking more calls is not a worse product. The four figures are the whole window
+          is a crowd at the door, not a fault in the picture. The lines are not priced the same per
+          second, so the share of calls is not the profit — the Prices tab holds each line's figure,
+          and the Calls tab costs every call at its own line. The four figures are the whole window
           whatever the rows below them are doing, and each row folds open to the calls behind it.
         </p>
         <div class="grid4" id="endsLineStats"></div>
@@ -1133,10 +1155,12 @@
           </table>
         </div>
         <p class="muted" style="margin:14px 0 6px">
-          The same calls by the key that was billed. Two keys are two separate accounts at the
-          video service, each with its own room inside it, so a line that looks crowded on one key
-          can be quiet on the other — and a customer's next call is only ever switched between models,
-          never between keys, because the pool decides the key by itself.
+          The same calls by the key that was billed. A key is a separate account at its own service,
+          each with its own room inside it, so a line that looks crowded on one key can be quiet on
+          the other — and the rows are headed by the line they belong to, because a Lucy key and a
+          new-line key are not two accounts at the same company. A customer's next call is switched
+          between models and between the two picture lines; which key on the chosen line answers it
+          is decided by the pool by itself.
         </p>
         <div data-endsfold style="overflow:auto">
           <table id="endsKeyTable">
@@ -1210,7 +1234,7 @@
           money, sat there.
         </p>
         <p class="muted" style="margin:0 0 12px">
-          <b>Line busy is four different faults wearing one word</b>, and they are mended in four
+          <b>Line busy is five different faults wearing one word</b>, and they are mended in five
           different places, so each press below is named as one of them:
           <b>Busy – he was already on a call</b> is our own gate refusing a second call on the same
           account before anything was dialled — an account colliding with itself;
@@ -1232,8 +1256,11 @@
           man. It used to read "his seat had not been released yet", which nothing on this page has
           ever proved;
           <b>Busy – the video service was full</b> is the service's own capacity answer, a crowd at
-          the door with nothing about this account involved. A refusal a build did not name is counted
-          apart as <b>did not say why</b>, never folded into one of the four.
+          the door with nothing about this account involved. <b>Busy – the new picture line had no
+          server free</b> is the same kind of crowd on the other company's line — it answers "no
+          available servers" (HTTP 429) instead of a session count, and a seat bought on the older line
+          does nothing for it, so it is counted apart from the two above. A refusal a build did not
+          name is counted apart as <b>did not say why</b>, never folded into one of the five.
           Presses our gate refused before it booked a call are in the counts and in the rows, but they
           held no line and cost nothing — that is what makes them worth separating.
           The rows under a day are <b>grouped under the kind they were counted in</b>, each group
@@ -1357,11 +1384,32 @@
             <div class="muted" style="margin-top:6px">Off, which is where it ships: a brand-new account dials the picture service it has always dialled. On: his <b>first</b> paid picture call goes to whichever of the two services the fleet went blank on least in the last day — but only when one is clearly quieter and both have real traffic behind them. A new account with a few calls already on it is never touched, and this never outranks a model you pinned on an account.</div>
             <div class="muted" id="cfgFirstCallNow" style="margin-top:6px"></div>
           </div>
+          <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
+            <label class="feat" style="margin:0"><input type="checkbox" id="cfgLucyOff" /> Close the Lucy line: put every paid picture call on the new line</label>
+            <div class="muted" style="margin-top:6px">Off, which is how it ships: <b>Lucy is dialled first</b>, and the new line only opens on the press Lucy turned away as full. On: a paid picture call goes to the new line straight away, without anyone first being told the line is busy.</div>
+            <div class="muted" style="margin-top:6px">It moves the <b>Video Call</b> tab only. The two cloning tabs need a picture line that takes a microphone, and only Lucy has one, so a <b>Video + Audio Cloning</b> or <b>Voice Clone Only</b> call stays on Lucy whatever this says. An account running an installer too old to open the new line also stays on Lucy — that is the one thing this switch cannot move, and the Calls tab goes on showing Lucy rows after you close it for exactly that reason. Nothing here is restarted on anybody's machine: it lands on the next call each app asks for.</div>
+            <div class="muted" id="cfgLucyNow" style="margin-top:6px"></div>
+          </div>
+          <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
+            <label style="margin-top:0">New-line calls allowed at once, across all accounts</label>
+            <input id="cfgReactorCeiling" type="number" min="0" step="1" />
+            <div class="muted" style="margin-top:6px">0 or blank = no limit from here. Set it to the number of calls the new service lets you have on air at once, and the caller past that number is told the lines are busy instead of burning minutes and failing. It counts only calls on the new line, so the Lucy ceiling above is a separate door.</div>
+            <div class="muted" id="cfgReactorNow" style="margin-top:6px"></div>
+          </div>
         </div>
         <label>Maintenance message</label>
         <textarea id="cfgMaintMsg" placeholder="Shown to users while maintenance mode is on"></textarea>
         <div class="btns" style="margin-top:12px"><button id="cfgSave" class="primary">Save gateway config</button></div>
         <div id="cfgMsg"></div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="font-size:14px;margin:0">Before you close the Lucy line</h2>
+          <button id="proofRefresh">Refresh</button>
+        </div>
+        <p class="muted" style="margin:6px 0 0">What the switch above would do to the accounts as they stand this minute. It opens no call, dials no line and spends nothing — a read, not a change — so you can look before you throw the switch and again after, and compare the two.</p>
+        <div id="proofBody"><p class="muted" style="margin:10px 0 0">Not loaded yet. Press <b>Refresh</b>.</p></div>
       </div>
 
       <div class="card">
@@ -1454,6 +1502,11 @@
             <label>Voice · ElevenLabs · $ per minute</label>
             <input id="pgVoiceMin" type="number" min="0" step="0.01" />
           </div>
+        </div>
+        <div style="margin-top:12px">
+          <label>New picture line · Reactor (model xmax-x2) · $ per minute</label>
+          <input id="pgReactorMin" type="number" min="0" step="0.001" style="max-width:180px" />
+          <div class="muted" style="margin-top:6px" id="pgReactorNote">This is what the third picture line charges you for a minute of it. The Calls tab prices a call on that line with this figure; a call on Lucy keeps the Lucy figure above. It is <b>not</b> used by the price steps below — your packages are still priced off the Lucy cost, which is the dearer of the two, so a call that lands on the cheaper line is extra margin rather than a cheaper sale.</div>
         </div>
         <details style="margin-top:14px">
           <summary class="muted">ElevenLabs shows credits instead of a dollar price? Work it out here</summary>
@@ -1730,11 +1783,16 @@
   };
   // What each supplier is called in this panel. The customer-facing apps never
   // use these words: a user sees one Start button and no service name.
-  const ENGINE_LABEL = { fal: "Paid service", decart: "Trial pool" };
-  const ENGINE_PILL = { fal: "yes", decart: "past_due" };
+  // The third is the new paid picture line. It is paid like the first, so its pill is a colour of its
+  // own rather than green (which would read as the same service) or amber (which reads as a fault).
+  const ENGINE_LABEL = { fal: "Paid service", decart: "Trial pool", reactor: "New picture line (Reactor)" };
+  const ENGINE_PILL = { fal: "yes", decart: "past_due", reactor: "line3" };
   // The two paid picture services, named by the tokens the call row is written with. Only this
   // page ever prints them; a customer sees one Start button.
-  const VIDEO_MODEL_NAME = { "lucy-2-5": "Lucy 2.5", "lucy-2-6": "Lucy 2.6" };
+  // The three model ids a call row can carry, as the panel names them. The third is a different
+  // company's line, and it is in here for display only: the per-account PIN dropdown above stays
+  // Lucy-only on purpose, because the new line has one model and there is nothing to choose on it.
+  const VIDEO_MODEL_NAME = { "lucy-2-5": "Lucy 2.5", "lucy-2-6": "Lucy 2.6", "xmax-x2": "Reactor xmax-x2 (new line)" };
   const FIRST_VIDEO_MODEL = "lucy-2-5";
   // Same decision the gateway makes: credited minutes mean the paid service for
   // good; otherwise the pin wins and the default is the trial pool.
@@ -1873,6 +1931,12 @@
       + ` (first seen ${esc(when(firstAt))}${moved ? ", latest " + esc(when(lastAt)) : ""})</div>`;
   };
   const usd = (v) => (N(v) < 0 ? "-$" : "$") + Math.abs(N(v)).toFixed(2);
+  // Every line's price of a SECOND is under a cent, and a price of "$0.00" is not a price — it reads
+  // as though the call were free. A cent or above keeps the two decimals the rest of the card uses.
+  const secUsd = (v) => { const n = N(v); const a = Math.abs(n); return (n < 0 ? "-$" : "$") + a.toFixed(a >= 0.01 ? 2 : 4); };
+  // A minute on either picture line is a little over a tenth of a dollar, and the Prices card states it
+  // to three decimals. "$0.10" beside that card's "$0.102" is the gap that reads as a broken meter.
+  const minUsd = (v) => { const n = N(v); const a = Math.abs(n); return (n < 0 ? "-$" : "$") + a.toFixed(a >= 1 ? 2 : 3); };
   const bucket = (v) => (v.unlimited ? '<span class="pill yes">Unlimited</span>' : '<span class="mono">' + clock(v.balance) + "</span>");
   /**
    * Which Unlimited pack an account is on, named the way the app names its tabs.
@@ -1914,6 +1978,10 @@
   let hasVideoModelCols = false;
   let hasTrialCols = false;
   let hasUnlCol = false;
+  // The third picture line's key tail arrives with its own migration, and this page can be deployed
+  // before that SQL runs, so the column is probed rather than assumed: without it the whole read
+  // fails and the Key pool tab goes blank, which is worse than one column he cannot see yet.
+  let hasReactorCol = false;
   let hasTrialCfg = false;
   // Which computer each account was created on, and whether that computer is already in
   // the trial register — without these the panel cannot say why an account got no minute.
@@ -4135,10 +4203,15 @@
   // What a second of cloned voice costs the voice key, read beside the video figure so the two
   // lists can never price a call with the other kind's number.
   let CALL_VOICE_RATE = null;
+  // The third picture line's own price, and null is an answer rather than a gap: pricing a new-line
+  // minute at the Lucy figure makes a profit that was never made, so a row with no figure of its own
+  // is left unpriced and said so, instead of quietly borrowing its neighbour's.
+  let CALL_REACTOR_RATE = null;
   // Three counts, kept apart on purpose: "no calls" and "calls you cannot see" look
   // identical in a blank card, and only the second one is a fault.
-  let CALL_FAL = 0;   // calls on the paid machine, all of them
-  let CALL_TOTAL = 0; // every call on record, both machines
+  let CALL_PAID = 0;    // calls on either paid picture line, all of them
+  let CALL_REACTOR = 0; // of those, the calls the third line served
+  let CALL_TOTAL = 0; // every call on record, every machine
   let CALL_KINDS = { video: 0, audio: 0, video_audio: 0 }; // on the paid machine, per kind
   let CALL_SEEN = -1; // what this browser's own sign-in is allowed to see
   let CALL_WHY = "";  // a read that failed, said in words
@@ -4149,7 +4222,7 @@
   const CALL_KIND_META = {
     video: {
       name: "video call", picName: "Picture", noneName: "no picture", voice: false, picture: true,
-      door: "This list is the Video Call tab: an AI picture with the customer's own voice. A call that cloned a voice is not here — it is on one of the two tabs beside it, and it did not fail to send a picture.",
+      door: "This list is the Video Call tab: an AI picture with the customer's own voice. A call that cloned a voice is not here — it is on one of the two tabs beside it, and it did not fail to send a picture. The picture on this tab can run on either paid line, and the <b>Picture model</b> column names which one served each call.",
     },
     video_audio: {
       name: "video + voice call", picName: "Picture", noneName: "no picture", voice: true, picture: true,
@@ -4223,8 +4296,13 @@
         : null;
       const voicePer = N(p.voicePerSecond);
       CALL_VOICE_RATE = voicePer > 0 ? voicePer : null;
+      // The third line's price is read separately from the other two, so a database that has no
+      // column for it still costs every Lucy call exactly as it did. Null on purpose: see above.
+      const reactorPer = N(p.reactorPerSecond);
+      CALL_REACTOR_RATE = reactorPer > 0 ? reactorPer : null;
       CALL_SKIPPED = N(p.trialRows);
-      CALL_FAL = N(p.falRows);
+      CALL_PAID = N(p.paidRows);
+      CALL_REACTOR = N(p.reactorRows);
       CALL_TOTAL = N(p.allRows);
       CALL_KINDS = {
         video: N((p.kindRows || {}).video),
@@ -4263,8 +4341,10 @@
       // One deliberate read with his own sign-in, so a card fed by the gateway can still
       // say out loud when the two disagree. That disagreement is the difference between a
       // quiet week and a permission that filters him, and it used to show as a blank card.
+      // Both paid lines are asked for, because both are on this card now: a count of one of
+      // them against a total of the other would report a gap that is not there.
       const { count: seen, error: seenErr } = await sb.from("usage_sessions")
-        .select("id", { count: "exact", head: true }).eq("engine", "fal");
+        .select("id", { count: "exact", head: true }).in("engine", ["fal", "reactor"]);
       CALL_SEEN = seenErr ? -1 : N(seen, -1);
       renderCalls();
       stamp("fcWhen");
@@ -4367,10 +4447,10 @@
       // cover all of them and told you which one to chase.
       box.innerHTML = door + `<p class="muted" style="margin:12px 0 0">${!CALL_TOTAL
         ? "Nothing has been booked on the video service at all — no call is recorded. If someone is on air while you read this, that call was never written down, and the fault is in the gateway, not on this page."
-        : !CALL_FAL
-          ? `No call has run on the paid video service. ${CALL_TOTAL} call(s) are on record: ${CALL_SKIPPED} on the trial machine, which is not listed here.`
+        : !CALL_PAID
+          ? `No call has run on a paid picture line. ${CALL_TOTAL} call(s) are on record: ${CALL_SKIPPED} on the trial machine, which is not listed here.`
           : !onMachine
-            ? `No ${meta.name} has run on the paid video service. Its ${CALL_FAL} call(s) split ${CALL_KINDS.video} natural-voice, ${CALL_KINDS.video_audio} picture-and-voice, ${CALL_KINDS.audio} Voice Clone Only${CALL_SKIPPED ? `, with ${CALL_SKIPPED} more on the trial machine` : ""}.`
+            ? `No ${meta.name} has run on a paid picture line. The ${CALL_PAID} paid call(s) split ${CALL_KINDS.video} natural-voice, ${CALL_KINDS.video_audio} picture-and-voice, ${CALL_KINDS.audio} Voice Clone Only${CALL_SKIPPED ? `, with ${CALL_SKIPPED} more on the trial machine` : ""}.`
             : `${onMachine} ${meta.name}(s) ran on the paid video service and none reached this newest list.`}</p>`;
       paintFold();
       return;
@@ -4401,14 +4481,27 @@
     }
     const now = Date.now();
     const rate = CALL_RATE;
+    // Which paid line served this call, read off the row the gateway wrote the second the line
+    // opened. Never off the price list and never off the account: the same account can be dialled on
+    // either line from one press to the next, so only the call itself answers which one took the money.
+    const isNewLine = (r) => meta.picture && r.engine === "reactor";
+    // What one second of this row's picture costs. The two picture lines are two companies with two
+    // published figures, so this is the one price on the card that moves per row. A new line with no
+    // saved price hands back null rather than Lucy's number, because a new-line minute costed at the
+    // Lucy rate is a margin that was never made, and the row says it is not priced instead.
+    const picRateOf = (r) => (isNewLine(r) ? CALL_REACTOR_RATE : rate.perSecond);
+    const rateFor = (r) => {
+      const pic = meta.picture ? picRateOf(r) : 0;
+      if (pic == null) return null;
+      return pic + (meta.voice ? CALL_VOICE_RATE : 0);
+    };
     // What one second of this kind of call costs: the video price, the voice price, or both. The
     // minutes it sells are priced the same way on all three lists, because all three draw one pool.
-    const perSecond = (meta.picture ? rate.perSecond : 0) + (meta.voice ? CALL_VOICE_RATE : 0);
     const rateText = meta.picture && meta.voice
-      ? `${usd(rate.perSecond)} a second of picture plus ${usd(CALL_VOICE_RATE)} a second of voice`
+      ? `${secUsd(rate.perSecond)} a second of picture plus ${secUsd(CALL_VOICE_RATE)} a second of voice`
       : meta.picture
-        ? `${usd(rate.perSecond)} a second, ${usd(rate.perSecond * 60)} a minute`
-        : `${usd(CALL_VOICE_RATE)} a second, ${usd(CALL_VOICE_RATE * 60)} a minute`;
+        ? `${secUsd(rate.perSecond)} a second, ${minUsd(rate.perSecond * 60)} a minute`
+        : `${secUsd(CALL_VOICE_RATE)} a second, ${minUsd(CALL_VOICE_RATE * 60)} a minute`;
     // What a minute sold for is his own Plans tab figure for that account's package. An account
     // on a package with no price written on it is said so on the row rather than guessed at; an
     // account with no package row at all falls to the average of his priced ones.
@@ -4425,9 +4518,12 @@
       const billed = N(r.billed_minutes);
       const rp = rateOf(r.user_id);
       const refused = lineRefused(r);
+      const sec = rateFor(r);
+      const onNew = isNewLine(r);
+      const unpriced = sec == null;
       return {
-        r, line, pic, billed, refused,
-        cost: refused ? 0 : bill * perSecond,
+        r, line, pic, billed, refused, onNew, unpriced,
+        cost: refused || unpriced ? 0 : bill * sec,
         sell: rp.perMinute,
         plan: rp.plan,
         pack: unlPackOf(r.user_id, r.started_at),
@@ -4435,16 +4531,25 @@
         paid: billed * rp.perMinute,
       };
     });
+    // A row nobody can price is counted, stated, and left out of the money total. Putting it in at
+    // zero would make the list read as though the line were free; giving it Lucy's figure would
+    // invent a cost it does not have.
+    const notPriced = rows.filter((x) => x.unpriced && !x.refused).length;
+    const onNewLine = rows.filter((x) => x.onNew).length;
     const sum = rows.reduce((a, x) => ({
       line: a.line + x.line, pic: a.pic + x.pic, billed: a.billed + x.billed,
-      cost: a.cost + x.cost, paid: a.paid + x.paid,
+      cost: a.cost + (x.unpriced ? 0 : x.cost), paid: a.paid + (x.unpriced ? 0 : x.paid),
     }), { line: 0, pic: 0, billed: 0, cost: 0, paid: 0 });
     const money = (v) => `<td class="mono" style="text-align:right">${usd(v)}</td>`;
     const refusals = rows.filter((x) => x.refused).length;
-    const red = rows.filter((x) => !x.refused && x.paid - x.cost < 0.005).length;
+    const red = rows.filter((x) => !x.refused && !x.unpriced && x.paid - x.cost < 0.005).length;
     // Folded, this one line is the whole list: what these calls cost, what they paid,
     // how many lost. The figures never blank - only the list does.
-    const brief = `<p class="muted" style="margin:10px 0 0">These <b>${rows.length}</b> ${meta.name}(s) on the paid video service cost <b>${usd(sum.cost)}</b> and paid <b>${usd(sum.paid)}</b> — that is <b>${sum.paid - sum.cost >= 0 ? "+" : ""}${usd(sum.paid - sum.cost)}</b>, over <b>${mins2(sum.billed)}</b> minutes you charged${refusals ? `, with <b>${refusals}</b> refused dial(s) the service never billed` : ""}${red ? `, with <b style="color:#fb7185">${red}</b> of them costing more than they paid` : ""}${CALL_SKIPPED && CALL_KIND === "video" ? `, plus <b>${CALL_SKIPPED}</b> trial call(s) that are not listed` : ""}.</p>`;
+    const brief = `<p class="muted" style="margin:10px 0 0">These <b>${rows.length}</b> ${meta.name}(s) on the paid video service cost <b>${usd(sum.cost)}</b> and paid <b>${usd(sum.paid)}</b> — that is <b>${sum.paid - sum.cost >= 0 ? "+" : ""}${usd(sum.paid - sum.cost)}</b>, over <b>${mins2(sum.billed)}</b> minutes you charged${refusals ? `, with <b>${refusals}</b> refused dial(s) the service never billed` : ""}${red ? `, with <b style="color:#fb7185">${red}</b> of them costing more than they paid` : ""}${CALL_SKIPPED && CALL_KIND === "video" ? `, plus <b>${CALL_SKIPPED}</b> trial call(s) that are not listed` : ""}.</p>${meta.picture && onNewLine
+      ? `<p class="muted" style="margin:6px 0 0"><b>${onNewLine}</b> of them ran on the new picture line${CALL_REACTOR_RATE ? ` and are costed at ${secUsd(CALL_REACTOR_RATE)} a second, ${minUsd(CALL_REACTOR_RATE * 60)} a minute` : ""}; the other <b>${rows.length - onNewLine}</b> ran on Lucy at ${secUsd(rate.perSecond)} a second.${notPriced
+        ? ` <b style="color:#fb7185">${notPriced}</b> of the new-line call(s) cannot be costed at all, because the Prices tab holds no rate for that line yet — the totals above leave those rows out rather than guessing.`
+        : ` That figure comes from the Prices tab, and the money columns below price each row with the line it actually ran on.`}</p>`
+      : ""}`;
     // Both sides of this line come from the same server read: fal.ai's own bill for the
     // day, added across every stored account, against the calls the gateway booked inside
     // that same day. The window is the server's and never worked out in this browser, whose
@@ -4454,7 +4559,12 @@
     const dayRows = bill && bill.start
       ? CALL_TODAY.filter((r) => Date.parse(String(r.started_at)) >= Date.parse(bill.start))
       : CALL_TODAY;
-    const picOfDay = dayRows.filter((r) => { const k = kindOf(r); return k === "video" || k === "video_audio"; });
+    // fal.ai's bill can only ever be set against the calls that ran on fal. A new-line call is a
+    // different company's invoice, so leaving it inside this comparison would show a "difference"
+    // that is nothing but the new line's own money, and the first thing he would conclude is that
+    // the meter is wrong.
+    const picOfDay = dayRows.filter((r) => { const k = kindOf(r); return (k === "video" || k === "video_audio") && r.engine !== "reactor"; });
+    const newOfDay = dayRows.filter((r) => r.engine === "reactor").length;
     const picRefused = picOfDay.filter(lineRefused).length;
     const picCost = picOfDay.reduce((a, r) => a + (lineRefused(r) ? 0 : callSeconds(r, now).bill), 0) * rate.perSecond;
     const named = ((bill && bill.parts) || []).map((x) => `${esc(x.label)} ${usd(x.cost)}`).join(" · ");
@@ -4465,15 +4575,20 @@
         ? "No fal.ai bill came with this load, so today's cost cannot be set against these rows. The figures above are your own meter's and are unchanged."
         : `fal.ai says today's whole bill is <b>${usd(N(bill.cost))}</b> for <b>${mins(N(bill.seconds) / 60)} min</b> of compute`
           + `${N(bill.accounts) > 1 ? `, added across your <b>${N(bill.accounts)}</b> stored accounts` : " for the stored account"}`
-          + `${named ? ` (${named})` : ""}. All <b>${picOfDay.length}</b> picture calls in that same window add up to <b>${usd(picCost)}</b>`
+          + `${named ? ` (${named})` : ""}. All <b>${picOfDay.length}</b> Lucy picture calls in that same window add up to <b>${usd(picCost)}</b>`
           + `${picRefused ? `, counting its <b>${picRefused}</b> refused dial(s) at nothing because the line never opened for them` : ""}`
           + ` — a difference of <b>${usd(Math.abs(gap))}</b> is ${gap >= 0.005 ? "calls still settling on fal.ai's side, calls outside this window, or spending by a key that is not in the pool" : "within reading distance"}`
           + `${bill.read === false ? " — and one or more accounts gave no answer, so that bill is the accounts that did." : "."}`
+          + `${newOfDay ? ` The <b>${newOfDay}</b> call(s) that ran on the new line in that window are not in that figure: this bill is fal's alone, and the new line is a separate invoice you pay there.` : ""}`
           + `${CALL_TODAY_CAPPED ? " The day's list is capped at 2,000 calls, so the difference can be larger than it looks." : ""}`;
-    // Which of the two paid picture services this call ran. The gateway writes it on the call the
+    // Which paid line served this call, and which model on it. The gateway writes both on the call the
     // second the line opens, so a row with nothing in it is a call made before that stamp existed
-    // - not a call that failed to send a picture, which is what the pill two columns over says.
-    const modelOf = (m) => (m ? VIDEO_MODEL_NAME[m] || esc(String(m)) : "not recorded");
+    // - not a call that failed to send a picture, which is what the pill two columns over says. The
+    // new line names itself here even when its model column is empty, because the two lines are two
+    // companies and a blank must never be read as "Lucy, presumably".
+    const modelOf = (r) => r.engine === "reactor"
+      ? (VIDEO_MODEL_NAME[r.video_model] || "Reactor (new line), model not recorded")
+      : (r.video_model ? VIDEO_MODEL_NAME[r.video_model] || esc(String(r.video_model)) : "not recorded");
     // What the pill in the Picture column is allowed to claim. It is the same one answer the Call
     // Ends tab gives, from the same words the app wrote down - and when that log was not read, the
     // row keeps the single name it always had and says why, rather than guessing which of the two
@@ -4499,7 +4614,7 @@
       const why = endsReason(x.r, CALL_FAIL);
       const said = (why.why && why.why.detail) || (why.lines[0] && why.lines[0].detail) || "";
       if (why.key === "refused") {
-        // "Line busy" used to be one word covering four different faults, several of which are ours to
+        // "Line busy" used to be one word covering five different faults, several of which are ours to
         // fix in several different places. This cell now names which one this dial met, and it reads it
         // off the same words the Call Ends tab reads, so the two tabs cannot sort one refusal twice.
         const b = busyOf(why.why);
@@ -4521,9 +4636,11 @@
         ? `<div title="${esc("This call ran on this account's Voice Clone Only Unlimited pack, at your Voice Clone Only rate. The minutes you charged are minutes spent, so the time on the line was longer than that figure.")}">Unlimited · Voice Clone Only pack</div>`
         : `<div title="${esc("This call ran on this account's picture Unlimited pack, at your Unlimited dial on the Burn rates tab. The minutes you charged are minutes spent, so a picture call ran shorter than that figure.")}">Unlimited · picture pack</div>`;
     const list = `
-      <p class="muted" style="margin:10px 0 0">One line per call, newest first, for every ${meta.name} run on the paid video service${CALL_SKIPPED ? ` - the <b>${CALL_SKIPPED}</b> trial call(s) are not here` : ""}. The services bill by the second, so
+      <p class="muted" style="margin:10px 0 0">One line per call, newest first, for every ${meta.name} run on a paid picture line${CALL_SKIPPED ? ` - the <b>${CALL_SKIPPED}</b> trial call(s) are not here` : ""}. The services bill by the second, so
         <b>what it cost</b> is the price on your Prices tab (${rateText}) times
-        the seconds this call held - that is money leaving you, whatever you charge. <b>What it paid</b> is the minutes you charged times
+        the seconds this call held - that is money leaving you, whatever you charge.${meta.picture && (CALL_REACTOR_RATE || onNewLine)
+          ? ` A call that ran on the <b>new line</b> is costed at that line's own price instead${CALL_REACTOR_RATE ? ` — ${secUsd(CALL_REACTOR_RATE)} a second, ${minUsd(CALL_REACTOR_RATE * 60)} a minute — and each such row says so under its cost` : ", which this database does not hold yet"}, because the two picture lines are two companies with two bills.`
+          : ""} <b>What it paid</b> is the minutes you charged times
         the price you set on that account's package on your Plans tab, which each row prints under the minutes. One pool of minutes funds all three
         kinds of call, so that selling price is the same figure on all three lists. Where a call ran on an Unlimited package the row names which pack under the minutes: an Unlimited minute is a minute <b>spent</b>, not time on the line, so a voice-pack call held the line longer than the figure you charged. These prices are read fresh
         every time the card loads, so a package you re-price shows up on the next refresh.${pillNote}${zeroNote}</p>
@@ -4533,33 +4650,37 @@
           <tbody>${rows.map((x) => `<tr>
             <td><b>${esc(EMAIL_OF[x.r.user_id] || shortId(x.r.user_id))}</b></td>
             <td class="muted">${when(x.r.started_at)}${x.r.ended_at ? "" : ' <span class="pill warn">on air</span>'}${x.r.settled ? "" : " · not settled"}</td>
-            ${meta.picture ? `<td class="muted">${modelOf(x.r.video_model)}</td>` : ""}
+            ${meta.picture ? `<td class="muted">${modelOf(x.r)}</td>` : ""}
             <td class="mono" style="text-align:right">${clock(x.line / 60)}</td>
             <td class="mono" style="text-align:right">${x.pic > 0 ? clock(x.pic / 60)
               : causePill(x) || `<span class="pill warn">${meta.noneName}</span>`}</td>
             ${x.refused
               ? `<td class="mono" style="text-align:right">${usd(0)}<div class="muted" style="font-size:11px">not charged</div></td>`
-              : money(x.cost)}
+              : x.unpriced
+                ? `<td class="mono" style="text-align:right"><span class="pill warn">no rate</span><div class="muted" style="font-size:11px">set it on Prices</div></td>`
+                : `<td class="mono" style="text-align:right">${usd(x.cost)}${x.onNew ? `<div class="muted" style="font-size:11px">${secUsd(CALL_REACTOR_RATE)} a sec · new line</div>` : ""}</td>`}
             <td class="mono" style="text-align:right">${mins2(x.billed)} min<div class="muted" style="font-size:11px">${usd(x.sell)} a minute · ${esc(x.plan)}${x.noOrder ? " · never paid you" : ""}${packOf(x)}</div></td>
             ${money(x.paid)}
-            <td class="mono" style="text-align:right;color:${x.paid - x.cost < 0.005 ? "#fb7185" : "#35e0a0"}">${x.paid - x.cost >= 0 ? "+" : ""}${usd(x.paid - x.cost)}</td>
+            ${x.unpriced && !x.refused
+              ? `<td class="mono" style="text-align:right"><span class="pill warn">${usd(x.paid)} in</span><div class="muted" style="font-size:11px">cost unknown</div></td>`
+              : `<td class="mono" style="text-align:right;color:${x.paid - x.cost < 0.005 ? "#fb7185" : "#35e0a0"}">${x.paid - x.cost >= 0 ? "+" : ""}${usd(x.paid - x.cost)}</td>`}
           </tr>`).join("")}</tbody>
           <tfoot><tr>
             <td><b>these ${rows.length} calls</b></td><td></td>${meta.picture ? "<td></td>" : ""}
             <td class="mono" style="text-align:right"><b>${clock(sum.line / 60)}</b></td>
             <td class="mono" style="text-align:right"><b>${clock(sum.pic / 60)}</b></td>
-            <td class="mono" style="text-align:right"><b>${usd(sum.cost)}</b></td>
+            <td class="mono" style="text-align:right"><b>${usd(sum.cost)}</b>${notPriced ? `<div class="muted" style="font-size:11px">excludes ${notPriced} unpriced</div>` : ""}</td>
             <td class="mono" style="text-align:right"><b>${mins2(sum.billed)} min</b></td>
-            <td class="mono" style="text-align:right"><b>${usd(sum.paid)}</b></td>
+            <td class="mono" style="text-align:right"><b>${usd(sum.paid)}</b>${notPriced ? `<div class="muted" style="font-size:11px">excludes ${notPriced} unpriced</div>` : ""}</td>
             <td class="mono" style="text-align:right"><b>${sum.paid - sum.cost >= 0 ? "+" : ""}${usd(sum.paid - sum.cost)}</b></td>
           </tr></tfoot>
         </table>
       </div>
-      <div class="syncbox">${gapNote} A row in red cost more than it paid — that is a call you ran and did not sell.</div>`;
+      <div class="syncbox">${gapNote} A row in red cost more than it paid — that is a call you ran and did not sell.${notPriced ? ` A row reading <b>no rate</b> ran on the new line, which has no price saved on the Prices tab yet, so it is left out of both totals rather than priced at Lucy's figure.` : ""}</div>`;
     // Where the gateway's count and his own sign-in's count disagree is the answer to
     // "where did my history go", so it is printed whether the list is open or folded.
-    const gapSeen = CALL_SEEN >= 0 && CALL_SEEN !== CALL_FAL
-      ? `<p class="muted" style="margin:8px 0 0">Read with your own sign-in this card reaches <b>${CALL_SEEN}</b> of the ${CALL_FAL} call(s) on the paid service; the figures above are counted by the gateway, so the list is complete whatever that number says.</p>`
+    const gapSeen = CALL_SEEN >= 0 && CALL_SEEN !== CALL_PAID
+      ? `<p class="muted" style="margin:8px 0 0">Read with your own sign-in this card reaches <b>${CALL_SEEN}</b> of the ${CALL_PAID} call(s) on the paid picture line${CALL_REACTOR ? `s, both of them (${CALL_REACTOR} on the new line)` : ""}; the figures above are counted by the gateway, so the list is complete whatever that number says.</p>`
       : "";
     CALL_LIST_SHOWN = true;
     box.innerHTML = door + brief + gapSeen + (CALLS_FOLD[CALL_KIND] ? "" : list);
@@ -4598,18 +4719,27 @@
   async function loadKeys() {
     const base = "id, label, enabled, priority, daily_minute_cap, minutes_today, usage_day, last_error, last_error_at, is_default, created_at, video_key_tail, voice_key_tail, recent_failures";
     const ordered = (cols) => sb.from("admin_key_health").select(cols).order("priority", { ascending: true });
-    let { data, error } = await ordered(base + ", for_unlimited_accounts, trial_key_tail, trial_minutes_budget, trial_minutes_used");
-    hasUnlCol = !error;
-    if (error) ({ data, error } = await ordered(base + ", trial_key_tail, trial_minutes_budget, trial_minutes_used"));
-    // The DeCart columns arrive with the dual-engine migration. Probing keeps this
-    // page working whether or not that SQL has run yet.
-    hasTrialCols = !error;
-    if (!hasTrialCols) ({ data, error } = await ordered(base));
+    let { data, error } = await ordered(base + ", for_unlimited_accounts, trial_key_tail, trial_minutes_budget, trial_minutes_used, reactor_key_tail");
+    if (!error) { hasReactorCol = true; hasUnlCol = true; hasTrialCols = true; }
+    else {
+      // Each migration added its own columns, and this page can be deployed ahead of any of them, so
+      // the read is stepped down one column set at a time. The order matters: a failure on the first
+      // query says nothing about WHICH column is missing, and asking without the newest one is what
+      // tells a not-yet-migrated Reactor column apart from a not-yet-migrated Unlimited tick.
+      ({ data, error } = await ordered(base + ", for_unlimited_accounts, trial_key_tail, trial_minutes_budget, trial_minutes_used"));
+      if (!error) { hasUnlCol = true; hasTrialCols = true; }
+      else {
+        ({ data, error } = await ordered(base + ", trial_key_tail, trial_minutes_budget, trial_minutes_used"));
+        hasTrialCols = !error;
+        if (!hasTrialCols) ({ data, error } = await ordered(base));
+      }
+    }
     if (error) return msg("poolMsg", "Could not read the key pool: " + error.message);
     msg("poolMsg", "");
     KEY_ROWS = data || [];
     ["thTrialKey", "thTrialLeft"].forEach((id) => $(id).classList.toggle("hidden", !hasTrialCols));
     $("thForUnl").classList.toggle("hidden", !hasUnlCol);
+    $("thReactorKey").classList.toggle("hidden", !hasReactorCol);
     renderDecartKeys();
 
     const live = KEY_ROWS.filter((k) => k.enabled !== false);
@@ -4620,10 +4750,13 @@
       [KEY_ROWS.length, "pairs stored"],
       [live.filter((k) => k.video_key_tail).length, "paid video keys live"],
     ];
+    if (hasReactorCol) stats.push([live.filter((k) => k.reactor_key_tail).length, "new-line keys live"]);
     if (hasUnlCol) {
       // The fence is only as real as this number. At zero, every Unlimited buyer's video call is
-      // refused by design, so the figure is red rather than a quiet nought.
-      const n = live.filter((k) => k.for_unlimited_accounts && k.video_key_tail).length;
+      // refused by design, so the figure is red rather than a quiet nought. Either picture line
+      // counts: an Unlimited account is served by the Lucy keys and the new-line keys ticked here,
+      // so a row holding only a Reactor key is a fenced line just as much as one holding only fal.
+      const n = live.filter((k) => k.for_unlimited_accounts && (k.video_key_tail || k.reactor_key_tail)).length;
       stats.push([n || '<span style="color:#fb7185">0</span>', "keys serve Unlimited accounts"]);
     }
     if (hasTrialCols) {
@@ -4655,12 +4788,13 @@
         <td><b>${esc(k.label || "(unlabeled)")}</b>${k.is_default ? ' <span class="pill yes">default</span>' : ""}</td>
         <td>${cell(k, "fal", k.video_key_tail)}</td>
         <td data-spend="${k.id}">${spendCell(k.id)}</td>
+        ${hasReactorCol ? `<td>${cell(k, "reactor", k.reactor_key_tail)}</td>` : ""}
         ${hasTrialCols ? tRow : ""}
         ${hasTrialCols ? `<td>${tLeft}</td>` : ""}
         <td>${cell(k, "elevenlabs", k.voice_key_tail)}</td>
         <td style="white-space:nowrap">${k.enabled === false ? '<span class="pill no">disabled</span>' : '<span class="pill yes">enabled</span>'} <button data-act="toggle" data-id="${k.id}">${k.enabled === false ? "enable" : "disable"}</button></td>
         ${hasUnlCol ? `<td>${k.for_unlimited_accounts
-          ? `<span class="pill yes" title="${k.video_key_tail ? "Unlimited accounts dial this key and no other" : "ticked, but this row holds no video key, so no Unlimited account can dial it"}">unlimited</span>`
+          ? `<span class="pill yes" title="Unlimited accounts dial this key and no other${k.reactor_key_tail ? ", on both picture lines it carries" : ""}">unlimited</span>${!k.video_key_tail && !k.reactor_key_tail ? '<div class="muted" style="font-size:11px">ticked, but this row holds no picture key, so no Unlimited account can dial it</div>' : ""}`
           : '<span class="muted" title="ordinary minute-buying customers use this key; an Unlimited account only touches it if you attach it to that account on its own page">—</span>'}</td>` : ""}
         <td class="mono">${N(k.priority, 100)}</td>
         <td class="mono" data-usage="${k.id}">${cap == null ? "uncapped" : mins(used) + " / " + mins(cap)}${cap != null && used >= N(cap) ? ' <span class="pill warn">capped</span>' : ""}</td>
@@ -4670,7 +4804,7 @@
           <button data-act="edit" data-id="${k.id}">Edit</button>
           <button data-act="del" data-id="${k.id}" class="danger">Delete</button>
         </td></tr>`;
-    }).join("") || '<tr><td colspan="13" class="muted">The pool is empty, so every call falls back to the FAL_KEY / ELEVENLABS_KEY env secrets. Add a pair above and press Verify.</td></tr>';
+    }).join("") || '<tr><td colspan="14" class="muted">The pool is empty, so every call falls back to the FAL_KEY / REACTOR_KEY / ELEVENLABS_KEY env secrets. Add a pair above and press Verify.</td></tr>';
 
     // Opens empty for the same reason as the plan and package boxes: this used to default
     // to whichever key the pool listed first, and Assign writes a live key.
@@ -4860,7 +4994,7 @@
   }
 
   async function runVerify(provider, key, keyId, ui) {
-    const name = provider === "fal" ? "fal.ai" : provider === "decart" ? "DeCart" : "ElevenLabs";
+    const name = provider === "fal" ? "fal.ai" : provider === "decart" ? "DeCart" : provider === "reactor" ? "Reactor" : "ElevenLabs";
     if (ui.prefix) setChip(ui.prefix, "busy", "checking");
     ui.box.className = "presult show";
     ui.box.textContent = "Asking " + name + "…";
@@ -5038,16 +5172,18 @@
 
   $("testFal").onclick = () => runVerify("fal", $("kFal").value.trim(), $("kId").value, { prefix: "vid", box: $("vidResult") });
   $("testEleven").onclick = () => runVerify("elevenlabs", $("kEleven").value.trim(), $("kId").value, { prefix: "voice", box: $("voiceResult") });
+  $("testReactor").onclick = () => runVerify("reactor", $("kReactor").value.trim(), $("kId").value, { prefix: "new", box: $("newResult") });
   // A typed key invalidates whatever the last check proved.
   $("kFal").oninput = () => { setChip("vid", "", "not tested"); $("vidResult").className = "presult"; };
   $("kEleven").oninput = () => { setChip("voice", "", "not tested"); $("voiceResult").className = "presult"; };
+  $("kReactor").oninput = () => { setChip("new", "", "not tested"); $("newResult").className = "presult"; };
 
   function clearKeyForm() {
-    ["kId", "kLabel", "kFal", "kEleven"].forEach((i) => $(i).value = "");
+    ["kId", "kLabel", "kFal", "kEleven", "kReactor"].forEach((i) => $(i).value = "");
     $("kPriority").value = 100; $("kCap").value = "";
     $("kEnabled").checked = true; $("kDefault").checked = false; $("kForUnlimited").checked = false;
-    setChip("vid", "", "not tested"); setChip("voice", "", "not tested");
-    ["vidResult", "voiceResult"].forEach((i) => $(i).className = "presult");
+    setChip("vid", "", "not tested"); setChip("voice", "", "not tested"); setChip("new", "", "not tested");
+    ["vidResult", "voiceResult", "newResult"].forEach((i) => $(i).className = "presult");
     msg("keyMsg", "");
   }
 
@@ -5066,10 +5202,17 @@
       // second visit: an Unlimited account dials only keys carrying this tick.
       for_unlimited_accounts: $("kForUnlimited").checked,
     };
-    const fal = $("kFal").value.trim(), eleven = $("kEleven").value.trim();
+    const fal = $("kFal").value.trim(), eleven = $("kEleven").value.trim(), reactor = $("kReactor").value.trim();
     if (fal) row.fal_key = fal;
     if (eleven) row.elevenlabs_key = eleven;
-    if (!id && !fal && !eleven) return msg("keyMsg", "Enter at least one key.");
+    if (reactor) {
+      // The column lands with the third-picture-line migration. Writing it before that SQL has run
+      // would refuse the whole save and lose the other two keys with it, so the box names what is
+      // missing instead of quietly dropping what he pasted.
+      if (!hasReactorCol) return msg("keyMsg", "The new-line key column is not in the database yet — run the third-picture-line migration, then paste it again.");
+      row.reactor_key = reactor;
+    }
+    if (!id && !fal && !eleven && !reactor) return msg("keyMsg", "Enter at least one key.");
     const res = id ? await sb.from("gateway_keys").update(row).eq("id", id) : await sb.from("gateway_keys").insert(row);
     if (res.error) return msg("keyMsg", res.error.message);
     msg("keyMsg", "Saved to the pool. Press Verify on each provider to confirm the gateway can actually use it.", "ok");
@@ -5190,12 +5333,17 @@
     }
     const { data: open } = await sb.from("admin_live_sessions").select("engine");
     const onTrial = (open || []).filter((r) => r.engine === "decart").length;
-    const onPaid = (open || []).filter((r) => r.engine === "fal").length;
+    // Three lines, three numbers. Counting a new-line call as "paid" here would hide the one figure
+    // he needs the moment he closes Lucy: how much of the fleet is sitting on the new service.
+    const onLucy = (open || []).filter((r) => r.engine === "fal").length;
+    const onNewLine = (open || []).filter((r) => r.engine === "reactor").length;
     $("supplyCards").innerHTML = [
       [N(supply.keys_ready), "trial keys able to serve"],
       [mins(supply.minutes_remaining) + " min", "budgeted minutes left"],
       [N(supply.uncapped_keys), "of those keys uncapped"],
-      [onTrial + " / " + onPaid, "calls running now: trial / paid"],
+      // Three lines, three numbers, in the order the app names them. Counting a new-line call as
+      // "paid" would hide the one figure he needs the moment he closes Lucy.
+      [onTrial + " / " + onLucy + " / " + onNewLine, "calls running now: trial / Lucy / new line"],
     ].map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
     if (N(supply.keys_ready) === 0) {
       msg("supplyMsg", "Not one trial key can serve a call right now, so a new account is told the lines are busy and fal.ai is billed nothing. Add or re-enable a DeCart key above.");
@@ -5623,11 +5771,21 @@
   // for.
   async function loadSessions() {
     const since = new Date(serverNowMs() - 3 * 86_400_000).toISOString();
-    const { data, error } = await sb.from("usage_sessions")
-      .select("id, user_id, tab, modality, device_id, engine, decart_key_id, started_at, lease_started_at, lease_expires_at, real_minutes, billed_minutes, pending_debit, ended_at")
+    const cols = "id, user_id, tab, modality, device_id, engine, decart_key_id, reactor_key_id, started_at, lease_started_at, lease_expires_at, real_minutes, billed_minutes, pending_debit, ended_at";
+    let { data, error } = await sb.from("usage_sessions")
+      .select(cols)
       .gte("started_at", since)
       .order("started_at", { ascending: false })
       .limit(1000);
+    // A panel redeployed before the third-line migration runs must still show this table, so the new
+    // column is dropped and the read repeated rather than leaving an error where the calls are.
+    if (error) {
+      ({ data, error } = await sb.from("usage_sessions")
+        .select(cols.replace(", reactor_key_id", ""))
+        .gte("started_at", since)
+        .order("started_at", { ascending: false })
+        .limit(1000));
+    }
     if (error) return msg("sessMsg", error.message);
     HIST = data || [];
     await emailsOf(HIST.map((r) => r.user_id));
@@ -5636,8 +5794,11 @@
   }
 
   function engCell(r) {
+    // A trial call and a new-line call each name the key that carried them, because both keys are
+    // separate accounts at their own service. A paid-line call is left as it has always been read.
+    const keyId = r.engine === "decart" ? r.decart_key_id : r.engine === "reactor" ? r.reactor_key_id : null;
     return r.engine
-      ? `<span class="pill ${ENGINE_PILL[r.engine]}">${ENGINE_LABEL[r.engine] || r.engine}</span>${r.engine === "decart" && r.decart_key_id ? `<div class="muted">key ${shortId(r.decart_key_id)}</div>` : ""}`
+      ? `<span class="pill ${ENGINE_PILL[r.engine] || "n"}">${ENGINE_LABEL[r.engine] || r.engine}</span>${keyId ? `<div class="muted">key ${shortId(keyId)}</div>` : ""}`
       : '<span class="muted">—</span>';
   }
 
@@ -5800,6 +5961,7 @@
   let ENDS_GATE = [];
   let ENDS_TRUNC = "";
   let ENDS_HAS_LINE_COLS = false; // these rows carry video_model and fal_key_id
+  let ENDS_HAS_NEW_LINE = false;  // ... and the third line's own key stamp
   let ENDS_KEYS = {};             // gateway_keys id -> its label, for the picture-line card
 
   // This page lists one row per paid call, so it grows taller every day while the figures above the
@@ -5840,21 +6002,31 @@
   async function fetchEnds(days) {
     const since = new Date(serverNowMs() - days * 864e5).toISOString();
     // The two stamps the picture-line card below groups by are written by the gateway on the call
-    // row itself, and they arrived with the second-picture-line migration. A panel redeployed
-    // before that SQL runs must still load this tab, so the wide read is tried first and the
-    // narrow one is the fallback — never a select that names a column this database has not got.
-    const wide = "id, user_id, tab, modality, device_id, started_at, media_started_at, ended_at, real_minutes, stopped_by, video_model, fal_key_id";
-    const narrow = "id, user_id, tab, modality, device_id, started_at, media_started_at, ended_at, real_minutes, stopped_by";
+    // row itself, and they arrived with the second-picture-line migration; the third line's own stamp
+    // arrived with the third. A panel redeployed before either SQL runs must still load this tab, so
+    // the widest read is tried first and each narrower one is a fallback — never a select that names a
+    // column this database has not got.
+    const base = "id, user_id, tab, modality, device_id, engine, started_at, media_started_at, ended_at, real_minutes, stopped_by";
+    const widest = base + ", video_model, fal_key_id, reactor_key_id";
+    const wide = base + ", video_model, fal_key_id";
+    const narrow = base;
+    const paidLine = ["fal", "reactor"];
     const [ses, fls, keys] = await Promise.all([
       (async () => {
-        const first = await sb.from("usage_sessions").select(wide)
-          .eq("engine", "fal").gte("started_at", since)
-          .order("started_at", { ascending: false }).limit(1000);
-        if (!first.error) { ENDS_HAS_LINE_COLS = true; return first; }
+        let last = null;
+        for (const cols of [widest, wide, narrow]) {
+          last = await sb.from("usage_sessions").select(cols)
+            .in("engine", paidLine).gte("started_at", since)
+            .order("started_at", { ascending: false }).limit(1000);
+          if (!last.error) {
+            ENDS_HAS_LINE_COLS = cols !== narrow;
+            ENDS_HAS_NEW_LINE = cols === widest;
+            return last;
+          }
+        }
         ENDS_HAS_LINE_COLS = false;
-        return await sb.from("usage_sessions").select(narrow)
-          .eq("engine", "fal").gte("started_at", since)
-          .order("started_at", { ascending: false }).limit(1000);
+        ENDS_HAS_NEW_LINE = false;
+        return last;
       })(),
       sb.from("call_failures")
         .select("user_id, session_id, stage, detail, created_at").gte("created_at", since).limit(4000),
@@ -5939,7 +6111,7 @@
   // tab, and a machine hold is not something to blame a booked call for.
   const PACED_HOLD_RE = /^paced\b|held \d+s of a \d+s window/i;
 
-  // The busy line is four different events wearing one word, and they are fixed in four different
+  // The busy line is five different events wearing one word, and they are fixed in five different
   // places, so this tab names them separately:
   //
   //   self  - OUR gate refused the press before a dial was ever asked, because this account already
@@ -5964,8 +6136,15 @@
   //   full  - the service answered its capacity refusal ("Server at capacity", `busy=capacity`, close
   //           1013): a crowd at the door, nothing to do with this account, and the one kind a third
   //           key or a second billing account would answer.
+  //   nodes - the NEW picture line answered the same way in its own words ("no available capacity: no
+  //           available servers", the class `RATE_LIMITED`, HTTP 429, marked `busy=no_servers`). It is
+  //           kept apart from `full` because it is a different company's seat pool: a refusal here says
+  //           the new line needs room, and says nothing at all about the older one. Before this kind
+  //           existed the app's own words fell through every test below and were filed as "did not say
+  //           why", which is how a crowded new line would have looked like a build that wrote no
+  //           evidence. Asked FIRST, because the same sentence carries the word "capacity" too.
   //   unk   - a busy refusal written by a build that did not yet quote the service's class. It is
-  //           shown as its own figure rather than folded into one of the four, because the difference
+  //           shown as its own figure rather than folded into one of the five, because the difference
   //           between "0 of this kind" and "we were never told" is the difference he acts on.
   //
   // The order of the tests is the strength of the evidence: the app's own `[busy=…]` mark, then the
@@ -5975,13 +6154,15 @@
     wait: { label: "Busy – our gate refused before the dial", short: "our gate", side: "our gate, before the dial: our own ceiling or waiting rule" },
     limit: { label: "Busy – the video line was at its session limit", short: "line session limit", side: "the video line, quoting its own session count - whose sessions, it does not say" },
     full: { label: "Busy – the video service was full", short: "service full", side: "the video service" },
+    nodes: { label: "Busy – the new picture line had no server free", short: "new line full", side: "the new picture line: that company's servers had no node free - a crowd on it, nothing about this account" },
     unk: { label: "Busy – the line refused and did not say why", short: "not named", side: "not on record" },
   };
 
   function busyOf(line) {
     const t = String((line && ((line.stage || "") + " " + (line.detail || ""))) || "");
     let key = "unk";
-    if (/busy=capacity|at capacity|overloaded|\b1013\b/i.test(t)) key = "full";
+    if (/busy=no_servers|no available (?:capacity|servers)|\brate_limited\b/i.test(t)) key = "nodes";
+    else if (/busy=capacity|at capacity|overloaded|\b1013\b/i.test(t)) key = "full";
     else if (/busy=session_limit|concurrent session limit|\bsession_limit\b|too many (concurrent )?(sessions|calls)/i.test(t)) key = "limit";
     else if (/\bconcurrent_limit\b/i.test(t)) key = "self";
     else if (/\blines_busy\b|still being released/i.test(t)) key = "wait";
@@ -6039,7 +6220,7 @@
       if (big) return mk("photo", "fail", "No " + kind + ": the photo was too big for the line to read", "our app's photo size", big);
       const ref = said(LINE_BUSY_RE);
       if (ref) {
-        // The busy line is four different events wearing one word, and each is fixed somewhere else,
+        // The busy line is five different events wearing one word, and each is fixed somewhere else,
         // so the row names WHICH one this call met off the words the app and the service wrote down -
         // never a guess on this page. The filters, the busy card and the Calls tab pill all read the
         // `busy` field below, so the two tabs cannot sort one refusal two ways.
@@ -6090,6 +6271,7 @@
     if (which === "busy_wait") return x.why.busy === "wait";
     if (which === "busy_limit") return x.why.busy === "limit";
     if (which === "busy_full") return x.why.busy === "full";
+    if (which === "busy_nodes") return x.why.busy === "nodes";
     if (which === "unrecorded") return !x.r.stopped_by && !!x.r.ended_at;
     return true;
   }
@@ -6108,6 +6290,29 @@
   // arrived to meter from.
   const REFUSAL_SEC_USD = 0.02; // the video line's price of a second, from the seller's own $1.20 a real minute
 
+  // A refusal on the new line is a different company's money, and its second is not worth Lucy's
+  // figure. So the seconds are costed per line: Lucy's at the constant above, the new line at the
+  // price saved on the Prices tab. `null` in the second field means that price is not on this
+  // database yet — the seconds are still counted, never quietly valued at the dearer rate.
+  function refusalCost(rows) {
+    let sec = 0;
+    let usd = 0;
+    let newSec = 0;
+    let newUnpriced = false;
+    for (const e of rows) {
+      sec += e.secs;
+      if (!e.secs) continue;
+      if (e.line === "new") {
+        newSec += e.secs;
+        if (CALL_REACTOR_RATE == null) { newUnpriced = true; continue; }
+        usd += e.secs * CALL_REACTOR_RATE;
+      } else {
+        usd += e.secs * REFUSAL_SEC_USD;
+      }
+    }
+    return { sec, usd, newSec, newUnpriced };
+  }
+
   function endsSec(r) {
     if (!r.started_at) return 0;
     const to = r.ended_at ? new Date(r.ended_at) : new Date(serverNowMs());
@@ -6115,7 +6320,7 @@
   }
 
   // One refusal, whichever half of the card it belongs to, in the same shape: when it happened, which
-  // of the four kinds of busy it was, what the line or the gate actually said, and how many seconds
+  // of the five kinds of busy it was, what the line or the gate actually said, and how many seconds
   // of our held line it cost. A press our gate refused before booking a call has no call row and no
   // line ever opened, so it carries no seconds and no cost - which is the fact that makes it worth
   // listing beside the refusals that do cost money rather than hidden inside them.
@@ -6126,6 +6331,9 @@
         at: x.r.started_at || (x.why.lines[0] && x.why.lines[0].created_at),
         busy: x.why.busy || "unk",
         secs: endsSec(x.r),
+        // Which line the refused call was dialled on, from the row the gateway wrote. The refusal
+        // money below is priced per line, and a new-line refusal is not Lucy's money.
+        line: x.r.engine === "reactor" ? "new" : "lucy",
         who: x.r.user_id,
         where: x.r.device_id || "—",
         tab: ENDS_TAB[x.r.tab] || x.r.tab || "—",
@@ -6171,24 +6379,33 @@
     const sec = entries.reduce((n, e) => n + e.secs, 0);
     const accounts = new Set(entries.map((e) => e.who).filter(Boolean));
     const machines = new Set(entries.filter((e) => e.booked).map((e) => e.where));
-    const counts = { self: 0, wait: 0, limit: 0, full: 0, unk: 0 };
+    // Built from BUSY_KINDS, not typed out: a kind added to that table but not here counted as NaN
+    // beside its own label, which is worse than not showing it at all.
+    const counts = Object.keys(BUSY_KINDS).reduce((o, k) => Object.assign(o, { [k]: 0 }), {});
     for (const e of entries) counts[e.busy]++;
     // The unbooked figure is BOTH of our gate's kinds, and a reader who takes it for the waiting rule
     // alone will look for holds in the rows and find "already on a call" there instead.
     const gateSplit = { wait: 0, self: 0, named: 0 };
     for (const e of gates) gateSplit[e.busy === "self" ? "self" : e.busy === "wait" ? "wait" : "named"]++;
 
+    const money = refusalCost(entries);
+    const moneyLabel = money.newSec
+      ? (money.newUnpriced
+        ? `ours, at 2 cents a second — plus ${money.newSec} s on the new line, not costed because no price is saved for it yet`
+        : `ours — Lucy's seconds at 2 cents a second, and the new line's ${money.newSec} s at its own saved price`)
+      : "ours, at 2 cents a second";
+
     $("endsRefusedStats").innerHTML = [
       [entries.length, "presses the busy line refused"],
       [gates.length, "of them refused before a line was dialled"],
       [sec, "seconds its line was held for nothing"],
-      ["$" + (sec * REFUSAL_SEC_USD).toFixed(2), "ours, at 2 cents a second"],
+      ["$" + money.usd.toFixed(2), moneyLabel],
       [accounts.size + " / " + machines.size, "accounts / machines named"],
     ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
 
-    // The four kinds, in figures, before anything is clicked - because the sentence he acted on
+    // The five kinds, in figures, before anything is clicked - because the sentence he acted on
     // ("reduce the number of line is busy we get") cannot be followed up on one total when three of the
-    // four kinds have nothing to do with the video service running out of room.
+    // five kinds have nothing to do with the video service running out of room.
     $("endsRefusedKinds").innerHTML = Object.keys(BUSY_KINDS).map((k) =>
       "<b>" + esc(BUSY_KINDS[k].label) + ":</b> " + counts[k]).join(" &nbsp;·&nbsp; ")
       + (gates.length
@@ -6238,7 +6455,7 @@
         + '<td class="mono" style="text-align:right">' + set.length + "</td>"
         + '<td class="muted">' + esc(byKind) + "</td>"
         + '<td class="mono" style="text-align:right">' + s + " s</td>"
-        + '<td class="mono" style="text-align:right">$' + (s * REFUSAL_SEC_USD).toFixed(2) + "</td>"
+        + '<td class="mono" style="text-align:right">$' + refusalCost(set).usd.toFixed(2) + "</td>"
         + '<td class="muted">' + one(who.size, "account") + " · " + one(where.size, "machine") + "</td>"
         + '<td style="white-space:nowrap"><button data-act="ends-detail">+</button></td></tr>'
         + '<tr data-ends-detail class="hidden"><td colspan="7" class="muted">' + grouped + "</td></tr>";
@@ -6252,11 +6469,15 @@
   // about being refused, he complains about pressing five times before his caller appears.
   //
   // One run = one machine's paid picture presses up to and including the one that showed a picture.
-  // That is deliberately the same shape as the audit read this stands in for — engine `fal` (which is
-  // what this tab already filters to), the two picture modalities, grouped by device_id, counted off
-  // started_at — so a figure here can be put beside the figures quoted from that read without a
-  // footnote. A press that books nothing is not here: this counts calls the line booked, which is the
-  // population the refusal card above also ends on.
+  // That is deliberately the same shape as the audit read this stands in for — the two paid picture
+  // lines together (which is what this tab already filters to), the two picture modalities, grouped
+  // by device_id, counted off started_at — so a figure here can be put beside the figures quoted from
+  // that read without a footnote. A press that books nothing is not here: this counts calls the line
+  // booked, which is the population the refusal card above also ends on.
+  //
+  // Both paid lines are in one run on purpose. The new line opens on the press Lucy turned away, so a
+  // customer's wait is the presses across both of them; counting only Lucy's presses would report the
+  // waiting he never got out of as though it had not happened.
   function pressRuns() {
     const byDev = {};
     let nameless = 0;
@@ -6395,11 +6616,11 @@
   // A blank here is a call that opened and never put a picture on screen: no picture stamp, on a
   // paid picture call. That is the customer's "black box" and nothing else, so the rate is the
   // figure he can act on — not the count of refusals, which is the Busy line tab's own card.
-  function endsLineRows(field, nameOf) {
+  function endsLineRows(pick, nameOf) {
     const out = {};
     for (const r of ENDS_CALLS) {
       if (r.modality !== "video" && r.modality !== "video_audio") continue;
-      const k = r[field] || "";
+      const k = pick(r) || "";
       const b = (out[k] = out[k] || { key: k, calls: 0, blank: 0, busy: 0, secs: 0, accounts: new Set(), machines: new Set(), rows: [] });
       b.calls++;
       if (!r.media_started_at) {
@@ -6462,8 +6683,20 @@
       $("endsLineNote").innerHTML = "These call rows carry no picture-line or key stamp yet: the migration that writes them has not run on this database, so this card has nothing honest to count. Nothing here has been changed.";
       return;
     }
-    const models = endsLineRows("video_model", (k) => k ? (VIDEO_MODEL_NAME[k] || k) : "Not recorded — a call from before the line was written down");
-    const keys = endsLineRows("fal_key_id", (k) => k ? (ENDS_KEYS[k] || "key " + shortId(k)) : "Not recorded — a call from before the key was written down");
+    const models = endsLineRows((r) => r.video_model, (k) => k ? (VIDEO_MODEL_NAME[k] || k) : "Not recorded — a call from before the line was written down");
+    // The key a call was billed against, named beside the line it belongs to. A Lucy key and a
+    // new-line key are accounts at two different companies, so a bare "key ab12" in one list would
+    // read as though one pool served both lines.
+    const keys = endsLineRows(
+      (r) => (r.engine === "reactor" ? "new line|" : "lucy|")
+        + String(r.engine === "reactor" ? (r.reactor_key_id || "") : (r.fal_key_id || "")),
+      (k) => {
+        const at = String(k).indexOf("|");
+        const line = String(k).slice(0, at) === "new line" ? "New line (Reactor)" : "Lucy";
+        const id = String(k).slice(at + 1);
+        return line + " · " + (id ? (ENDS_KEYS[id] || "key " + shortId(id))
+          : "no key written on this call — a row from before its line kept a key stamp");
+      });
     const calls = models.reduce((n, b) => n + b.calls, 0);
     const busy = models.reduce((n, b) => n + b.busy, 0);
     // The four figures name the two bad events apart, because they are two different answers and he
@@ -6483,7 +6716,7 @@
       [calls, "paid picture calls in the window"],
       [nBlank, "of them opened and gave no picture"],
       [busy, "of them the line answered busy"],
-      [calls ? (nBlank / calls * 100).toFixed(1) + "%" : "—", "no-picture rate across both lines"],
+      [calls ? (nBlank / calls * 100).toFixed(1) + "%" : "—", "no-picture rate across every picture line"],
     ].map((s) => '<div class="stat"><div class="v">' + esc(s[0]) + '</div><div class="l">' + esc(s[1]) + "</div></div>").join("");
     endsLineTable(models, "endsLineTable", 8);
     endsLineTable(keys, "endsKeyTable", 8);
@@ -6557,6 +6790,10 @@
     const facts = [
       r.started_at ? "opened " + when(r.started_at) : "",
       r.ended_at ? "closed " + when(r.ended_at) : "still open",
+      ENDS_KIND[r.modality] === "picture"
+        ? "picture line: " + (r.engine === "reactor" ? "the new line" + (r.reactor_key_id ? " (key " + shortId(r.reactor_key_id) + ")" : "")
+          : "Lucy" + (r.fal_key_id ? " (key " + shortId(r.fal_key_id) + ")" : ""))
+        : "",
       "span " + endsSpan(r) + " (an upper bound, not the metered time)",
       ENDS_KIND[r.modality] === "picture"
         ? (r.media_started_at ? "a picture arrived " + when(r.media_started_at) : "no picture ever arrived on this call")
@@ -6761,14 +6998,14 @@
       const row = KEY_ROWS.find((k) => k.id === id);
       if (!row) return;
       $("kId").value = row.id; $("kLabel").value = row.label || "";
-      $("kFal").value = ""; $("kEleven").value = "";
+      $("kFal").value = ""; $("kEleven").value = ""; $("kReactor").value = "";
       $("kPriority").value = N(row.priority, 100);
       $("kCap").value = row.daily_minute_cap ?? "";
       $("kEnabled").checked = row.enabled !== false;
       $("kDefault").checked = !!row.is_default;
       $("kForUnlimited").checked = !!row.for_unlimited_accounts;
-      setChip("vid", "", "not tested"); setChip("voice", "", "not tested");
-      msg("keyMsg", `Editing “${row.label || shortId(id)}”. Stored keys stay exactly as they are unless you paste over them${row.trial_key_tail ? ", and its DeCart trial key is edited on the DeCart keys tab" : ""}.`, "ok");
+      setChip("vid", "", "not tested"); setChip("voice", "", "not tested"); setChip("new", "", "not tested");
+      msg("keyMsg", `Editing “${row.label || shortId(id)}”. Stored keys stay exactly as they are unless you paste over them${row.trial_key_tail ? ", and its DeCart trial key is edited on the DeCart keys tab" : ""}${row.reactor_key_tail ? ` — this row already holds a new-line key ending ${row.reactor_key_tail}` : ""}.`, "ok");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -6837,6 +7074,8 @@
   let hasVideoCeiling = false;
   let hasCloningCfg = false;
   let hasFirstCallLineCfg = false;   // app_config.first_call_health_line exists on this database
+  let hasLucySwitch = false;         // app_config.lucy_models_enabled exists on this database
+  let hasReactorCeiling = false;     // app_config.max_concurrent_reactor_sessions exists on it
 
   async function loadConfig() {
     const { data, error } = await sb.from("app_config").select("*").eq("id", 1).maybeSingle();
@@ -6887,8 +7126,131 @@
       ? ""
       : "The database has no first-call column yet — run the migration, then reload this page. Nothing here has been changed.";
 
+    // The two new-line columns came in the same migration (20261130120000), and a panel redeployed
+    // ahead of that SQL fails its WHOLE save by naming them, so each is probed on its own and its box
+    // disables rather than offering a switch that cannot be written. The switch is stored as the line
+    // being ON, so the tick reads as the closing of it — and that inversion is shown in the box, since
+    // a tick labelled "close Lucy" saving `true` somewhere else is the sort of thing a later reader
+    // gets wrong.
+    const probeLucy = await sb.from("app_config").select("lucy_models_enabled").eq("id", 1).maybeSingle();
+    hasLucySwitch = !probeLucy.error;
+    $("cfgLucyOff").checked = hasLucySwitch && probeLucy.data?.lucy_models_enabled === false;
+    $("cfgLucyOff").disabled = !hasLucySwitch;
+    $("cfgLucyNow").innerHTML = !hasLucySwitch
+      ? "The database has no Lucy switch yet — run the third-picture-line migration, then reload this page. Nothing here has been changed."
+      : probeLucy.data?.lucy_models_enabled === false
+        ? "Lucy is closed right now: a paid picture call goes to the new line first. The two cloning tabs and any account on an older installer are still on Lucy."
+        : "";
+
+    const probeRoom = await sb.from("app_config").select("max_concurrent_reactor_sessions").eq("id", 1).maybeSingle();
+    hasReactorCeiling = !probeRoom.error;
+    $("cfgReactorCeiling").disabled = !hasReactorCeiling;
+    $("cfgReactorCeiling").value = probeRoom.data?.max_concurrent_reactor_sessions ?? 0;
+    $("cfgReactorNow").innerHTML = !hasReactorCeiling
+      ? "The database has no new-line ceiling column yet — run the third-picture-line migration, then reload this page. Nothing here has been changed."
+      : (probeRoom.data?.max_concurrent_reactor_sessions ?? 0) > 0
+        ? "A call past this number is told the lines are busy, and the next press after that goes to Lucy while Lucy is open."
+        : "";
+
+    await loadThirdLineProof();
     await Promise.all([loadPool(), loadSupply()]);
   }
+
+  // The read-only before-and-after for the switch above, served by admin-api because the routing
+  // answer belongs to the database. Nothing here is saved, and a failure never blanks the switch: the
+  // card says what could not be read and leaves the gateway box alone.
+  let PROOF_FOLDED = true;
+  try { PROOF_FOLDED = localStorage.getItem("streamlive.proof.folded") !== "0"; } catch { }
+  let PROOF = null;
+  let PROOF_WHY = "";
+
+  async function loadThirdLineProof() {
+    try {
+      PROOF = await api({ action: "third_line_proof" });
+      PROOF_WHY = "";
+    } catch (err) {
+      PROOF = null;
+      PROOF_WHY = err.message;
+    }
+    renderThirdLineProof();
+  }
+
+  function renderThirdLineProof() {
+    const box = $("proofBody");
+    if (!box) return;
+    if (!PROOF) {
+      box.innerHTML = `<p class="muted" style="margin:10px 0 0">${esc(PROOF_WHY
+        ? `The proof could not be read: ${PROOF_WHY}. If this database has not run the third-picture-line migration yet, that is the reason — the switch above is unaffected.`
+        : "Not loaded yet. Press Refresh.")}</p>`;
+      return;
+    }
+    const p = PROOF;
+    const cost = p.cost_per_minute_usd || {};
+    const cannot = p.calls_the_switch_cannot_move || {};
+    // A minute of the new line is a tenth of a cent, so two decimals would print every row of this
+    // card as $0.10 against itself. Three is what the database rounds to, and it is what he reads.
+    const usd3 = (v) => "$" + N(v).toFixed(3);
+    const accounts = Array.isArray(p.accounts) ? p.accounts : [];
+    const moves = accounts.filter((a) => a.engine_today !== a.engine_if_asked).length;
+    const buyers = accounts.filter((a) => a.new_buyer === true).length;
+    const stats = [
+      [p.lucy_models_enabled === false ? '<span style="color:#fb7185">closed</span>' : '<span style="color:#35e0a0">open</span>', "the Lucy line right now"],
+      [N(p.lines_usable) + " / " + N(p.lines_with_a_key), "new-line keys usable / stored"],
+      [N(p.live_reactor) + " / " + N(p.live_fal), "calls on air: new line / Lucy"],
+      [usd3(N(cost.new_line)), "a minute on the new line costs you"],
+    ];
+    const head = `<div class="grid4" style="margin-top:10px">${stats.map(([v, l]) =>
+      `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("")}</div>`;
+    // The figures stay on screen and only the list folds, the same rule the calls ledger follows: a
+    // folded card must never read as a card with nothing in it.
+    const brief = `<p class="muted" style="margin:10px 0 0">${accounts.length
+      ? `Of the <b>${accounts.length}</b> paid account(s) this read lists, closing Lucy would move <b>${moves}</b> to the new line straight away; <b>${buyers}</b> of them are new buyers whose first paid picture call already goes there while Lucy stays open.`
+      : "No paid account is listed, so there is nothing for the switch to move yet — every account is either untried, unpaid or has its picture calls switched off."}${N(p.live_reactor) ? ` <b>${N(p.live_reactor)}</b> call(s) are on the new line as you read this.` : ""}</p>`;
+    const list = `
+      <p class="muted" style="margin:10px 0 0">One row per paid account, capped at forty rows. <b>Now</b> is the line a call from that account runs today; <b>If asked</b> is the line the same call runs on a press that says Lucy turned it away — the two differ only where that account has a new line it is allowed to dial. A row noting <b>no picture shown on a paid call yet</b> is a new buyer: his first paid picture call goes to the new line without waiting for a refusal, which is why two equal columns can still name an account the switch moves. A key count of nought means no new line is reachable for that account, so no switch can move it.</p>
+      <div style="overflow:auto;margin-top:8px">
+        <table id="proofTable">
+          <thead><tr><th>Account</th><th>Now</th><th>If asked</th><th>New keys</th><th>Notes</th></tr></thead>
+          <tbody>${accounts.map((a) => `<tr>
+            <td><b>${esc(a.account || "(no email)")}</b></td>
+            <td>${linePill(a.engine_today)}</td>
+            <td>${linePill(a.engine_if_asked)}</td>
+            <td class="mono">${N(a.reactor_lines)}</td>
+            <td class="muted">${a.new_buyer === true ? "no picture shown on a paid call yet" : ""}${a.unlimited === true ? `${a.new_buyer === true ? " · " : ""}on an Unlimited pack` : ""}${!N(a.reactor_lines) ? `${a.new_buyer === true || a.unlimited === true ? " · " : ""}no new line it may dial` : ""}</td>
+          </tr>`).join("")}</tbody>
+        </table>
+      </div>
+      <div class="syncbox">A minute on the Lucy line costs you ${usd3(N(cost.paid_line))} at the figure on your Prices tab; a minute on the new line costs ${usd3(N(cost.new_line))}. Nothing here changes what a customer pays — a call on the new line drains the same minutes at the same rate dial. ${esc(cost.note || "")}</div>
+      <div class="syncbox">What the switch cannot move: ${esc(cannot.cloning_tabs || "")} ${esc(cannot.old_installers || "")}</div>`;
+    box.innerHTML = head + brief + (PROOF_FOLDED ? "" : list) + foldButton();
+  }
+
+  // The + and − beside the card's title, the same sign the calls ledger uses: it only appears once
+  // there is a list for it to open, so a card that failed to read never looks like a folded one.
+  function foldButton() {
+    return PROOF ? `<p style="margin:10px 0 0"><button id="proofFold">${PROOF_FOLDED ? "+" : "−"} ${PROOF_FOLDED ? "list the paid accounts" : "hide the account list"}</button></p>` : "";
+  }
+
+  // Which line a call runs on, named the way the Key pool tab names it, and never as a bare engine
+  // string: 'trial' here means the free-video machine, which no picture switch ever touches.
+  function linePill(e) {
+    if (e === "reactor") return '<span class="pill yes">new line</span>';
+    if (e === "decart") return '<span class="pill n">trial machine</span>';
+    if (e === "fal") return '<span class="pill warn">Lucy</span>';
+    return '<span class="muted">—</span>';
+  }
+
+  $("proofRefresh").onclick = () => loadThirdLineProof();
+  // Folding costs no read: the rows are already in memory, so the figures cannot flicker and the
+  // card can be shut for the part he is not looking at. The button is re-rendered with the list, so
+  // the press is caught on the card rather than on the button.
+  $("proofBody").addEventListener("click", (ev) => {
+    const b = ev.target && ev.target.closest ? ev.target.closest("#proofFold") : null;
+    if (!b) return;
+    PROOF_FOLDED = !PROOF_FOLDED;
+    try { localStorage.setItem("streamlive.proof.folded", PROOF_FOLDED ? "1" : "0"); } catch { }
+    renderThirdLineProof();
+  });
 
   $("cfgSave").onclick = async () => {
     msg("cfgMsg", "");
@@ -6919,6 +7281,12 @@
     }
     const firstCallWanted = $("cfgFirstCallLine").checked;
     if (hasFirstCallLineCfg) row.first_call_health_line = firstCallWanted;
+    // The tick is the line being CLOSED, so the column it writes is its opposite. Same reason the
+    // box reads "Off, which is how it ships": his mental model is the switch, not the flag.
+    const lucyOffWanted = $("cfgLucyOff").checked;
+    if (hasLucySwitch) row.lucy_models_enabled = !lucyOffWanted;
+    const reactorCeilingWanted = N($("cfgReactorCeiling").value, 0);
+    if (hasReactorCeiling) row.max_concurrent_reactor_sessions = reactorCeilingWanted > 0 ? Math.floor(reactorCeilingWanted) : null;
     const { error } = await sb.from("app_config").update(row).eq("id", 1);
     if (error) return msg("cfgMsg", error.message);
     // Paint what actually landed, not what was clicked: on a database without the middle position a
@@ -6929,6 +7297,16 @@
     $("cfgFirstCallNow").innerHTML = hasFirstCallLineCfg
       ? ""
       : "The first-call line was not saved: this database has no column for it yet.";
+    $("cfgLucyNow").innerHTML = !hasLucySwitch
+      ? "The Lucy line was not changed: this database has no switch column yet."
+      : lucyOffWanted
+        ? "Lucy is closed right now: a paid picture call goes to the new line first. The two cloning tabs and any account on an older installer are still on Lucy."
+        : "";
+    $("cfgReactorNow").innerHTML = !hasReactorCeiling
+      ? "The new-line ceiling was not saved: this database has no column for it yet."
+      : reactorCeilingWanted > 0
+        ? "A call past this number is told the lines are busy, and the next press after that goes to Lucy while Lucy is open."
+        : "";
     msg("cfgMsg", "Gateway config saved — voice cloning across the whole software is now "
       + CLONE_LABEL[hasCloneModeCfg ? globalCloneMode : CLONING_MODE] + " " + landed
       + (CLONING_MODE === "off"
@@ -6937,7 +7315,19 @@
           ? ". The Video + Audio Cloning tab is shut for everyone now, so no call pairs a picture with a cloned voice; the Voice Clone Only tab is still open to the accounts whose own line allows it, and every Video Call tab keeps working."
           : " — applies to the next call, and each account is back to its own line for its Video + Audio Cloning and Voice Clone Only tabs. Video Call is never decided from here.")
       + " The first-call line is now "
-      + (hasFirstCallLineCfg ? (firstCallWanted ? "ON: a brand-new account's first paid picture call goes to whichever of the two picture services the fleet went blank on least in the last day." : "OFF: a brand-new account dials the picture service it has always dialled.") : "unchanged (this database has no column for it yet)"), "ok");
+      + (hasFirstCallLineCfg ? (firstCallWanted ? "ON: a brand-new account's first paid picture call goes to whichever of the two picture services the fleet went blank on least in the last day." : "OFF: a brand-new account dials the picture service it has always dialled.") : "unchanged (this database has no column for it yet)")
+      + " | The Lucy line is now "
+      + (hasLucySwitch
+        ? (lucyOffWanted
+          ? "CLOSED: a paid picture call goes to the new line straight away, no busy answer needed first. Three things this cannot move — the two cloning tabs stay on Lucy, an account whose installer cannot open the new line stays on Lucy, and a call already on air keeps the line it opened on."
+          : "OPEN: Lucy is dialled first, and the new line opens on the press Lucy turned away as full, plus a new buyer's first paid picture call.")
+        : "unchanged (this database has no column for it yet, so the tick was not saved)")
+      + " | The new line is now capped at "
+      + (hasReactorCeiling
+        ? (reactorCeilingWanted > 0
+          ? Math.floor(reactorCeilingWanted) + " call(s) on air across all accounts; a press past that is told the lines are busy."
+          : "no limit from this box — every seat the service itself gives you can be used.")
+        : "unchanged (this database has no column for it yet, so the number was not saved)"), "ok");
   };
 
   async function loadPool() {
@@ -7782,6 +8172,11 @@
     pgRenderLadder();
   }
 
+  // The third line's price column is newer than this page, and writing a column that is not there
+  // fails the whole update — which would take the two rates the price steps run on with it. So the
+  // box is probed and, on a database without the column, greyed out and said so.
+  let hasReactorRate = false;
+
   async function loadPricing() {
     const { data, error } = await sb.from("billing_config")
       .select("lucy_video_per_sec_cost, voice_cloning_per_sec_cost, profit_margin_percent, last_verified_at")
@@ -7794,6 +8189,16 @@
       $("pgMargin").value = N(data.profit_margin_percent, PG_DEFAULT.margin);
       $("pgVerified").textContent = data.last_verified_at || "—";
     }
+    const probeReactorRate = await sb.from("billing_config")
+      .select("reactor_video_per_sec_cost").eq("id", 1).maybeSingle();
+    hasReactorRate = !probeReactorRate.error;
+    $("pgReactorMin").disabled = !hasReactorRate;
+    $("pgReactorMin").value = hasReactorRate
+      ? +(N(probeReactorRate.data?.reactor_video_per_sec_cost, 0.0017) * 60).toFixed(4)
+      : "";
+    $("pgReactorNote").innerHTML = !hasReactorRate
+      ? "This database has no column for the new line's price yet — run the third-picture-line price migration, then reload this page. Nothing here has been changed, and no call can be priced off this line until it is: the same migration is what lets a call run on it at all."
+      : "This is what the third picture line charges you for a minute of it. The Calls tab prices a call on that line with this figure; a call on Lucy keeps the Lucy figure above. It is <b>not</b> used by the price steps below — your packages are still priced off the Lucy cost, which is the dearer of the two, so a call that lands on the cheaper line is extra margin rather than a cheaper sale.";
     if (!$("pgElCpm").value) $("pgElCpm").value = 1000;
     pgRenderAll();
   }
@@ -7804,18 +8209,33 @@
     msg("pgMsg", "");
     const falMin = pgIn("pgFalMin", NaN), voiceMin = pgIn("pgVoiceMin", NaN), target = pgTarget();
     if (!(falMin > 0) || !(voiceMin > 0)) return msg("pgMsg", "Both rates have to be more than zero.");
+    // A blank or zero new-line box is left alone rather than written as zero, because zero here means
+    // "a call on that line is free" to the Calls tab, and a rate nobody measured is a likelier answer
+    // than a line that costs nothing.
+    const reactorMin = pgIn("pgReactorMin", NaN);
+    if (hasReactorRate && !(reactorMin > 0) && String($("pgReactorMin").value).trim() !== "") {
+      return msg("pgMsg", "The new-line rate has to be more than zero, or the box left empty to keep what is saved.");
+    }
     const row = {
       lucy_video_per_sec_cost: +(falMin / 60).toFixed(6),
       voice_cloning_per_sec_cost: +(voiceMin / 60).toFixed(6),
       profit_margin_percent: Math.round(target),
       last_verified_at: serverNowIso().slice(0, 10),
-      source_notes: `fal.ai Lucy 2.5 realtime ${falMin}/min; ElevenLabs for the cloned voice ${voiceMin}/min. The voice service now charges for reading his words and for speaking them back as two separate lines, so this figure is your own estimate of a minute of calling rather than one price from their list. Saved from the Prices tab.`,
+      source_notes: `fal.ai Lucy 2.5 realtime ${falMin}/min; ElevenLabs for the cloned voice ${voiceMin}/min. The voice service now charges for reading his words and for speaking them back as two separate lines, so this figure is your own estimate of a minute of calling rather than one price from their list.`
+        + (reactorMin > 0 ? ` Reactor xmax-x2 (the third picture line) ${reactorMin}/min.` : "")
+        + " Saved from the Prices tab.",
     };
+    if (hasReactorRate && reactorMin > 0) row.reactor_video_per_sec_cost = +(reactorMin / 60).toFixed(6);
     const { data, error } = await sb.from("billing_config").update(row).eq("id", 1).select("id");
     if (error) return msg("pgMsg", error.message);
     if (!data || !data.length) return msg("pgMsg", "There is no billing_config row (id = 1) to write to — apply the wallet and burn-rate migration, then save again.");
     $("pgVerified").textContent = row.last_verified_at;
-    msg("pgMsg", "Saved — every price on this page now works off these rates.", "ok");
+    msg("pgMsg", "Saved — every price on this page now works off these rates."
+      + (hasReactorRate && reactorMin > 0
+        ? ` A call on the new picture line is costed at ${pgUsd(reactorMin)} a minute from now on, against ${pgUsd(falMin)} for Lucy; the price steps below still work off Lucy.`
+        : hasReactorRate
+          ? " The new-line box was left empty, so the rate already saved there still prices calls on that line."
+          : " The new line's rate was not saved: this database has no column for it yet."), "ok");
   };
 
   $("pgDerive").onclick = () => {
