@@ -63,6 +63,12 @@
   .hidden { display: none; }
   .err { color: #fb7185; font-size: 13px; margin-top: 8px; }
   .ok { color: #4ade80; font-size: 13px; margin-top: 8px; }
+  /* A gateway card whose own row could not be read is not a card that can be written, and a box
+     that still looks clickable while its tick is thrown away is the fault, not the grey. Only the
+     switches go dim: the read buttons on the other cards in this tab stay alive, since a read
+     cannot lie about being saved. */
+  #cfgCard.stale input, #cfgCard.stale select, #cfgCard.stale textarea,
+  #cfgCard.stale button { opacity: .4; cursor: not-allowed; }
   .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
   .tabs button { background: #0e141b; }
   .tabs button.on { background: #0e7f86; border-color: #12a5ad; color: #04121a; font-weight: 700; }
@@ -1331,7 +1337,7 @@
 
     <!-- ══ TAB: GATEWAY ════════════════════════════════════════════════════ -->
     <section id="tab-gateway" class="hidden">
-      <div class="card">
+      <div class="card" id="cfgCard">
         <h2 style="font-size:14px;margin:0 0 4px">Gateway switches</h2>
         <p class="muted" style="margin:0 0 12px">Single config row the desktop app and the gateway read on every call.</p>
         <div class="grid2">
@@ -1405,7 +1411,7 @@
         </div>
         <label>Maintenance message</label>
         <textarea id="cfgMaintMsg" placeholder="Shown to users while maintenance mode is on"></textarea>
-        <div class="btns" style="margin-top:12px"><button id="cfgSave" class="primary">Save gateway config</button></div>
+        <div class="btns" style="margin-top:12px"><button id="cfgSave" class="primary">Save gateway config</button><button id="cfgReload">Re-read this card</button></div>
         <div id="cfgMsg"></div>
       </div>
 
@@ -7125,10 +7131,55 @@
   let hasLucy25Switch = false;       // app_config.lucy_2_5_enabled exists on it
   let hasReactorCeiling = false;     // app_config.max_concurrent_reactor_sessions exists on it
 
+  // Whether this tab has actually read its own row. Every switch box on it is written only when
+  // its column was found, so a tab that never read cannot know which columns exist — and a Save
+  // press there quietly leaves the untouched ones out while still printing "saved". The read is
+  // what opens the tab, and nothing is clickable until it succeeds.
+  let CFG_LIVE = false;
+
+  // A refused write has to name itself in the words the box above it already uses — a list of column
+  // names is not a sentence he can act on.
+  const CFG_LABEL = {
+    min_supported_version: "Minimum supported version",
+    latest_version: "Latest version offered",
+    lease_chunk_minutes: "Lease chunk minutes",
+    lease_ttl_seconds: "Lease TTL seconds",
+    signup_enabled: "Self-signup enabled",
+    maintenance: "Maintenance mode",
+    maintenance_message: "Maintenance message",
+    max_concurrent_video_sessions: "Video calls allowed at once",
+    cloning_mode: "Voice cloning across the whole software",
+    cloning_enabled: "Voice cloning across the whole software",
+    first_call_health_line: "First-call picture line",
+    lucy_models_enabled: "the Lucy line switch",
+    lucy_2_5_enabled: "the single picture model switch",
+    max_concurrent_reactor_sessions: "New-line calls allowed at once",
+  };
+
+  function gateGateway(on) {
+    CFG_LIVE = on;
+    const card = $("cfgCard");
+    card.classList.toggle("stale", !on);
+    // Every control except the re-read: on a card that cannot be written, the one press that still
+    // helps is the one that asks the database again without making him reload and lose his place.
+    for (const el of card.querySelectorAll("input, select, textarea, button:not(#cfgReload)")) el.disabled = !on;
+  }
+  gateGateway(false);
+
   async function loadConfig() {
     const { data, error } = await sb.from("app_config").select("*").eq("id", 1).maybeSingle();
-    if (error) return msg("cfgMsg", error.message);
-    if (!data) return msg("cfgMsg", "No app_config row (id = 1) — run the credits migration.");
+    if (error) {
+      gateGateway(false);
+      return msg("cfgMsg", "This card did not read its own row, so nothing on it can be saved — a tick here would be dropped, not written. "
+        + error.message + " Press Re-read this card; if it stays grey, sign in again.");
+    }
+    if (!data) {
+      gateGateway(false);
+      return msg("cfgMsg", "No app_config row (id = 1) — run the credits migration.");
+    }
+    // The row is in hand, so the tab may be written. Each box below still disables itself when its
+    // own column is missing, which is the only reason a control on a live tab should be grey.
+    gateGateway(true);
     const probe = await sb.from("app_config").select("max_concurrent_video_sessions").eq("id", 1).maybeSingle();
     hasVideoCeiling = !probe.error;
     $("cfgVideoCeiling").disabled = !hasVideoCeiling;
@@ -7315,6 +7366,9 @@
 
   $("cfgSave").onclick = async () => {
     msg("cfgMsg", "");
+    // A card that never read its row cannot know which of its own columns exist, so a save from here
+    // would quietly leave out every box whose probe never ran — and still print "saved".
+    if (!CFG_LIVE) return msg("cfgMsg", "Nothing was sent: this card has not read its own row, so a tick pressed here would be thrown away rather than saved. Press Re-read this card, and sign in again if it stays grey.");
     const min = $("cfgMin").value.trim();
     if (!/^\d+(\.\d+){0,2}$/.test(min)) return msg("cfgMsg", "Minimum supported version must look like 1.2.3.");
     const row = {
@@ -7340,20 +7394,61 @@
       row.cloning_enabled = globalCloneMode === "voice_video";
       CLONING_MODE = row.cloning_enabled ? "voice_video" : "off";
     }
-    const firstCallWanted = $("cfgFirstCallLine").checked;
+    let firstCallWanted = $("cfgFirstCallLine").checked;
     if (hasFirstCallLineCfg) row.first_call_health_line = firstCallWanted;
     // The tick is the line being CLOSED, so the column it writes is its opposite. Same reason the
     // box reads "Off, which is how it ships": his mental model is the switch, not the flag.
-    const lucyOffWanted = $("cfgLucyOff").checked;
+    let lucyOffWanted = $("cfgLucyOff").checked;
     if (hasLucySwitch) row.lucy_models_enabled = !lucyOffWanted;
     // Same inversion as the switch above it: the tick is a model being CLOSED, the column is it
     // being enabled, and the box says which of the two it is naming so the pair cannot be mixed up.
-    const lucy25OffWanted = $("cfgLucy25Off").checked;
+    let lucy25OffWanted = $("cfgLucy25Off").checked;
     if (hasLucy25Switch) row.lucy_2_5_enabled = !lucy25OffWanted;
-    const reactorCeilingWanted = N($("cfgReactorCeiling").value, 0);
+    let reactorCeilingWanted = N($("cfgReactorCeiling").value, 0);
     if (hasReactorCeiling) row.max_concurrent_reactor_sessions = reactorCeilingWanted > 0 ? Math.floor(reactorCeilingWanted) : null;
     const { error } = await sb.from("app_config").update(row).eq("id", 1);
     if (error) return msg("cfgMsg", error.message);
+    // Believe the write only once the database says it back. A save that touches no rows is not an
+    // error here, and every box on this card is skipped when its column was never read — so without
+    // this second read a press could print "saved" over a row that never moved.
+    const back = await sb.from("app_config").select("*").eq("id", 1).maybeSingle();
+    if (back.error || !back.data) {
+      gateGateway(false);
+      return msg("cfgMsg", "The save cannot be confirmed: "
+        + (back.error ? back.error.message : "the config row is not there any more")
+        + ". Until this card reads its row again, nothing it shows can be trusted. Press Re-read this card.");
+    }
+    const saved = back.data;
+    const notSaved = Object.keys(row).filter((k) => {
+      const want = row[k];
+      const got = saved[k];
+      if (want === null) return got !== null && got !== undefined;
+      if (typeof want === "number") return Number(got) !== want;
+      return got !== want;
+    });
+    // Repaint the card from what is stored, not from what was clicked. A tick that did not land has
+    // to show itself as unticked on the same screen that just claimed to save it.
+    $("cfgMin").value = saved.min_supported_version || "";
+    $("cfgLatest").value = saved.latest_version || "";
+    $("cfgChunk").value = N(saved.lease_chunk_minutes, 5);
+    $("cfgTtl").value = N(saved.lease_ttl_seconds, 120);
+    $("cfgSignup").checked = saved.signup_enabled !== false;
+    $("cfgMaint").checked = saved.maintenance === true;
+    $("cfgMaintMsg").value = saved.maintenance_message || "";
+    if (hasVideoCeiling) $("cfgVideoCeiling").value = saved.max_concurrent_video_sessions ?? 0;
+    firstCallWanted = saved.first_call_health_line === true;
+    lucyOffWanted = saved.lucy_models_enabled === false;
+    lucy25OffWanted = saved.lucy_2_5_enabled === false;
+    reactorCeilingWanted = N(saved.max_concurrent_reactor_sessions, 0);
+    $("cfgFirstCallLine").checked = hasFirstCallLineCfg && firstCallWanted;
+    $("cfgLucyOff").checked = hasLucySwitch && lucyOffWanted;
+    $("cfgLucy25Off").checked = hasLucy25Switch && lucy25OffWanted;
+    if (hasReactorCeiling) $("cfgReactorCeiling").value = reactorCeilingWanted;
+    if (notSaved.length) {
+      return msg("cfgMsg", "NOT SAVED — " + notSaved.map((k) => CFG_LABEL[k] || k).join(", ")
+        + (notSaved.length === 1 ? " still reads" : " still read") + " something else on the database, so this press did not go through. "
+        + "The boxes above now show what is actually stored. Nothing changed for any customer.");
+    }
     // Paint what actually landed, not what was clicked: on a database without the middle position a
     // Voice Clone Only click lands as closed, and rows still showing the click would be a second lie.
     setCloneDoor("cfgCloningMode", hasCloneModeCfg ? globalCloneMode : CLONING_MODE);
@@ -7405,6 +7500,14 @@
           ? Math.floor(reactorCeilingWanted) + " call(s) on air across all accounts; a press past that is told the lines are busy."
           : "no limit from this box — every seat the service itself gives you can be used.")
         : "unchanged (this database has no column for it yet, so the number was not saved)"), "ok");
+  };
+
+  // The recovery press for a grey card, so he never has to reload the whole panel (and lose the tab
+  // he was reading) to find out whether the sign-in came back.
+  $("cfgReload").onclick = async () => {
+    msg("cfgMsg", "");
+    await loadConfig();
+    if (CFG_LIVE) msg("cfgMsg", "This card has read its row again — every switch above shows what the database holds right now.", "ok");
   };
 
   async function loadPool() {
@@ -8483,9 +8586,16 @@
     }
     // Only an admin who was shown the dashboard has anything to lose. A refused sign-in (not an
     // admin) signs itself out through this same event, and its own sentence must stay on screen.
-    if (!ADMIN_ID || $("authMsg").innerHTML.trim()) return;
+    if (!ADMIN_ID) return;
+    // The figures stay on screen; the one thing that must not stay pressable is a write. With no
+    // session the gateway card cannot read its row, so a tick pressed there would be dropped. This
+    // happens before the sentence below, because a card left open by an earlier message on the tab
+    // would still offer a switch that cannot land.
+    gateGateway(false);
     $("authCard").classList.remove("hidden");
-    msg("authMsg", "Your sign-in stopped being accepted, so the panel stopped reading. Nothing about your data changed, and the figures on the tabs are the last ones it read. Sign in again to refresh them.");
+    if (!$("authMsg").innerHTML.trim()) {
+      msg("authMsg", "Your sign-in stopped being accepted, so the panel stopped reading. Nothing about your data changed, and the figures on the tabs are the last ones it read. The gateway switches are greyed until you sign in again, because a save from a panel that cannot read would not land.");
+    }
   });
 
   // The strip is the point: next time a tab looks empty you can read off this line
@@ -8494,8 +8604,30 @@
   setInterval(paintClock, 1000);
   // The one measurement every time window on this panel is counted from. showDash waits on it.
   const CLOCK_READY = syncClock();
+  // The browser stops the timer that renews this window's sign-in the moment the tab goes to the
+  // background, so a panel left open beside another window used to come back to "your sign-in
+  // stopped being accepted" even though nothing about the account changed. Asking for a fresh token
+  // as soon as the tab is looked at again keeps the same sign-in alive; an expiry the server really
+  // refuses still falls through to the card above.
+  let lastRevive = 0;
+  async function reviveSession() {
+    if (!ADMIN_ID || $("dash").classList.contains("hidden")) return;
+    // Only the interval is measured from this clock, so the gap between this machine and the
+    // server's time cannot make this fire too often or never.
+    if (Date.now() - lastRevive < 120000) return;
+    lastRevive = Date.now();
+    const { data } = await sb.auth.getSession();
+    if (!data?.session) return;
+    const { error } = await sb.auth.refreshSession();
+    // The token came back, so the card that greyed itself out can read its row again on its own.
+    if (!error) void loadConfig();
+  }
   // A jump while the tab was in the background is caught the moment you look again.
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) void syncClock(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    void syncClock();
+    void reviveSession();
+  });
 
   sb.auth.getSession().then(({ data }) => { if (data?.session) showDash(data.session.user); });
 </script>
