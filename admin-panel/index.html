@@ -1403,6 +1403,12 @@
             <div class="muted" id="cfgLucy25Now" style="margin-top:6px"></div>
           </div>
           <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
+            <label class="feat" style="margin:0"><input type="checkbox" id="cfgReactorOff" /> Close the new picture line: keep every paid picture call on Lucy</label>
+            <div class="muted" style="margin-top:6px">Off: the new line opens the way it ships — on the press Lucy turned away as full, and on a new buyer's first paid picture call. On: <b>no paid picture call goes to the new line at all</b>; every one stays on Lucy, including a press Lucy just refused (it is told the lines are busy and asks Lucy again) and a new buyer's first call. Throw this when the new service is returning a wrong or poor picture and you would rather a customer retry on Lucy than watch it.</div>
+            <div class="muted" style="margin-top:6px">It moves the <b>Video Call</b> tab only; the cloning tabs and free trials never used the new line. It outranks the two switches above: with this closed, closing Lucy or closing one model cannot hand a call to the new line. A call already on air keeps the line it opened on until it ends, and nothing is restarted on anybody's machine — it lands on the next call each app asks for.</div>
+            <div class="muted" id="cfgReactorOffNow" style="margin-top:6px"></div>
+          </div>
+          <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
             <label style="margin-top:0">New-line calls allowed at once, across all accounts</label>
             <input id="cfgReactorCeiling" type="number" min="0" step="1" />
             <div class="muted" style="margin-top:6px">0 or blank = no limit from here. Set it to the number of calls the new service lets you have on air at once, and the caller past that number is told the lines are busy instead of burning minutes and failing. It counts only calls on the new line, so the Lucy ceiling above is a separate door.</div>
@@ -7129,6 +7135,7 @@
   let hasFirstCallLineCfg = false;   // app_config.first_call_health_line exists on this database
   let hasLucySwitch = false;         // app_config.lucy_models_enabled exists on this database
   let hasLucy25Switch = false;       // app_config.lucy_2_5_enabled exists on it
+  let hasReactorSwitch = false;      // app_config.reactor_enabled exists on it
   let hasReactorCeiling = false;     // app_config.max_concurrent_reactor_sessions exists on it
 
   // Whether this tab has actually read its own row. Every switch box on it is written only when
@@ -7153,6 +7160,7 @@
     first_call_health_line: "First-call picture line",
     lucy_models_enabled: "the Lucy line switch",
     lucy_2_5_enabled: "the single picture model switch",
+    reactor_enabled: "the new picture line switch",
     max_concurrent_reactor_sessions: "New-line calls allowed at once",
   };
 
@@ -7252,6 +7260,19 @@
       ? "The database has no single-model switch yet — run its migration, then reload this page. Nothing here has been changed."
       : probeLucy25.data?.lucy_2_5_enabled === false
         ? "Lucy 2.5 is closed right now: a paid picture call runs Lucy 2.6, or the new line where it was already going there. Accounts on an installer too old to choose a model are still on 2.5."
+        : "";
+
+    // The new-line off switch came later still, so it is probed on its own for the same reason:
+    // naming a column this database has not run would fail the whole gateway save. The tick is the
+    // line being CLOSED, the column is it being enabled — the same inversion as the two above.
+    const probeReactor = await sb.from("app_config").select("reactor_enabled").eq("id", 1).maybeSingle();
+    hasReactorSwitch = !probeReactor.error;
+    $("cfgReactorOff").checked = hasReactorSwitch && probeReactor.data?.reactor_enabled === false;
+    $("cfgReactorOff").disabled = !hasReactorSwitch;
+    $("cfgReactorOffNow").innerHTML = !hasReactorSwitch
+      ? "The database has no new-line off switch yet — run its migration, then reload this page. Nothing here has been changed."
+      : probeReactor.data?.reactor_enabled === false
+        ? "The new line is closed right now: every paid picture call stays on Lucy, including a press Lucy refused and a new buyer's first call. A call already on air keeps the new line until it ends."
         : "";
 
     const probeRoom = await sb.from("app_config").select("max_concurrent_reactor_sessions").eq("id", 1).maybeSingle();
@@ -7404,6 +7425,9 @@
     // being enabled, and the box says which of the two it is naming so the pair cannot be mixed up.
     let lucy25OffWanted = $("cfgLucy25Off").checked;
     if (hasLucy25Switch) row.lucy_2_5_enabled = !lucy25OffWanted;
+    // Same inversion again: the tick is the new line being CLOSED, the column is it being enabled.
+    let reactorOffWanted = $("cfgReactorOff").checked;
+    if (hasReactorSwitch) row.reactor_enabled = !reactorOffWanted;
     let reactorCeilingWanted = N($("cfgReactorCeiling").value, 0);
     if (hasReactorCeiling) row.max_concurrent_reactor_sessions = reactorCeilingWanted > 0 ? Math.floor(reactorCeilingWanted) : null;
     const { error } = await sb.from("app_config").update(row).eq("id", 1);
@@ -7439,10 +7463,12 @@
     firstCallWanted = saved.first_call_health_line === true;
     lucyOffWanted = saved.lucy_models_enabled === false;
     lucy25OffWanted = saved.lucy_2_5_enabled === false;
+    reactorOffWanted = saved.reactor_enabled === false;
     reactorCeilingWanted = N(saved.max_concurrent_reactor_sessions, 0);
     $("cfgFirstCallLine").checked = hasFirstCallLineCfg && firstCallWanted;
     $("cfgLucyOff").checked = hasLucySwitch && lucyOffWanted;
     $("cfgLucy25Off").checked = hasLucy25Switch && lucy25OffWanted;
+    $("cfgReactorOff").checked = hasReactorSwitch && reactorOffWanted;
     if (hasReactorCeiling) $("cfgReactorCeiling").value = reactorCeilingWanted;
     if (notSaved.length) {
       return msg("cfgMsg", "NOT SAVED — " + notSaved.map((k) => CFG_LABEL[k] || k).join(", ")
@@ -7467,6 +7493,11 @@
       ? "The single-model door was not changed: this database has no column for it yet."
       : lucy25OffWanted
         ? "Lucy 2.5 is closed right now: a paid picture call runs Lucy 2.6, or the new line where it was already going there. Accounts on an installer too old to choose a model are still on 2.5."
+        : "";
+    $("cfgReactorOffNow").innerHTML = !hasReactorSwitch
+      ? "The new-line off switch was not changed: this database has no column for it yet."
+      : reactorOffWanted
+        ? "The new line is closed right now: every paid picture call stays on Lucy, including a press Lucy refused and a new buyer's first call. A call already on air keeps the new line until it ends."
         : "";
     $("cfgReactorNow").innerHTML = !hasReactorCeiling
       ? "The new-line ceiling was not saved: this database has no column for it yet."
@@ -7493,6 +7524,12 @@
         ? (lucy25OffWanted
           ? "CLOSED: no new paid picture call runs Lucy 2.5 — they run Lucy 2.6, or the new line where that is where the call was going. Four things this cannot move — a call already on air, an installer that never chose a model, a machine that can open only 2.5, and a free trial call."
           : "OPEN: both picture models are available again and the gateway picks between them call by call, as it ships.")
+        : "unchanged (this database has no column for it yet, so the tick was not saved)")
+      + " | The new picture line is now "
+      + (hasReactorSwitch
+        ? (reactorOffWanted
+          ? "CLOSED: no paid picture call goes to the new line — every one stays on Lucy, including a press Lucy refused and a new buyer's first call. It outranks the Lucy and single-model switches above. A call already on air keeps the new line until it ends."
+          : "OPEN: the new line opens on the press Lucy turned away as full, and on a new buyer's first paid picture call, as it ships.")
         : "unchanged (this database has no column for it yet, so the tick was not saved)")
       + " | The new line is now capped at "
       + (hasReactorCeiling
