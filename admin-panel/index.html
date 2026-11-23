@@ -1391,6 +1391,12 @@
             <div class="muted" id="cfgLucyNow" style="margin-top:6px"></div>
           </div>
           <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
+            <label class="feat" style="margin:0"><input type="checkbox" id="cfgLucy25Off" /> Close one picture model only: send every paid picture call to the other</label>
+            <div class="muted" style="margin-top:6px">Off, which is how it ships: both models are open and the gateway picks between them call by call. On: <b>Lucy 2.5</b> takes no paid picture call at all — each one goes to <b>Lucy 2.6</b>, or to the new line where the call was already going there. The two models have separate queues at the service, so this is the door to throw when one is refusing customers and the other answers on the first press.</div>
+            <div class="muted" style="margin-top:6px">This moves a model, not a company: it decides nothing about which service a call runs on, what a minute costs, its rate, or the minutes it drains — the switch above is what closes a whole line, and that one still wins. It is a ceiling over every account: it closes what a per-account <b>Picture model</b> pin has opened, and can never open what an account has closed. Four calls it cannot move: a call already on air keeps the model it opened on; an installer too old to say which models it opens keeps dialling the one written inside itself; a machine that can open only the model you closed keeps it rather than getting a blank; and a free trial call runs the trial line's own single model. The Calls tab goes on showing rows on the closed model for those accounts, and nothing is restarted on anybody's machine — it lands on the next call each app asks for.</div>
+            <div class="muted" id="cfgLucy25Now" style="margin-top:6px"></div>
+          </div>
+          <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
             <label style="margin-top:0">New-line calls allowed at once, across all accounts</label>
             <input id="cfgReactorCeiling" type="number" min="0" step="1" />
             <div class="muted" style="margin-top:6px">0 or blank = no limit from here. Set it to the number of calls the new service lets you have on air at once, and the caller past that number is told the lines are busy instead of burning minutes and failing. It counts only calls on the new line, so the Lucy ceiling above is a separate door.</div>
@@ -1994,6 +2000,11 @@
   // line must not tell him an account is shut when it has no evidence of it.
   let CLONING_MODE = null;
   let hasCloneModeCfg = false;   // app_config.cloning_mode exists on this database
+  // Whether the gateway tab has the first picture model closed, as read on this visit. null means
+  // the gateway read has not landed yet (it is one of the loads that run when the page opens), so
+  // the account card says nothing about it rather than guessing — and the gateway card is where
+  // the door itself is set.
+  let LUCY25_CLOSED = null;
   let hasCloneModeSub = false;   // subscriptions.cloning_mode exists on this database
   let hasAudioLockCol = false;   // subscriptions.audio_cloning_only exists on this database
   let DEV_OF = {};
@@ -2639,7 +2650,10 @@
         : eng === "decart"
           ? "this line moves nothing for him right now — he runs on the free-trial pool, which has one picture service of its own. It takes effect the day he is on the paid service."
           : pinned
-            ? `chosen by you${c.pin.video_model_at ? " on " + when(c.pin.video_model_at) : ""}. His paid calls dial ${VIDEO_MODEL_NAME[pinned]} every time, and each one is written into the Calls list with it. Nothing overrides a choice you have made here.`
+            ? `chosen by you${c.pin.video_model_at ? " on " + when(c.pin.video_model_at) : ""}. His paid calls dial ${VIDEO_MODEL_NAME[pinned]} every time, and each one is written into the Calls list with it. `
+              + (LUCY25_CLOSED === true && pinned === FIRST_VIDEO_MODEL
+                ? "But the gateway has the first picture model closed right now, and that door sits above this choice: his paid calls run the second model (or the new line where it was already going there) until you open it again."
+                : "Nothing overrides a choice you have made here.")
             : "nothing chosen, so the software decides on each call: away from the line this computer last went blank on, and otherwise onto the line that last gave this account a picture. Whichever it dials is written into the Calls list, so the Calls tab tells you what he actually ran. An app build older than this switch dials the first service whatever is chosen here.");
   }
 
@@ -7108,6 +7122,7 @@
   let hasCloningCfg = false;
   let hasFirstCallLineCfg = false;   // app_config.first_call_health_line exists on this database
   let hasLucySwitch = false;         // app_config.lucy_models_enabled exists on this database
+  let hasLucy25Switch = false;       // app_config.lucy_2_5_enabled exists on it
   let hasReactorCeiling = false;     // app_config.max_concurrent_reactor_sessions exists on it
 
   async function loadConfig() {
@@ -7173,6 +7188,19 @@
       ? "The database has no Lucy switch yet — run the third-picture-line migration, then reload this page. Nothing here has been changed."
       : probeLucy.data?.lucy_models_enabled === false
         ? "Lucy is closed right now: a paid picture call goes to the new line first. The two cloning tabs and any account on an older installer are still on Lucy."
+        : "";
+
+    // The one-model door came later than the whole-line one, so it is probed on its own for the
+    // same reason: naming a column this database has not run would fail the whole gateway save.
+    const probeLucy25 = await sb.from("app_config").select("lucy_2_5_enabled").eq("id", 1).maybeSingle();
+    hasLucy25Switch = !probeLucy25.error;
+    LUCY25_CLOSED = hasLucy25Switch ? probeLucy25.data?.lucy_2_5_enabled === false : null;
+    $("cfgLucy25Off").checked = hasLucy25Switch && probeLucy25.data?.lucy_2_5_enabled === false;
+    $("cfgLucy25Off").disabled = !hasLucy25Switch;
+    $("cfgLucy25Now").innerHTML = !hasLucy25Switch
+      ? "The database has no single-model switch yet — run its migration, then reload this page. Nothing here has been changed."
+      : probeLucy25.data?.lucy_2_5_enabled === false
+        ? "Lucy 2.5 is closed right now: a paid picture call runs Lucy 2.6, or the new line where it was already going there. Accounts on an installer too old to choose a model are still on 2.5."
         : "";
 
     const probeRoom = await sb.from("app_config").select("max_concurrent_reactor_sessions").eq("id", 1).maybeSingle();
@@ -7318,6 +7346,10 @@
     // box reads "Off, which is how it ships": his mental model is the switch, not the flag.
     const lucyOffWanted = $("cfgLucyOff").checked;
     if (hasLucySwitch) row.lucy_models_enabled = !lucyOffWanted;
+    // Same inversion as the switch above it: the tick is a model being CLOSED, the column is it
+    // being enabled, and the box says which of the two it is naming so the pair cannot be mixed up.
+    const lucy25OffWanted = $("cfgLucy25Off").checked;
+    if (hasLucy25Switch) row.lucy_2_5_enabled = !lucy25OffWanted;
     const reactorCeilingWanted = N($("cfgReactorCeiling").value, 0);
     if (hasReactorCeiling) row.max_concurrent_reactor_sessions = reactorCeilingWanted > 0 ? Math.floor(reactorCeilingWanted) : null;
     const { error } = await sb.from("app_config").update(row).eq("id", 1);
@@ -7334,6 +7366,12 @@
       ? "The Lucy line was not changed: this database has no switch column yet."
       : lucyOffWanted
         ? "Lucy is closed right now: a paid picture call goes to the new line first. The two cloning tabs and any account on an older installer are still on Lucy."
+        : "";
+    if (hasLucy25Switch) LUCY25_CLOSED = lucy25OffWanted;
+    $("cfgLucy25Now").innerHTML = !hasLucy25Switch
+      ? "The single-model door was not changed: this database has no column for it yet."
+      : lucy25OffWanted
+        ? "Lucy 2.5 is closed right now: a paid picture call runs Lucy 2.6, or the new line where it was already going there. Accounts on an installer too old to choose a model are still on 2.5."
         : "";
     $("cfgReactorNow").innerHTML = !hasReactorCeiling
       ? "The new-line ceiling was not saved: this database has no column for it yet."
@@ -7354,6 +7392,12 @@
         ? (lucyOffWanted
           ? "CLOSED: a paid picture call goes to the new line straight away, no busy answer needed first. Three things this cannot move — the two cloning tabs stay on Lucy, an account whose installer cannot open the new line stays on Lucy, and a call already on air keeps the line it opened on."
           : "OPEN: Lucy is dialled first, and the new line opens on the press Lucy turned away as full, plus a new buyer's first paid picture call.")
+        : "unchanged (this database has no column for it yet, so the tick was not saved)")
+      + " | The first picture model is now "
+      + (hasLucy25Switch
+        ? (lucy25OffWanted
+          ? "CLOSED: no new paid picture call runs Lucy 2.5 — they run Lucy 2.6, or the new line where that is where the call was going. Four things this cannot move — a call already on air, an installer that never chose a model, a machine that can open only 2.5, and a free trial call."
+          : "OPEN: both picture models are available again and the gateway picks between them call by call, as it ships.")
         : "unchanged (this database has no column for it yet, so the tick was not saved)")
       + " | The new line is now capped at "
       + (hasReactorCeiling
