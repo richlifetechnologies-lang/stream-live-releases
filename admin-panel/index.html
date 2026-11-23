@@ -337,7 +337,13 @@
               <div style="flex:0 0 auto"><button id="detSaveVideoModel">Save picture model</button></div>
               <div class="muted" id="detVideoModelNow" style="flex:1 1 240px"></div>
             </div>
+            <div class="row" style="align-items:center;margin-top:10px">
+              <div style="flex:0 0 220px"><label style="margin-top:0">New line model</label><select id="detReactorModel"><option value="">Automatic (the software chooses)</option><option value="xmax-x2">Reactor x2 (new line)</option><option value="xmax-x2-1">Reactor x2.1 (new line)</option></select></div>
+              <div style="flex:0 0 auto"><button id="detSaveReactorModel">Save new line model</button></div>
+              <div class="muted" id="detReactorModelNow" style="flex:1 1 240px"></div>
+            </div>
             <div class="muted" style="margin-top:8px">This line only moves an account that runs on the paid service — the free-trial pool has one model of its own and this cannot change it. The two cost the same per second, so choosing one prices nothing differently and books nothing differently on your meter. A build of the app older than this switch can only dial 2.5, and its calls are recorded as 2.5 whatever is chosen here. Which model a call actually ran is written on the call and printed in the Calls list under <b>Picture model</b>.</div>
+            <div class="muted" style="margin-top:8px"><b>New line model</b> is the same choice for the third picture line, which carries two models of its own. It only moves a call that the Gateway tab's new-line switch has already admitted to that line; while that switch is closed every paid picture call stays on Lucy and this box changes nothing. The two new-line models cost the same per second as each other. The Gateway tab's <b>Close the new picture line</b> tick shuts both of them off together, and the two model doors under it close one at a time — this box only chooses between the models those doors have left open.</div>
           </div>
 
           <div id="noSub" class="hidden" style="margin-top:12px;border:1px dashed #6b2233;border-radius:10px;padding:10px">
@@ -1405,8 +1411,19 @@
           <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
             <label class="feat" style="margin:0"><input type="checkbox" id="cfgReactorOff" /> Close the new picture line: keep every paid picture call on Lucy</label>
             <div class="muted" style="margin-top:6px">Off: the new line opens the way it ships — on the press Lucy turned away as full, and on a new buyer's first paid picture call. On: <b>no paid picture call goes to the new line at all</b>; every one stays on Lucy, including a press Lucy just refused (it is told the lines are busy and asks Lucy again) and a new buyer's first call. Throw this when the new service is returning a wrong or poor picture and you would rather a customer retry on Lucy than watch it.</div>
-            <div class="muted" style="margin-top:6px">It moves the <b>Video Call</b> tab only; the cloning tabs and free trials never used the new line. It outranks the two switches above: with this closed, closing Lucy or closing one model cannot hand a call to the new line. A call already on air keeps the line it opened on until it ends, and nothing is restarted on anybody's machine — it lands on the next call each app asks for.</div>
+            <div class="muted" style="margin-top:6px">It moves the <b>Video Call</b> tab only; the cloning tabs and free trials never used the new line. It outranks the two switches above and the two model doors below: with this closed, no other tick on this card can hand a call to the new line. A call already on air keeps the line it opened on until it ends, and nothing is restarted on anybody's machine — it lands on the next call each app asks for.</div>
             <div class="muted" id="cfgReactorOffNow" style="margin-top:6px"></div>
+          </div>
+          <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
+            <label class="feat" style="margin:0"><input type="checkbox" id="cfgReactorX2Off" /> Close the new line's first model only (x2): send its calls to x2.1</label>
+            <div class="muted" style="margin-top:6px">Off, which is how it ships: both new-line models are open and the gateway picks between them call by call. On: <b>x2</b> takes no new paid picture call — each one goes to <b>x2.1</b> instead. Throw this when one of the two is returning a wrong or poor picture and the other is answering. It decides nothing about which service a call runs on or what a minute costs, and the whole-line tick above still wins: with the line closed, this changes nothing.</div>
+            <div class="muted" style="margin-top:6px">It is a ceiling over every account: it closes what a per-account <b>New line model</b> pin has opened, and can never open what an account has closed. Three calls it cannot move: a call already on air keeps the model it opened on; a machine that can open only the model you closed stays on Lucy rather than getting a blank; and a free trial call runs the trial line's own single model. With <b>both</b> model doors closed, every paid picture call stays on Lucy — the same result as the whole-line tick. Nothing is restarted on anybody's machine; it lands on the next call each app asks for.</div>
+            <div class="muted" id="cfgReactorX2Now" style="margin-top:6px"></div>
+          </div>
+          <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
+            <label class="feat" style="margin:0"><input type="checkbox" id="cfgReactorX21Off" /> Close the new line's second model only (x2.1): send its calls to x2</label>
+            <div class="muted" style="margin-top:6px">Off, which is how it ships: both new-line models are open. On: <b>x2.1</b> takes no new paid picture call — each one goes to <b>x2</b> instead. Everything else reads exactly as the first model's door above: a model door, not a company door, under the whole-line tick, over every per-account pin, and a machine that can open only the closed model stays on Lucy. With both model doors closed, every paid picture call stays on Lucy.</div>
+            <div class="muted" id="cfgReactorX21Now" style="margin-top:6px"></div>
           </div>
           <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
             <label style="margin-top:0">New-line calls allowed at once, across all accounts</label>
@@ -1522,7 +1539,7 @@
           </div>
         </div>
         <div style="margin-top:12px">
-          <label>New picture line · Reactor (model xmax-x2) · $ per minute</label>
+          <label>New picture line · Reactor (model xmax-x2-1) · $ per minute</label>
           <input id="pgReactorMin" type="number" min="0" step="0.001" style="max-width:180px" />
           <div class="muted" style="margin-top:6px" id="pgReactorNote">This is what the third picture line charges you for a minute of it. The Calls tab prices a call on that line with this figure; a call on Lucy keeps the Lucy figure above. It is <b>not</b> used by the price steps below — your packages are still priced off the Lucy cost, which is the dearer of the two, so a call that lands on the cheaper line is extra margin rather than a cheaper sale.</div>
         </div>
@@ -1807,11 +1824,13 @@
   const ENGINE_PILL = { fal: "yes", decart: "past_due", reactor: "line3" };
   // The two paid picture services, named by the tokens the call row is written with. Only this
   // page ever prints them; a customer sees one Start button.
-  // The three model ids a call row can carry, as the panel names them. The third is a different
-  // company's line, and it is in here for display only: the per-account PIN dropdown above stays
-  // Lucy-only on purpose, because the new line has one model and there is nothing to choose on it.
-  const VIDEO_MODEL_NAME = { "lucy-2-5": "Lucy 2.5", "lucy-2-6": "Lucy 2.6", "xmax-x2": "Reactor xmax-x2 (new line)" };
+  // The four model ids a call row can carry, as the panel names them. The third company's line has
+  // two models of its own, chosen on the account under "New line model" exactly as the two Lucy
+  // models are chosen under "Picture model". Both new-line ids are kept so calls recorded on either
+  // still read by name.
+  const VIDEO_MODEL_NAME = { "lucy-2-5": "Lucy 2.5", "lucy-2-6": "Lucy 2.6", "xmax-x2": "Reactor xmax-x2 (new line)", "xmax-x2-1": "Reactor xmax-x2-1 (new line)" };
   const FIRST_VIDEO_MODEL = "lucy-2-5";
+  const FIRST_REACTOR_MODEL = "xmax-x2";
   // Same decision the gateway makes: credited minutes mean the paid service for
   // good; otherwise the pin wins and the default is the trial pool.
   // Mirrors the gateway's decision exactly, so this page can never show an engine
@@ -1994,6 +2013,7 @@
   // it read as "the panel has no model choice" — and the Calls list prints "—" on rows the
   // database cannot name a model for, which are the calls made before this was recorded.
   let hasVideoModelCols = false;
+  let hasReactorModelCols = false;
   let hasTrialCols = false;
   let hasUnlCol = false;
   // The third picture line's key tail arrives with its own migration, and this page can be deployed
@@ -2017,6 +2037,13 @@
   // the account card says nothing about it rather than guessing — and the gateway card is where
   // the door itself is set.
   let LUCY25_CLOSED = null;
+  // Whether the gateway tab has the whole new picture line closed, as read on this visit. null
+  // means the gateway card has not been opened yet, so the account card says nothing about it.
+  let REACTOR_CLOSED = null;
+  // The two per-model doors, read the same way: null until the gateway card has been opened, so
+  // the account card never claims a door it has not read.
+  let REACTOR_X2_CLOSED = null;
+  let REACTOR_X21_CLOSED = null;
   let hasCloneModeSub = false;   // subscriptions.cloning_mode exists on this database
   let hasAudioLockCol = false;   // subscriptions.audio_cloning_only exists on this database
   let DEV_OF = {};
@@ -2489,6 +2516,27 @@
     }
   }
 
+  // Choosing the new-line model for one account. The same shape as the Lucy choice: nothing here
+  // touches a price or a meter figure, and it only moves a call already admitted to the new line.
+  async function pinReactorModel(userId, choice, box) {
+    const target = choice === "" ? null : choice;
+    const name = EMAIL_OF[userId] || userId;
+    try {
+      const res = await api({ action: "set_reactor_model", userId, reactorModel: target });
+      if (CUR && CUR.user_id === userId) {
+        CUR.pin = { ...(CUR.pin || {}), reactor_model: res.reactor_model ?? null, reactor_model_at: serverNowIso() };
+        await renderReactorModelPin();
+      }
+      msg(box, target === null
+        ? `${name} is back on Automatic for the new line: a call admitted to it dials the first model this build can open.`
+        : `${name}'s new-line calls now dial ${VIDEO_MODEL_NAME[res.effective] || res.effective}. This moves nothing while the new line is closed on the Gateway tab.`, "ok");
+      return true;
+    } catch (err) {
+      msg(box, err.message);
+      return false;
+    }
+  }
+
   // A select has no click handler of its own in this panel's delegation, so the
   // change event is wired separately and re-renders on a cancelled confirmation.
   document.addEventListener("change", async (e) => {
@@ -2519,8 +2567,13 @@
     if (snap?.ok === false) return msg("detMsg", snap.error || "snapshot failed");
     const pinCols = "engine_override, engine_override_by, engine_override_at, trial_granted_at";
     // The picture-model columns came later than these, and naming a column the database does not
-    // have fails the whole read, so ask with them and fall back to without.
-    const pinWith = await sb.from("subscriptions")
+    // have fails the whole read, so ask with them and fall back to without. The new-line model
+    // columns came later still, so they are asked first and dropped one step at a time.
+    const pinReactor = await sb.from("subscriptions")
+      .select(pinCols + ", video_model, video_model_by, video_model_at, reactor_model, reactor_model_by, reactor_model_at")
+      .eq("user_id", userId).maybeSingle();
+    hasReactorModelCols = !pinReactor.error;
+    const pinWith = hasReactorModelCols ? pinReactor : await sb.from("subscriptions")
       .select(pinCols + ", video_model, video_model_by, video_model_at")
       .eq("user_id", userId).maybeSingle();
     hasVideoModelCols = !pinWith.error;
@@ -2590,7 +2643,7 @@
     };
     $("acctDetail").classList.remove("hidden");
     renderAccount();
-    await Promise.all([loadAssignments(), loadLedger(userId), renderEnginePin(), renderVideoModelPin()]);
+    await Promise.all([loadAssignments(), loadLedger(userId), renderEnginePin(), renderVideoModelPin(), renderReactorModelPin()]);
     msg("detMsg", "Account loaded.", "ok");
   }
 
@@ -2667,6 +2720,28 @@
                 ? "But the gateway has the first picture model closed right now, and that door sits above this choice: his paid calls run the second model (or the new line where it was already going there) until you open it again."
                 : "Nothing overrides a choice you have made here.")
             : "nothing chosen, so the software decides on each call: away from the line this computer last went blank on, and otherwise onto the line that last gave this account a picture. Whichever it dials is written into the Calls list, so the Calls tab tells you what he actually ran. An app build older than this switch dials the first service whatever is chosen here.");
+  }
+
+  // The new-line model choice, the same shape as the Lucy one above. It only moves a call the
+  // Gateway tab's new-line switch has already admitted to that line; while the line is closed every
+  // paid picture call stays on Lucy and this box changes nothing.
+  async function renderReactorModelPin() {
+    const c = CUR;
+    const pinned = c.pin?.reactor_model ?? null;
+    $("detReactorModel").value = pinned ?? "";
+    $("detReactorModel").disabled = !hasReactorModelCols;
+    $("detSaveReactorModel").disabled = !hasReactorModelCols;
+    $("detReactorModelNow").innerHTML = `<span class="pill ${pinned ? "yes" : "none"}">${
+      pinned ? VIDEO_MODEL_NAME[pinned] : "Automatic"}</span> `
+      + (!hasReactorModelCols
+        ? "the new-line model choice cannot be saved until the migration that adds it has run."
+        : REACTOR_CLOSED === true
+          ? "the new line is closed on the Gateway tab right now, so every paid picture call stays on Lucy and this choice moves nothing until you open the line again."
+          : pinned && (pinned === "xmax-x2" ? REACTOR_X2_CLOSED : REACTOR_X21_CLOSED) === true
+            ? "the model you pinned is closed on the Gateway tab right now, so a call admitted to the new line dials the other open model instead, and a machine that can open only the closed model stays on Lucy. This pin moves nothing until that model's door is opened again."
+            : pinned
+              ? `chosen by you${c.pin.reactor_model_at ? " on " + when(c.pin.reactor_model_at) : ""}. A call admitted to the new line dials ${VIDEO_MODEL_NAME[pinned]}, and each one is written into the Calls list with it.`
+              : "nothing chosen, so a call admitted to the new line dials the first model this build can open that the Gateway tab has left open. Which one it ran is written into the Calls list.");
   }
 
   function renderAccount() {
@@ -2918,6 +2993,12 @@
     if (!CUR) return;
     msg("detMsg", "");
     await pinVideoModel(CUR.user_id, $("detVideoModel").value, "detMsg");
+  };
+
+  $("detSaveReactorModel").onclick = async () => {
+    if (!CUR) return;
+    msg("detMsg", "");
+    await pinReactorModel(CUR.user_id, $("detReactorModel").value, "detMsg");
   };
 
   $("detCreateSub").onclick = async () => {
@@ -7136,6 +7217,8 @@
   let hasLucySwitch = false;         // app_config.lucy_models_enabled exists on this database
   let hasLucy25Switch = false;       // app_config.lucy_2_5_enabled exists on it
   let hasReactorSwitch = false;      // app_config.reactor_enabled exists on it
+  let hasReactorX2Switch = false;    // app_config.reactor_x2_enabled exists on it
+  let hasReactorX21Switch = false;   // app_config.reactor_x21_enabled exists on it
   let hasReactorCeiling = false;     // app_config.max_concurrent_reactor_sessions exists on it
 
   // Whether this tab has actually read its own row. Every switch box on it is written only when
@@ -7161,6 +7244,8 @@
     lucy_models_enabled: "the Lucy line switch",
     lucy_2_5_enabled: "the single picture model switch",
     reactor_enabled: "the new picture line switch",
+    reactor_x2_enabled: "the new line's first model door (x2)",
+    reactor_x21_enabled: "the new line's second model door (x2.1)",
     max_concurrent_reactor_sessions: "New-line calls allowed at once",
   };
 
@@ -7267,12 +7352,39 @@
     // line being CLOSED, the column is it being enabled — the same inversion as the two above.
     const probeReactor = await sb.from("app_config").select("reactor_enabled").eq("id", 1).maybeSingle();
     hasReactorSwitch = !probeReactor.error;
+    REACTOR_CLOSED = hasReactorSwitch ? probeReactor.data?.reactor_enabled === false : null;
     $("cfgReactorOff").checked = hasReactorSwitch && probeReactor.data?.reactor_enabled === false;
     $("cfgReactorOff").disabled = !hasReactorSwitch;
     $("cfgReactorOffNow").innerHTML = !hasReactorSwitch
       ? "The database has no new-line off switch yet — run its migration, then reload this page. Nothing here has been changed."
       : probeReactor.data?.reactor_enabled === false
         ? "The new line is closed right now: every paid picture call stays on Lucy, including a press Lucy refused and a new buyer's first call. A call already on air keeps the new line until it ends."
+        : "";
+
+    // The two model doors came later than the whole-line switch, so each is probed on its own for
+    // the same reason: naming a column this database has not run would fail the whole gateway save.
+    // Same inversion as every door above: the tick is the model being CLOSED, the column is it
+    // being enabled.
+    const probeReactorX2 = await sb.from("app_config").select("reactor_x2_enabled").eq("id", 1).maybeSingle();
+    hasReactorX2Switch = !probeReactorX2.error;
+    REACTOR_X2_CLOSED = hasReactorX2Switch ? probeReactorX2.data?.reactor_x2_enabled === false : null;
+    $("cfgReactorX2Off").checked = hasReactorX2Switch && probeReactorX2.data?.reactor_x2_enabled === false;
+    $("cfgReactorX2Off").disabled = !hasReactorX2Switch;
+    $("cfgReactorX2Now").innerHTML = !hasReactorX2Switch
+      ? "The database has no door for the new line's first model yet — run its migration, then reload this page. Nothing here has been changed."
+      : probeReactorX2.data?.reactor_x2_enabled === false
+        ? "x2 is closed right now: a new-line call runs x2.1, and a machine that can open only x2 stays on Lucy. A call already on air keeps x2 until it ends."
+        : "";
+
+    const probeReactorX21 = await sb.from("app_config").select("reactor_x21_enabled").eq("id", 1).maybeSingle();
+    hasReactorX21Switch = !probeReactorX21.error;
+    REACTOR_X21_CLOSED = hasReactorX21Switch ? probeReactorX21.data?.reactor_x21_enabled === false : null;
+    $("cfgReactorX21Off").checked = hasReactorX21Switch && probeReactorX21.data?.reactor_x21_enabled === false;
+    $("cfgReactorX21Off").disabled = !hasReactorX21Switch;
+    $("cfgReactorX21Now").innerHTML = !hasReactorX21Switch
+      ? "The database has no door for the new line's second model yet — run its migration, then reload this page. Nothing here has been changed."
+      : probeReactorX21.data?.reactor_x21_enabled === false
+        ? "x2.1 is closed right now: a new-line call runs x2, and a machine that can open only x2.1 stays on Lucy. A call already on air keeps x2.1 until it ends."
         : "";
 
     const probeRoom = await sb.from("app_config").select("max_concurrent_reactor_sessions").eq("id", 1).maybeSingle();
@@ -7428,6 +7540,12 @@
     // Same inversion again: the tick is the new line being CLOSED, the column is it being enabled.
     let reactorOffWanted = $("cfgReactorOff").checked;
     if (hasReactorSwitch) row.reactor_enabled = !reactorOffWanted;
+    // Same inversion once more, per model: each tick is that model being CLOSED, each column is it
+    // being enabled, and each box names which of the two it is so the pair cannot be mixed up.
+    let reactorX2OffWanted = $("cfgReactorX2Off").checked;
+    if (hasReactorX2Switch) row.reactor_x2_enabled = !reactorX2OffWanted;
+    let reactorX21OffWanted = $("cfgReactorX21Off").checked;
+    if (hasReactorX21Switch) row.reactor_x21_enabled = !reactorX21OffWanted;
     let reactorCeilingWanted = N($("cfgReactorCeiling").value, 0);
     if (hasReactorCeiling) row.max_concurrent_reactor_sessions = reactorCeilingWanted > 0 ? Math.floor(reactorCeilingWanted) : null;
     const { error } = await sb.from("app_config").update(row).eq("id", 1);
@@ -7464,11 +7582,15 @@
     lucyOffWanted = saved.lucy_models_enabled === false;
     lucy25OffWanted = saved.lucy_2_5_enabled === false;
     reactorOffWanted = saved.reactor_enabled === false;
+    reactorX2OffWanted = saved.reactor_x2_enabled === false;
+    reactorX21OffWanted = saved.reactor_x21_enabled === false;
     reactorCeilingWanted = N(saved.max_concurrent_reactor_sessions, 0);
     $("cfgFirstCallLine").checked = hasFirstCallLineCfg && firstCallWanted;
     $("cfgLucyOff").checked = hasLucySwitch && lucyOffWanted;
     $("cfgLucy25Off").checked = hasLucy25Switch && lucy25OffWanted;
     $("cfgReactorOff").checked = hasReactorSwitch && reactorOffWanted;
+    $("cfgReactorX2Off").checked = hasReactorX2Switch && reactorX2OffWanted;
+    $("cfgReactorX21Off").checked = hasReactorX21Switch && reactorX21OffWanted;
     if (hasReactorCeiling) $("cfgReactorCeiling").value = reactorCeilingWanted;
     if (notSaved.length) {
       return msg("cfgMsg", "NOT SAVED — " + notSaved.map((k) => CFG_LABEL[k] || k).join(", ")
@@ -7489,6 +7611,9 @@
         ? "Lucy is closed right now: a paid picture call goes to the new line first. The two cloning tabs and any account on an older installer are still on Lucy."
         : "";
     if (hasLucy25Switch) LUCY25_CLOSED = lucy25OffWanted;
+    if (hasReactorSwitch) REACTOR_CLOSED = reactorOffWanted;
+    if (hasReactorX2Switch) REACTOR_X2_CLOSED = reactorX2OffWanted;
+    if (hasReactorX21Switch) REACTOR_X21_CLOSED = reactorX21OffWanted;
     $("cfgLucy25Now").innerHTML = !hasLucy25Switch
       ? "The single-model door was not changed: this database has no column for it yet."
       : lucy25OffWanted
@@ -7498,6 +7623,16 @@
       ? "The new-line off switch was not changed: this database has no column for it yet."
       : reactorOffWanted
         ? "The new line is closed right now: every paid picture call stays on Lucy, including a press Lucy refused and a new buyer's first call. A call already on air keeps the new line until it ends."
+        : "";
+    $("cfgReactorX2Now").innerHTML = !hasReactorX2Switch
+      ? "The first model's door was not changed: this database has no column for it yet."
+      : reactorX2OffWanted
+        ? "x2 is closed right now: a new-line call runs x2.1, and a machine that can open only x2 stays on Lucy. A call already on air keeps x2 until it ends."
+        : "";
+    $("cfgReactorX21Now").innerHTML = !hasReactorX21Switch
+      ? "The second model's door was not changed: this database has no column for it yet."
+      : reactorX21OffWanted
+        ? "x2.1 is closed right now: a new-line call runs x2, and a machine that can open only x2.1 stays on Lucy. A call already on air keeps x2.1 until it ends."
         : "";
     $("cfgReactorNow").innerHTML = !hasReactorCeiling
       ? "The new-line ceiling was not saved: this database has no column for it yet."
@@ -7528,9 +7663,24 @@
       + " | The new picture line is now "
       + (hasReactorSwitch
         ? (reactorOffWanted
-          ? "CLOSED: no paid picture call goes to the new line — every one stays on Lucy, including a press Lucy refused and a new buyer's first call. It outranks the Lucy and single-model switches above. A call already on air keeps the new line until it ends."
+          ? "CLOSED: no paid picture call goes to the new line — every one stays on Lucy, including a press Lucy refused and a new buyer's first call. It outranks the Lucy and single-model switches above and the two model doors below. A call already on air keeps the new line until it ends."
           : "OPEN: the new line opens on the press Lucy turned away as full, and on a new buyer's first paid picture call, as it ships.")
         : "unchanged (this database has no column for it yet, so the tick was not saved)")
+      + " | The new line's first model (x2) is now "
+      + (hasReactorX2Switch
+        ? (reactorX2OffWanted
+          ? "CLOSED: a new-line call runs x2.1 instead, and a machine that can open only x2 stays on Lucy. A call already on air keeps x2 until it ends."
+          : "OPEN: both new-line models are available and the gateway picks between them call by call, as it ships.")
+        : "unchanged (this database has no column for it yet, so the tick was not saved)")
+      + " | The new line's second model (x2.1) is now "
+      + (hasReactorX21Switch
+        ? (reactorX21OffWanted
+          ? "CLOSED: a new-line call runs x2 instead, and a machine that can open only x2.1 stays on Lucy. A call already on air keeps x2.1 until it ends."
+          : "OPEN: both new-line models are available and the gateway picks between them call by call, as it ships.")
+        : "unchanged (this database has no column for it yet, so the tick was not saved)")
+      + (hasReactorX2Switch && hasReactorX21Switch && reactorX2OffWanted && reactorX21OffWanted
+        ? " Both model doors are closed, so every paid picture call stays on Lucy — the same result as the whole-line tick."
+        : "")
       + " | The new line is now capped at "
       + (hasReactorCeiling
         ? (reactorCeilingWanted > 0
@@ -8439,7 +8589,7 @@
       profit_margin_percent: Math.round(target),
       last_verified_at: serverNowIso().slice(0, 10),
       source_notes: `fal.ai Lucy 2.5 realtime ${falMin}/min; ElevenLabs for the cloned voice ${voiceMin}/min. The voice service now charges for reading his words and for speaking them back as two separate lines, so this figure is your own estimate of a minute of calling rather than one price from their list.`
-        + (reactorMin > 0 ? ` Reactor xmax-x2 (the third picture line) ${reactorMin}/min.` : "")
+        + (reactorMin > 0 ? ` Reactor xmax-x2-1 (the third picture line) ${reactorMin}/min.` : "")
         + " Saved from the Prices tab.",
     };
     if (hasReactorRate && reactorMin > 0) row.reactor_video_per_sec_cost = +(reactorMin / 60).toFixed(6);
