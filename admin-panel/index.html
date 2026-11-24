@@ -2011,6 +2011,10 @@
   // Absent rows are calls the app never reported — a voice-only call, an older app, or a database
   // whose picture table has not been created yet — and the column says so instead of guessing.
   let PICTURE = {};
+  // What the picture read answered, in its own words. A row that says "not reported" is the truth
+  // only when the read asked and nothing was there; when the read was refused, that is a different
+  // fact about a different thing, and the page now says which one it has.
+  let PIC_NOTE = "";
   let hasEngineCols = false;
   // Same rule as the engine pin: the picture-model columns only exist once their migration has
   // run, and this page can be deployed ahead of it. The switch stays visible either way — hiding
@@ -5937,6 +5941,7 @@
     // account. A failure leaves the column saying it has nothing, which is what a table that has
     // not been created yet really is.
     PICTURE = {};
+    PIC_NOTE = "";
     try {
       const p = await api({ action: "picture", since });
       for (const row of (p.rows || [])) {
@@ -5944,7 +5949,15 @@
         // Newest wins if a call somehow reported twice, so the column shows the last word about it.
         if (!PICTURE[row.session_id]) PICTURE[row.session_id] = row;
       }
-    } catch { PICTURE = {}; }
+      if (p.missing) PIC_NOTE = `the picture reports could not be read: ${p.missing}`;
+      else if (!(p.rows || []).length) PIC_NOTE = "the picture reports came back empty for this window";
+      else if (!Object.keys(PICTURE).length) PIC_NOTE = `the picture read returned ${p.rows.length} reports and none of them names a call`;
+    } catch (err) {
+      PICTURE = {};
+      PIC_NOTE = err instanceof SignedOut
+        ? String(err.message)
+        : `the picture read was refused: ${String(err.message || err)}`;
+    }
     renderOpenLeases();
     renderHist();
   }
@@ -6049,9 +6062,10 @@
         ${picCell(r)}
         <td style="white-space:nowrap">${r.ended_at ? "" : `<button data-act="end" data-id="${r.id}" class="danger">End it</button>`}</td></tr>${picDetailRow(r)}`).join("")
       || '<tr><td colspan="11" class="muted">No call in the last 3 days matches that filter.</td></tr>';
-    msg("histMsg", rows.length > shown.length
-      ? `Showing the most recent ${shown.length} of ${rows.length} calls in that filter.`
-      : "");
+    msg("histMsg", [
+      rows.length > shown.length ? `Showing the most recent ${shown.length} of ${rows.length} calls in that filter.` : "",
+      PIC_NOTE,
+    ].filter(Boolean).join("  "));
   }
   $("sessRefresh").onclick = loadSessions;
   $("histRefresh").onclick = loadSessions;
