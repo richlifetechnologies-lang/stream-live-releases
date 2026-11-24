@@ -1076,7 +1076,7 @@
         <div class="grid4" id="histStats"></div>
         <div style="overflow:auto;margin-top:12px">
           <table id="histTable">
-            <thead><tr><th>User</th><th>Video service</th><th>Call type</th><th>Device</th><th>Started</th><th>Ended</th><th>On air</th><th style="text-align:right">Billed</th><th style="text-align:right">Held</th><th></th></tr></thead>
+            <thead><tr><th>User</th><th>Video service</th><th>Call type</th><th>Device</th><th>Started</th><th>Ended</th><th>On air</th><th style="text-align:right">Billed</th><th style="text-align:right">Held</th><th style="text-align:right">Picture</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -2007,6 +2007,10 @@
   let AIR_ROWS = [];
   let AIR_TRUNC = false;
   let HIST = [];
+  // What each call in the table below did with its picture on the customer's machine, by session id.
+  // Absent rows are calls the app never reported — a voice-only call, an older app, or a database
+  // whose picture table has not been created yet — and the column says so instead of guessing.
+  let PICTURE = {};
   let hasEngineCols = false;
   // Same rule as the engine pin: the picture-model columns only exist once their migration has
   // run, and this page can be deployed ahead of it. The switch stays visible either way — hiding
@@ -5929,6 +5933,18 @@
     if (error) return msg("sessMsg", error.message);
     HIST = data || [];
     await emailsOf(HIST.map((r) => r.user_id));
+    // One read for the whole table, through the gateway because the table is write-only to an
+    // account. A failure leaves the column saying it has nothing, which is what a table that has
+    // not been created yet really is.
+    PICTURE = {};
+    try {
+      const p = await api({ action: "picture", since });
+      for (const row of (p.rows || [])) {
+        if (!row.session_id) continue;
+        // Newest wins if a call somehow reported twice, so the column shows the last word about it.
+        if (!PICTURE[row.session_id]) PICTURE[row.session_id] = row;
+      }
+    } catch { PICTURE = {}; }
     renderOpenLeases();
     renderHist();
   }
@@ -5964,6 +5980,44 @@
     }).join("") || '<tr><td colspan="11" class="muted">Nothing is on air right now — every call has closed.</td></tr>';
   }
 
+  // The two counts that separate somebody else's machine from this customer's: what the picture line
+  // sent, and what this computer put on the screen. One line in the table, the rest of the evidence
+  // behind a plus — a column of eleven figures is a column nobody reads, and a figure that is only
+  // ever behind a click is a figure that is never looked at.
+  function picCell(r) {
+    const p = PICTURE[String(r.id)];
+    if (!p) return '<td class="mono" style="text-align:right"><span class="muted">not reported</span></td>';
+    const a = N(p.arrived_fps, -1), s = N(p.shown_fps, -1);
+    const shown = a >= 0 && s >= 0
+      ? `<span class="pill ${s < a * 0.6 ? "warn" : "ok"}">${a.toFixed(1)} → ${s.toFixed(1)} fps</span>`
+      : `<span class="muted">no count</span>`;
+    const what = [p.codec, p.frame_size].filter(Boolean).join(" ");
+    return `<td class="mono" style="text-align:right;white-space:nowrap">${shown}` +
+      (what ? ` <span class="muted" style="font-size:11px">${esc(what)}</span>` : "") +
+      ` <button data-pic="${r.id}" style="padding:1px 6px">+</button></td>`;
+  }
+
+  // The whole of it, folded shut under its own call: the format that arrived, the decoder that
+  // answered, what the startup measurement said this machine could afford, and whether the app put
+  // the formats in this machine's order or was refused and left it alone.
+  function picDetailRow(r) {
+    const p = PICTURE[String(r.id)];
+    if (!p) return "";
+    const cell = (l, v) => (v ? `<span class="muted">${l}:</span> <b>${esc(String(v))}</b>` : "");
+    const bits = [
+      cell("decoded", N(p.decoded_fps, -1) >= 0 ? p.decoded_fps + " fps" : ""),
+      cell("frames this machine threw away", p.dropped_frames),
+      cell("decoder", p.decoder),
+      cell("this machine was measured as", p.budget_tier),
+      cell("what it can decode", p.formats),
+      cell("graphics", p.gpu),
+      cell("what the app did about the order", p.policy),
+      cell("reported", when(p.created_at)),
+    ].filter(Boolean);
+    return `<tr data-pic-for="${r.id}" style="display:none"><td colspan="11" class="muted" style="font-size:11px;line-height:1.7">` +
+      (p.line ? `<b>${esc(p.line)}</b> · ` : "") + bits.join(" · ") + `</td></tr>`;
+  }
+
   function renderHist() {
     const q = ($("histSearch").value || "").trim().toLowerCase();
     const rows = HIST.filter((r) => !q || String(EMAIL_OF[r.user_id] || "").toLowerCase().includes(q));
@@ -5974,6 +6028,13 @@
       [rows.filter((r) => !r.ended_at).length, "still open"],
       [clock(rows.reduce((a, r) => a + N(r.real_minutes), 0)), "time on air"],
       [mins1(held) + " min", "held by an open call"],
+      // The one number this table was given the picture column for: calls where the line sent more
+      // than this machine showed. Zero is the answer he wants; a growing figure names the machines
+      // to look at without anybody having to describe a stutter first.
+      [rows.filter((r) => {
+        const p = PICTURE[String(r.id)];
+        return p && N(p.arrived_fps, -1) >= 3 && N(p.shown_fps, -1) >= 0 && N(p.shown_fps) < N(p.arrived_fps) * 0.6;
+      }).length, "calls that showed less than arrived"],
     ].map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
     $("histTable").querySelector("tbody").innerHTML = shown.map((r) => `<tr>
         <td><b>${esc(EMAIL_OF[r.user_id] || shortId(r.user_id))}</b></td>
@@ -5985,8 +6046,9 @@
         <td class="mono" style="text-align:right">${clock(r.real_minutes)}</td>
         <td class="mono" style="text-align:right">${mins2(r.billed_minutes)}</td>
         <td class="mono" style="text-align:right">${N(r.pending_debit) ? mins2(r.pending_debit) + " min" : "—"}</td>
-        <td style="white-space:nowrap">${r.ended_at ? "" : `<button data-act="end" data-id="${r.id}" class="danger">End it</button>`}</td></tr>`).join("")
-      || '<tr><td colspan="10" class="muted">No call in the last 3 days matches that filter.</td></tr>';
+        ${picCell(r)}
+        <td style="white-space:nowrap">${r.ended_at ? "" : `<button data-act="end" data-id="${r.id}" class="danger">End it</button>`}</td></tr>${picDetailRow(r)}`).join("")
+      || '<tr><td colspan="11" class="muted">No call in the last 3 days matches that filter.</td></tr>';
     msg("histMsg", rows.length > shown.length
       ? `Showing the most recent ${shown.length} of ${rows.length} calls in that filter.`
       : "");
@@ -5994,6 +6056,17 @@
   $("sessRefresh").onclick = loadSessions;
   $("histRefresh").onclick = loadSessions;
   $("histSearch").oninput = renderHist;
+  // One listener for the whole table, opened per press and closed again, so the row never grows and
+  // the page never grows with it.
+  $("histTable").addEventListener("click", (ev) => {
+    const btn = ev.target && ev.target.closest ? ev.target.closest("button[data-pic]") : null;
+    if (!btn) return;
+    const row = $("histTable").querySelector(`tr[data-pic-for="${btn.dataset.pic}"]`);
+    if (!row) return;
+    const open = row.style.display === "none";
+    row.style.display = open ? "" : "none";
+    btn.textContent = open ? "−" : "+";
+  });
 
   $("reapAll").onclick = async () => {
     if (!confirm("Close every lease that ran past its TTL across all accounts? Used minutes stay billed, unused pre-debits are refunded.")) return;
