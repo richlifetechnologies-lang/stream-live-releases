@@ -158,6 +158,25 @@
      screen when the list folds. */
   .syncbox { margin-top: 10px; padding: 10px 12px; border: 1px solid #1d2733; border-left: 3px solid #0e7f86;
              border-radius: 8px; background: #0b0f14; font-size: 12px; color: #8aa0b2; line-height: 1.6; }
+  /* The photo model line's money, in a different colour from the fal.ai card above it: yellow
+     writing, so one glance across the tab says which company's money a figure belongs to. Nothing
+     here turns amber or red whatever the balance says - the owner's ruling is that the two lines
+     are told apart by the colour of the writing, never by an alarm going off on a low figure. */
+  #rbalCard { border-color: #4a3d12; }
+  #rbalCard h2 { color: #facc15; }
+  #rbalCard label { color: #c8ab55; }
+  #rbalCard .rbalbig { color: #facc15; }
+  #rbalCard .rbalsub { color: #a8935a; }
+  #rbalCard .rbalhint { color: #b39a4e; }
+  #rbalCard .rbalhint b { color: #f0d582; }
+  #rbalCard .rbwhen { color: #8f7c42; font-size: 12px; }
+  #rbalCard .acctchip { border-color: #4a3d12; background: #16130a; color: #f5e6bd; }
+  #rbalCard .acctchip.sel { border-color: #facc15; box-shadow: 0 0 0 1px #6b5610 inset; }
+  #rbalCard .acctchip .v { color: #facc15; }
+  #rbalCard .acctdetail { border-color: #2c2612; background: #100e08; }
+  #rbalCard .acctdetail .v { color: #facc15; }
+  #rbalCard .acctdetail .k { color: #a08b4f; }
+  #rbalCard .presult.ok { background: #2a2409; color: #fde68a; border-color: #6b5610; }
   @media (max-width: 900px){ .acctdetail { grid-template-columns: 1fr 1fr 1fr; gap: 14px; } }
 </style>
 </head>
@@ -526,6 +545,48 @@
         </div>
       </div>
 
+      <!-- The other company's money. The same three presses the card above answers with, in a
+           different colour, and with one rule that card does not have: a key that can start a call
+           is refused here. No amount boxes, because nothing on this card is allowed to react to the
+           size of a figure. -->
+      <div class="card" id="rbalCard">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="font-size:14px;margin:0">Photo model balance · Vidu S2 <span class="pill n" id="rbCount" style="display:none"></span></h2>
+          <div class="row" style="align-items:center;gap:10px;flex:0 1 auto;min-width:0">
+            <span class="rbwhen" id="rbWhen"></span>
+            <button id="refreshRBalance">Check now</button>
+            <button id="rbAdd" style="border-style:dashed" title="Watch another photo model account beside this one">+ add account</button>
+            <button id="foldRBal" class="foldbtn" title="Show or hide the list of accounts" style="display:none">+</button>
+          </div>
+        </div>
+        <p class="rbalsub" style="margin:8px 0 0;font-size:12px">The <b>new line's photo model</b> — its own account and its own money. Nothing here is your fal.ai balance, and no figure on this card adds to or comes out of the card above.</p>
+        <div id="rbBody"></div>
+        <div id="rbMsg"></div>
+        <div id="rbResult" class="presult"></div>
+
+        <!-- One row at a time, named by its id exactly as the fal form is: the fault that table
+             was rebuilt to end was a second key silently overwriting the first account's row. -->
+        <div id="rbForm" class="hidden">
+          <input type="hidden" id="rbId" />
+          <div class="grid2" style="margin-top:16px">
+            <div>
+              <label>The key that reads this balance</label>
+              <div class="secret">
+                <input id="rbKey" type="password" autocomplete="off" spellcheck="false" placeholder="blank = keep the key this account already holds" />
+                <button type="button" data-show="rbKey">show</button>
+                <button type="button" id="testRBalance" class="primary">Verify</button>
+              </div>
+            </div>
+            <div><label>Name it</label><input id="rbLabel" placeholder="e.g. Photo line account" /></div>
+          </div>
+          <p class="phint rbalhint" style="margin-top:10px">Where the key comes from: your Reactor account's <b>API Keys</b> page — make a key with <b>only the billing role</b> ticked, and leave Developer and Account admin off. That kind of key reads a balance and cannot start a call, so it costs nothing to keep it here. <b>This box refuses a key that can spend:</b> it asks that account which roles the key holds and asks the service for a pass to open a call, and unless both answers say the key is harmless nothing is saved and the reason prints in this box. The keys that start calls stay in the pool below, and this one is never added to it. Every account you store is read on its own and added to the figure above; the same key twice is refused, because it would count the same money twice.</p>
+          <div class="btns" style="margin-top:12px">
+            <button id="saveRBalance" class="primary">Save this account</button>
+            <button id="cancelRBalance">Cancel</button>
+          </div>
+        </div>
+      </div>
+
       <!-- One line per call, never a pack of totals: this is where a single call can be
            pointed at and asked "what did this cost me, and what did I sell it for".
            Three lists, one per kind of call, because the app sells three: a picture with the
@@ -614,7 +675,7 @@
             <button type="button" data-show="kReactor">show</button>
             <button type="button" id="testReactor" class="primary">Verify</button>
           </div>
-          <p class="phint">Where: your Reactor account's API key page. What it does: the gateway signs a short-lived pass with it and your app opens the picture call with that pass — the key itself never leaves the server. Several rows can each hold one, and the pool tries them in the same <b>priority</b> order as the fal.ai keys above, so this line rotates like the others. A call on it takes the camera only: the two cloning tabs need a line that carries a microphone, and only Lucy has one.</p>
+          <p class="phint">Where: your Reactor account's API key page. What it does: the gateway signs a short-lived pass with it and your app opens the picture call with that pass — the key itself never leaves the server. Several rows can each hold one, and the pool tries them in the same <b>priority</b> order as the fal.ai keys above, so this line rotates like the others. A call on it takes the camera only, and that is enough on both tabs that show a picture: the cloned voice a caller hears leaves this machine through its own virtual microphone and never travels along the picture line. So this line serves <b>Video Call</b> and <b>Video + Audio Cloning</b>; a <b>Voice Clone Only</b> call sends no picture at all and stays on Lucy.</p>
           <div class="presult" id="newResult"></div>
         </div>
 
@@ -1399,7 +1460,7 @@
           <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
             <label class="feat" style="margin:0"><input type="checkbox" id="cfgLucyOff" /> Close the Lucy line: put every paid picture call on the new line</label>
             <div class="muted" style="margin-top:6px">Off, which is how it ships: <b>Lucy is dialled first</b>, and the new line only opens on the press Lucy turned away as full. On: a paid picture call goes to the new line straight away, without anyone first being told the line is busy.</div>
-            <div class="muted" style="margin-top:6px">It moves the <b>Video Call</b> tab only. The two cloning tabs need a picture line that takes a microphone, and only Lucy has one, so a <b>Video + Audio Cloning</b> or <b>Voice Clone Only</b> call stays on Lucy whatever this says. An account running an installer too old to open the new line also stays on Lucy — that is the one thing this switch cannot move, and the Calls tab goes on showing Lucy rows after you close it for exactly that reason. Nothing here is restarted on anybody's machine: it lands on the next call each app asks for.</div>
+            <div class="muted" style="margin-top:6px">It moves the two tabs that show a picture: <b>Video Call</b> and <b>Video + Audio Cloning</b>. A <b>Voice Clone Only</b> call sends no picture at all, so it stays on Lucy whatever this says. An account running an installer too old to open the new line also stays on Lucy — that is the one thing this switch cannot move, and the Calls tab goes on showing Lucy rows after you close it for exactly that reason. Nothing here is restarted on anybody's machine: it lands on the next call each app asks for.</div>
             <div class="muted" id="cfgLucyNow" style="margin-top:6px"></div>
           </div>
           <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
@@ -1411,7 +1472,7 @@
           <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
             <label class="feat" style="margin:0"><input type="checkbox" id="cfgReactorOff" /> Close the new picture line: keep every paid picture call on Lucy</label>
             <div class="muted" style="margin-top:6px">Off: the new line opens the way it ships — on the press Lucy turned away as full, and on a new buyer's first paid picture call. On: <b>no paid picture call goes to the new line at all</b>; every one stays on Lucy, including a press Lucy just refused (it is told the lines are busy and asks Lucy again) and a new buyer's first call. Throw this when the new service is returning a wrong or poor picture and you would rather a customer retry on Lucy than watch it.</div>
-            <div class="muted" style="margin-top:6px">It moves the <b>Video Call</b> tab only; the cloning tabs and free trials never used the new line. It outranks the two switches above and the two model doors below: with this closed, no other tick on this card can hand a call to the new line. A call already on air keeps the line it opened on until it ends, and nothing is restarted on anybody's machine — it lands on the next call each app asks for.</div>
+            <div class="muted" style="margin-top:6px">It closes the new line on both tabs that show a picture — <b>Video Call</b> and <b>Video + Audio Cloning</b> — with one tick. A <b>Voice Clone Only</b> call never uses the new line. It outranks the two switches above and the two model doors below: with this closed, no other tick on this card can hand a call to the new line. A call already on air keeps the line it opened on until it ends, and nothing is restarted on anybody's machine — it lands on the next call each app asks for.</div>
             <div class="muted" id="cfgReactorOffNow" style="margin-top:6px"></div>
           </div>
           <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
@@ -2145,7 +2206,7 @@
     machines: [loadMachines],
     topups: [loadRequests],
     payments: [loadPayments, loadPaystackHook],
-    keys: [loadKeys, loadBalance, loadCalls],
+    keys: [loadKeys, loadBalance, loadReactorBalance, loadCalls],
     decart: [loadKeys, loadSupply],
     split: [loadAccounts],
     engines: [loadConfig],
@@ -4334,6 +4395,228 @@
     }
   });
 
+  // ── the photo model line's money ──────────────────────────────────────────────
+  // The same shape as the fal.ai card above it, and it differs in exactly three ways: the company
+  // it reads, the colour of its writing, and the gate on the way in. There are no amount boxes
+  // because there is no alarm — a low figure on this card is a figure.
+  let REACTOR_BAL = null;
+  let RBAL_AT = 0;
+  let RBAL_SEL = "";
+  let RBAL_PAINTED = null;
+  const RBAL_FOLD_KEY = "streamlive.reactorbalance.folded";
+  let RBAL_FOLD = true;
+  try { if (localStorage.getItem(RBAL_FOLD_KEY) === "0") RBAL_FOLD = false; } catch { }
+  let RB_EDIT = "";
+
+  function renderRBalance(p) {
+    const box = $("rbBody");
+    if (!box) return;
+    const rows = p.accounts || [];
+    const at = Date.now() - RBAL_AT;
+    // The strip describes one account, so a row he forgot between reads moves the pick to the
+    // first one left rather than leaving the strip describing nothing.
+    if (!rows.some((a) => String(a.id) === RBAL_SEL)) RBAL_SEL = rows.length ? String(rows[0].id) : "";
+    RBAL_PAINTED = { ...p, accounts: rows };
+
+    const count = $("rbCount");
+    count.style.display = rows.length ? "" : "none";
+    count.textContent = rows.length ? `${rows.length} account${rows.length === 1 ? "" : "s"}` : "";
+    const read = rows.filter((a) => a.ok);
+    $("rbWhen").textContent = rows.length ? `${read.length} of ${rows.length} read` : "";
+
+    const total = p.total_usd == null ? null : N(p.total_usd);
+    const hide = RBAL_FOLD ? ' style="display:none"' : "";
+    const chips = `<div class="acctchips" data-fold="rbal"${hide}>` + rows.map((a) =>
+      `<button type="button" class="acctchip${String(a.id) === RBAL_SEL ? " sel" : ""}" data-acct="${esc(String(a.id))}" title="Put this account on its own line">`
+      + `<span class="acctdot" style="background:${a.ok ? "#facc15" : "#4a3d12"}"></span>`
+      + `${esc(a.label)} <span class="v">${a.balance_usd == null ? "not read" : usd(N(a.balance_usd))}</span></button>`).join("")
+      + `</div>`
+      + `<div class="acctdetail" data-fold="rbal"${hide} id="rbDetail"></div>`;
+
+    box.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-end;margin-top:12px">
+        <div>
+          <div class="rbalbig" style="font-family:ui-monospace,monospace;font-size:38px;font-weight:800;line-height:1.05">${total === null ? "—" : usd(total)}</div>
+          <div class="rbalsub" style="font-size:12px">${rows.length > 1 ? "left, all photo model accounts together" : rows.length ? "left on the photo model's account" : "no key stored for this line yet"}</div>
+        </div>
+        <div>
+          <div class="rbalbig" style="font-family:ui-monospace,monospace;font-size:19px;font-weight:700">${rows.length ? `${read.length}/${rows.length}` : "—"}</div>
+          <div class="rbalsub" style="font-size:12px">accounts that answered</div>
+        </div>
+      </div>
+      ${rows.length ? chips : ""}
+      <p class="rbalsub" style="margin:12px 0 0;font-size:12px">${esc(p.detail || "")}${p.from_cache ? " · the reading is held for two minutes so this page never hammers that service" : rows.length ? ` · checked ${balAgo(at)}` : ""}</p>`;
+    paintRDetail();
+    paintFoldRBalance();
+  }
+
+  /** The account the chips picked, or null when the card describes none. */
+  function pickedRAccount() {
+    const rows = (RBAL_PAINTED && RBAL_PAINTED.accounts) || [];
+    return rows.find((a) => String(a.id) === RBAL_SEL) || null;
+  }
+
+  function paintRDetail() {
+    const host = $("rbDetail");
+    if (!host) return;
+    const a = pickedRAccount();
+    if (!a) { host.innerHTML = ""; return; }
+    const idAttr = esc(String(a.id));
+    host.innerHTML = `
+      <div><div class="k">${esc(a.label)} · key ${esc(a.tail)}</div>
+        <div class="v">${a.balance_usd == null ? "not read this time" : usd(N(a.balance_usd))}</div></div>
+      <div><div class="k">in their credits</div><div class="v">${a.balance_credits == null ? "—" : Math.round(N(a.balance_credits)).toLocaleString()}</div></div>
+      <div><div class="k">account</div><div class="v" style="font-size:13px">${esc(a.account_id || "—")}</div></div>
+      <div class="btns">
+        <button type="button" data-act="check" data-acct="${idAttr}">Check</button>
+        <button type="button" data-act="edit" data-acct="${idAttr}">Edit</button>
+        <button type="button" data-act="forget" data-acct="${idAttr}" class="danger">Forget</button>
+      </div>
+      <p class="muted" style="grid-column:1/-1;margin:0;font-size:11.5px">${a.ok
+        ? "This key was refused a pass to start a call on the day it was saved, which is the only reason this box would hold it. Roles can be changed on the service afterwards, so Check re-asks."
+        : esc(String(a.detail || "the photo model service would not read that key"))}</p>`;
+  }
+
+  function paintFoldRBalance() {
+    const b = $("foldRBal");
+    if (!b) return;
+    const many = ((RBAL_PAINTED && RBAL_PAINTED.accounts) || []).length > 0;
+    b.style.display = many ? "" : "none";
+    b.textContent = RBAL_FOLD ? "+" : "−";
+    b.title = RBAL_FOLD ? "Show the list of accounts" : "Hide the list of accounts";
+    document.querySelectorAll("#rbalCard [data-fold]").forEach((n) => { n.style.display = RBAL_FOLD ? "none" : ""; });
+  }
+
+  // force = the button was pressed. A reading younger than a minute is only re-painted otherwise,
+  // so the fifteen-second tick keeps this card honest without a second round trip per poll.
+  function loadReactorBalance(force) {
+    if (REACTOR_BAL && !force && Date.now() - RBAL_AT < 50_000) { renderRBalance(REACTOR_BAL); return Promise.resolve(); }
+    RBAL_AT = Date.now();
+    return api(force ? { action: "reactor_balance", force: true } : { action: "reactor_balance" })
+      .then((r) => { REACTOR_BAL = r; msg("rbMsg", ""); renderRBalance(r); })
+      .catch((err) => { msg("rbMsg", "Could not read the photo model balance: " + err.message); renderRBalance({ accounts: [], detail: "" }); });
+  }
+
+  $("refreshRBalance").onclick = () => loadReactorBalance(true);
+  $("foldRBal").onclick = () => {
+    RBAL_FOLD = !RBAL_FOLD;
+    try { localStorage.setItem(RBAL_FOLD_KEY, RBAL_FOLD ? "1" : "0"); } catch { }
+    paintFoldRBalance();
+  };
+  $("rbKey").oninput = () => { $("rbResult").className = "presult"; };
+
+  function openRForm(a) {
+    RB_EDIT = a && a.id ? String(a.id) : "";
+    $("rbId").value = RB_EDIT;
+    $("rbKey").value = "";
+    $("rbLabel").value = a ? String(a.label || "") : "";
+    $("rbForm").classList.remove("hidden");
+    $("rbResult").className = "presult";
+    $("saveRBalance").textContent = RB_EDIT ? "Save this account" : "Add this account";
+    (RB_EDIT ? $("rbLabel") : $("rbKey")).focus();
+  }
+  function closeRForm() {
+    RB_EDIT = "";
+    $("rbId").value = "";
+    $("rbForm").classList.add("hidden");
+    $("rbResult").className = "presult";
+  }
+  $("rbAdd").onclick = () => openRForm(null);
+  $("cancelRBalance").onclick = closeRForm;
+
+  $("testRBalance").onclick = () => {
+    const box = $("rbResult");
+    box.className = "presult show";
+    box.textContent = "Asking the photo model service…";
+    api({
+      action: "reactor_balance_test",
+      key: $("rbKey").value.trim() || undefined,
+      id: RB_EDIT || undefined,
+    }).then((r) => {
+      box.className = "presult show " + (r.verified ? (r.spendable ? "fail" : "ok") : "fail");
+      box.textContent = r.detail || (r.verified ? "Accepted." : "That service refused the key.");
+    }).catch((err) => { box.className = "presult show fail"; box.textContent = err.message; });
+  };
+
+  $("saveRBalance").onclick = () => {
+    const btn = $("saveRBalance");
+    btn.disabled = true;
+    const wasEdit = !!RB_EDIT;
+    api({
+      action: "reactor_balance_save",
+      key: $("rbKey").value.trim() || undefined,
+      id: wasEdit ? RB_EDIT : undefined,
+      add: wasEdit ? undefined : true,
+      label: $("rbLabel").value.trim() || undefined,
+    }).then((r) => {
+      const box = $("rbResult");
+      if (r.saved !== true) {
+        // A key that can spend is the case this card exists to catch, so its sentence stays in the
+        // box above the buttons rather than scrolling away as a one-line message under the card.
+        box.className = "presult show fail";
+        box.textContent = r.detail || "That key was not accepted, so nothing was saved.";
+        msg("rbMsg", r.verified === false ? "Nothing was saved." : "That key can start a call, so it was refused.");
+        return;
+      }
+      const mine = (r.accounts || []).find((a) => r.tail && a.tail === r.tail) || null;
+      box.className = "presult show ok";
+      box.textContent = (wasEdit ? "Saved" : "Added")
+        + (mine ? `: ${mine.label} reads ${usd(N(mine.balance_usd))}.` : ".")
+        + " It was refused a pass to start a call, so it can only ever read you a figure.";
+      msg("rbMsg", "Saved.", "ok");
+      if (mine) RBAL_SEL = String(mine.id);
+      REACTOR_BAL = r;
+      RBAL_AT = Date.now();
+      closeRForm();
+      renderRBalance(r);
+      void loadKeys();
+    }).catch((err) => msg("rbMsg", err.message))
+      .finally(() => { btn.disabled = false; });
+  };
+
+  // One listener for the chips and the strip, because both are re-painted on every read.
+  $("rbBody").addEventListener("click", (ev) => {
+    const hit = ev.target.closest("[data-act], .acctchip[data-acct]");
+    if (!hit) return;
+    const id = String(hit.dataset.acct || "");
+    const row = ((RBAL_PAINTED && RBAL_PAINTED.accounts) || []).find((a) => String(a.id) === id) || null;
+    const act = hit.dataset.act || "";
+    if (!act) {
+      RBAL_SEL = id;
+      document.querySelectorAll("#rbBody .acctchip").forEach((c) => c.classList.toggle("sel", String(c.dataset.acct) === id));
+      paintRDetail();
+      return;
+    }
+    if (act === "edit") { openRForm(row || { id, label: "" }); return; }
+    if (act === "check") {
+      const box = $("rbResult");
+      box.className = "presult show";
+      box.textContent = "Asking the photo model service about that account…";
+      api({ action: "reactor_balance_test", id: id || undefined })
+        .then((r) => {
+          box.className = "presult show " + (r.verified ? (r.spendable ? "fail" : "ok") : "fail");
+          box.textContent = r.detail || (r.verified ? "Accepted." : "That service would not read that key.");
+          if (r.verified) void loadReactorBalance(true);
+        })
+        .catch((err) => { box.className = "presult show fail"; box.textContent = err.message; });
+      return;
+    }
+    if (act === "forget") {
+      if (!confirm(`Forget ${row && row.label ? `“${row.label}”` : "this account"}? Its chip goes and the total above loses its share. Your fal.ai keys, your call keys, your customers and your prices are untouched.`)) return;
+      api({ action: "reactor_balance_save", remove: true, id: id || undefined })
+        .then((r) => {
+          if (String(RBAL_SEL) === id) RBAL_SEL = "";
+          closeRForm();
+          REACTOR_BAL = r;
+          RBAL_AT = Date.now();
+          msg("rbMsg", "That billing key is forgotten.", "ok");
+          renderRBalance(r);
+          void loadKeys();
+        })
+        .catch((err) => msg("rbMsg", err.message));
+    }
+  });
+
   // ── every call, what it cost against what it paid ───────────────────────────
   // fal sends one bill for the whole day and never a price per call, so the cost column
   // is his own arithmetic: the Prices-tab rate times the seconds this call held.
@@ -5321,6 +5604,7 @@
       // The balance card re-paints on this tick so "checked 20 seconds ago" never goes
       // stale under his eyes; the fetch inside only goes out once the reading is old.
       void loadBalance();
+      void loadReactorBalance();
       void loadCalls();
     }
   }, 15_000);
@@ -7487,7 +7771,7 @@
     $("cfgLucyNow").innerHTML = !hasLucySwitch
       ? "The database has no Lucy switch yet — run the third-picture-line migration, then reload this page. Nothing here has been changed."
       : probeLucy.data?.lucy_models_enabled === false
-        ? "Lucy is closed right now: a paid picture call goes to the new line first. The two cloning tabs and any account on an older installer are still on Lucy."
+        ? "Lucy is closed right now: a paid picture call goes to the new line first, on the Video Call tab and on the Video + Audio Cloning tab alike. A Voice Clone Only call and any account on an older installer are still on Lucy."
         : "";
 
     // The one-model door came later than the whole-line one, so it is probed on its own for the
@@ -7809,7 +8093,7 @@
     $("cfgLucyNow").innerHTML = !hasLucySwitch
       ? "The Lucy line was not changed: this database has no switch column yet."
       : lucyOffWanted
-        ? "Lucy is closed right now: a paid picture call goes to the new line first. The two cloning tabs and any account on an older installer are still on Lucy."
+        ? "Lucy is closed right now: a paid picture call goes to the new line first, on the Video Call tab and on the Video + Audio Cloning tab alike. A Voice Clone Only call and any account on an older installer are still on Lucy."
         : "";
     if (hasLucy25Switch) LUCY25_CLOSED = lucy25OffWanted;
     if (hasReactorSwitch) REACTOR_CLOSED = reactorOffWanted;
@@ -7863,7 +8147,7 @@
       + " | The Lucy line is now "
       + (hasLucySwitch
         ? (lucyOffWanted
-          ? "CLOSED: a paid picture call goes to the new line straight away, no busy answer needed first. Three things this cannot move — the two cloning tabs stay on Lucy, an account whose installer cannot open the new line stays on Lucy, and a call already on air keeps the line it opened on."
+          ? "CLOSED: a paid picture call goes to the new line straight away, no busy answer needed first — on the Video Call tab and on the Video + Audio Cloning tab. Three things this cannot move — a Voice Clone Only call stays on Lucy, an account whose installer cannot open the new line stays on Lucy, and a call already on air keeps the line it opened on."
           : "OPEN: Lucy is dialled first, and the new line opens on the press Lucy turned away as full, plus a new buyer's first paid picture call.")
         : "unchanged (this database has no column for it yet, so the tick was not saved)")
       + " | The first picture model is now "
