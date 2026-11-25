@@ -338,7 +338,7 @@
               <div class="muted" id="detVideoModelNow" style="flex:1 1 240px"></div>
             </div>
             <div class="row" style="align-items:center;margin-top:10px">
-              <div style="flex:0 0 220px"><label style="margin-top:0">New line model</label><select id="detReactorModel"><option value="">Automatic (the software chooses)</option><option value="xmax-x2">Reactor x2 (new line)</option><option value="xmax-x2-1">Reactor x2.1 (new line)</option></select></div>
+              <div style="flex:0 0 220px"><label style="margin-top:0">New line model</label><select id="detReactorModel"><option value="">Automatic (the software chooses)</option><option value="xmax-x2">Reactor x2 (new line)</option><option value="xmax-x2-1">Reactor x2.1 (new line)</option><option value="vidu-s2-editing">Reactor Vidu S2 (new line, photo model)</option></select></div>
               <div style="flex:0 0 auto"><button id="detSaveReactorModel">Save new line model</button></div>
               <div class="muted" id="detReactorModelNow" style="flex:1 1 240px"></div>
             </div>
@@ -1426,6 +1426,18 @@
             <div class="muted" id="cfgReactorX21Now" style="margin-top:6px"></div>
           </div>
           <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
+            <label class="feat" style="margin:0"><input type="checkbox" id="cfgReactorViduOff" /> Close the new line's photo model only (Vidu S2): send its calls to x2</label>
+            <div class="muted" style="margin-top:6px">Off, which is how it ships: the photo model takes a call only where it is chosen — pinned to an account, or first in what the installer declares. On: <b>no new paid picture call runs it</b>; each one goes to <b>x2</b> instead, and a machine that can open only this model stays on Lucy. Throw this when the photo model is returning a wrong or poor picture, or when you want it off the books: it is the expensive model on this line at <b>$0.42 a minute</b> against x2 and x2.1 at $0.102.</div>
+            <div class="muted" style="margin-top:6px">One rule this model carries that the other two do not: it reads a reference photo and has no text field, so a press that came with no photo is never handed it whatever this box says — that call runs one of the two prompt models. Everything else reads exactly as the other model doors: a model door, not a company door, under the whole-line tick, over every per-account pin, and never moving a call already on air or a free trial.</div>
+            <div class="muted" id="cfgReactorViduNow" style="margin-top:6px"></div>
+          </div>
+          <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
+            <label class="feat" style="margin:0"><input type="checkbox" id="cfgReactorPromptOff" /> Close <b>both</b> prompt models at once (x2 and x2.1): run the new line only on the photo model</label>
+            <div class="muted" style="margin-top:6px">One press for the two doors above, so you do not have to tick them separately and hope both saved. On: <b>x2 and x2.1 both take no new paid picture call</b>, which leaves the photo model as the only thing this line answers with — so a paid picture call reaches the new line only when the press carries a reference photo, and a press without one stays on Lucy rather than being handed a model that cannot use it. Off: both prompt models open again, whatever they were before, and the photo model goes back to running only where it is chosen.</div>
+            <div class="muted" style="margin-top:6px">It moves only when you move it: opening or closing one of the two doors above never trips this box by itself, and saving this card without touching it changes nothing. It is not a third switch in the database — it writes the two doors it stands for, and it reads their state back. The whole-line tick above still outranks everything here: with the line closed, this changes nothing.</div>
+            <div class="muted" id="cfgReactorPromptNow" style="margin-top:6px"></div>
+          </div>
+          <div style="border:1px solid #1d2733;border-radius:10px;padding:10px">
             <label style="margin-top:0">New-line calls allowed at once, across all accounts</label>
             <input id="cfgReactorCeiling" type="number" min="0" step="1" />
             <div class="muted" style="margin-top:6px">0 or blank = no limit from here. Set it to the number of calls the new service lets you have on air at once, and the caller past that number is told the lines are busy instead of burning minutes and failing. It counts only calls on the new line, so the Lucy ceiling above is a separate door.</div>
@@ -1539,9 +1551,18 @@
           </div>
         </div>
         <div style="margin-top:12px">
-          <label>New picture line · Reactor (model xmax-x2-1) · $ per minute</label>
-          <input id="pgReactorMin" type="number" min="0" step="0.001" style="max-width:180px" />
+          <div class="grid2">
+            <div>
+              <label style="margin-top:0">New picture line · its prompt models (x2 and x2.1) · $ per minute</label>
+              <input id="pgReactorMin" type="number" min="0" step="0.001" />
+            </div>
+            <div>
+              <label style="margin-top:0">New picture line · its photo model · $ per minute</label>
+              <input id="pgViduMin" type="number" min="0" step="0.001" />
+            </div>
+          </div>
           <div class="muted" style="margin-top:6px" id="pgReactorNote">This is what the third picture line charges you for a minute of it. The Calls tab prices a call on that line with this figure; a call on Lucy keeps the Lucy figure above. It is <b>not</b> used by the price steps below — your packages are still priced off the Lucy cost, which is the dearer of the two, so a call that lands on the cheaper line is extra margin rather than a cheaper sale.</div>
+          <div class="muted" style="margin-top:6px" id="pgViduNote">The same line also carries a model that works from a photo instead of a typed description, and it bills at a different rate — four times the two above. The Calls tab prices a call on it with <b>this</b> figure, never the prompt models'. Leave a box empty to keep the rate already saved for it.</div>
         </div>
         <details style="margin-top:14px">
           <summary class="muted">ElevenLabs shows credits instead of a dollar price? Work it out here</summary>
@@ -1828,7 +1849,7 @@
   // two models of its own, chosen on the account under "New line model" exactly as the two Lucy
   // models are chosen under "Picture model". Both new-line ids are kept so calls recorded on either
   // still read by name.
-  const VIDEO_MODEL_NAME = { "lucy-2-5": "Lucy 2.5", "lucy-2-6": "Lucy 2.6", "xmax-x2": "Reactor xmax-x2 (new line)", "xmax-x2-1": "Reactor xmax-x2-1 (new line)" };
+  const VIDEO_MODEL_NAME = { "lucy-2-5": "Lucy 2.5", "lucy-2-6": "Lucy 2.6", "xmax-x2": "Reactor xmax-x2 (new line)", "xmax-x2-1": "Reactor xmax-x2-1 (new line)", "vidu-s2-editing": "Reactor Vidu S2 (new line, photo model)" };
   const FIRST_VIDEO_MODEL = "lucy-2-5";
   const FIRST_REACTOR_MODEL = "xmax-x2";
   // Same decision the gateway makes: credited minutes mean the paid service for
@@ -2052,6 +2073,7 @@
   // the account card never claims a door it has not read.
   let REACTOR_X2_CLOSED = null;
   let REACTOR_X21_CLOSED = null;
+  let REACTOR_VIDU_CLOSED = null;
   let hasCloneModeSub = false;   // subscriptions.cloning_mode exists on this database
   let hasAudioLockCol = false;   // subscriptions.audio_cloning_only exists on this database
   let DEV_OF = {};
@@ -2745,7 +2767,7 @@
         ? "the new-line model choice cannot be saved until the migration that adds it has run."
         : REACTOR_CLOSED === true
           ? "the new line is closed on the Gateway tab right now, so every paid picture call stays on Lucy and this choice moves nothing until you open the line again."
-          : pinned && (pinned === "xmax-x2" ? REACTOR_X2_CLOSED : REACTOR_X21_CLOSED) === true
+          : pinned && (pinned === "xmax-x2" ? REACTOR_X2_CLOSED : pinned === "xmax-x2-1" ? REACTOR_X21_CLOSED : REACTOR_VIDU_CLOSED) === true
             ? "the model you pinned is closed on the Gateway tab right now, so a call admitted to the new line dials the other open model instead, and a machine that can open only the closed model stays on Lucy. This pin moves nothing until that model's door is opened again."
             : pinned
               ? `chosen by you${c.pin.reactor_model_at ? " on " + when(c.pin.reactor_model_at) : ""}. A call admitted to the new line dials ${VIDEO_MODEL_NAME[pinned]}, and each one is written into the Calls list with it.`
@@ -4344,6 +4366,14 @@
   // minute at the Lucy figure makes a profit that was never made, so a row with no figure of its own
   // is left unpriced and said so, instead of quietly borrowing its neighbour's.
   let CALL_REACTOR_RATE = null;
+  // The photo model of that same line, which costs four times the two prompt models beside it. It is
+  // a separate figure because one column cannot answer for two models four times apart: a call that
+  // ran the photo model and was costed at the x2 price would show a margin that was never made.
+  let CALL_VIDU_RATE = null;
+  /** Which call rows ran the line's photo model, read off the model the gateway wrote on the row. */
+  const isViduRow = (r) => r && r.video_model === "vidu-s2-editing";
+  /** What one second of a call on the new line cost, per model rather than per line. */
+  const newLineRateOf = (r) => (isViduRow(r) ? CALL_VIDU_RATE : CALL_REACTOR_RATE);
   // Three counts, kept apart on purpose: "no calls" and "calls you cannot see" look
   // identical in a blank card, and only the second one is a fault.
   let CALL_PAID = 0;    // calls on either paid picture line, all of them
@@ -4437,6 +4467,11 @@
       // column for it still costs every Lucy call exactly as it did. Null on purpose: see above.
       const reactorPer = N(p.reactorPerSecond);
       CALL_REACTOR_RATE = reactorPer > 0 ? reactorPer : null;
+      // Read on its own, exactly as the line's rate above is: a database whose Prices tab has no
+      // figure for the photo model leaves those rows unpriced and says so, rather than costing a
+      // 42-cent minute at 10 cents.
+      const viduPer = N(p.viduPerSecond);
+      CALL_VIDU_RATE = viduPer > 0 ? viduPer : null;
       CALL_SKIPPED = N(p.trialRows);
       CALL_PAID = N(p.paidRows);
       CALL_REACTOR = N(p.reactorRows);
@@ -4630,7 +4665,7 @@
     // published figures, so this is the one price on the card that moves per row. A new line with no
     // saved price hands back null rather than Lucy's number, because a new-line minute costed at the
     // Lucy rate is a margin that was never made, and the row says it is not priced instead.
-    const picRateOf = (r) => (isNewLine(r) ? CALL_REACTOR_RATE : rate.perSecond);
+    const picRateOf = (r) => (isNewLine(r) ? newLineRateOf(r) : rate.perSecond);
     const rateFor = (r) => {
       const pic = meta.picture ? picRateOf(r) : 0;
       if (pic == null) return null;
@@ -4661,9 +4696,10 @@
       const refused = lineRefused(r);
       const sec = rateFor(r);
       const onNew = isNewLine(r);
+      const onPhoto = isViduRow(r);
       const unpriced = sec == null;
       return {
-        r, line, pic, billed, refused, onNew, unpriced,
+        r, line, pic, billed, refused, onNew, onPhoto, unpriced,
         cost: refused || unpriced ? 0 : bill * sec,
         sell: rp.perMinute,
         plan: rp.plan,
@@ -4677,6 +4713,7 @@
     // invent a cost it does not have.
     const notPriced = rows.filter((x) => x.unpriced && !x.refused).length;
     const onNewLine = rows.filter((x) => x.onNew).length;
+    const onPhotoLine = rows.filter((x) => x.onPhoto).length;
     const sum = rows.reduce((a, x) => ({
       line: a.line + x.line, pic: a.pic + x.pic, billed: a.billed + x.billed,
       cost: a.cost + (x.unpriced ? 0 : x.cost), paid: a.paid + (x.unpriced ? 0 : x.paid),
@@ -4687,9 +4724,9 @@
     // Folded, this one line is the whole list: what these calls cost, what they paid,
     // how many lost. The figures never blank - only the list does.
     const brief = `<p class="muted" style="margin:10px 0 0">These <b>${rows.length}</b> ${meta.name}(s) on the paid video service cost <b>${usd(sum.cost)}</b> and paid <b>${usd(sum.paid)}</b> — that is <b>${sum.paid - sum.cost >= 0 ? "+" : ""}${usd(sum.paid - sum.cost)}</b>, over <b>${mins2(sum.billed)}</b> minutes you charged${refusals ? `, with <b>${refusals}</b> refused dial(s) the service never billed` : ""}${red ? `, with <b style="color:#fb7185">${red}</b> of them costing more than they paid` : ""}${CALL_SKIPPED && CALL_KIND === "video" ? `, plus <b>${CALL_SKIPPED}</b> trial call(s) that are not listed` : ""}.</p>${meta.picture && onNewLine
-      ? `<p class="muted" style="margin:6px 0 0"><b>${onNewLine}</b> of them ran on the new picture line${CALL_REACTOR_RATE ? ` and are costed at ${secUsd(CALL_REACTOR_RATE)} a second, ${minUsd(CALL_REACTOR_RATE * 60)} a minute` : ""}; the other <b>${rows.length - onNewLine}</b> ran on Lucy at ${secUsd(rate.perSecond)} a second.${notPriced
-        ? ` <b style="color:#fb7185">${notPriced}</b> of the new-line call(s) cannot be costed at all, because the Prices tab holds no rate for that line yet — the totals above leave those rows out rather than guessing.`
-        : ` That figure comes from the Prices tab, and the money columns below price each row with the line it actually ran on.`}</p>`
+      ? `<p class="muted" style="margin:6px 0 0"><b>${onNewLine}</b> of them ran on the new picture line${onPhotoLine ? `, of which <b>${onPhotoLine}</b> ran its <b>photo model</b> at ${CALL_VIDU_RATE ? `${secUsd(CALL_VIDU_RATE)} a second, ${minUsd(CALL_VIDU_RATE * 60)} a minute` : "a price this database does not hold"}` : ""}; ${onNewLine - onPhotoLine ? `the other <b>${onNewLine - onPhotoLine}</b> on that line ran the prompt models at ${CALL_REACTOR_RATE ? `${secUsd(CALL_REACTOR_RATE)} a second, ${minUsd(CALL_REACTOR_RATE * 60)} a minute` : "a price this database does not hold"}; ` : ""}the other <b>${rows.length - onNewLine}</b> ran on Lucy at ${secUsd(rate.perSecond)} a second.${notPriced
+        ? ` <b style="color:#fb7185">${notPriced}</b> of the new-line call(s) cannot be costed at all, because the Prices tab holds no rate for that model yet — the totals above leave those rows out rather than guessing.`
+        : ` Those figures come from the Prices tab, and the money columns below price each row with the model its own call ran.`}</p>`
       : ""}`;
     // Both sides of this line come from the same server read: fal.ai's own bill for the
     // day, added across every stored account, against the calls the gateway booked inside
@@ -4779,8 +4816,8 @@
     const list = `
       <p class="muted" style="margin:10px 0 0">One line per call, newest first, for every ${meta.name} run on a paid picture line${CALL_SKIPPED ? ` - the <b>${CALL_SKIPPED}</b> trial call(s) are not here` : ""}. The services bill by the second, so
         <b>what it cost</b> is the price on your Prices tab (${rateText}) times
-        the seconds this call held - that is money leaving you, whatever you charge.${meta.picture && (CALL_REACTOR_RATE || onNewLine)
-          ? ` A call that ran on the <b>new line</b> is costed at that line's own price instead${CALL_REACTOR_RATE ? ` — ${secUsd(CALL_REACTOR_RATE)} a second, ${minUsd(CALL_REACTOR_RATE * 60)} a minute — and each such row says so under its cost` : ", which this database does not hold yet"}, because the two picture lines are two companies with two bills.`
+        the seconds this call held - that is money leaving you, whatever you charge.${meta.picture && (CALL_REACTOR_RATE || CALL_VIDU_RATE || onNewLine)
+          ? ` A call that ran on the <b>new line</b> is costed at that line's own price instead${CALL_REACTOR_RATE ? ` — ${secUsd(CALL_REACTOR_RATE)} a second, ${minUsd(CALL_REACTOR_RATE * 60)} a minute for its two prompt models${CALL_VIDU_RATE ? `, and ${secUsd(CALL_VIDU_RATE)} a second, ${minUsd(CALL_VIDU_RATE * 60)} a minute for the <b>photo model</b>` : ", while the photo model has no price on this database yet"}` : ", which this database does not hold yet"} — and each such row says under its cost which model it ran, because the three sit on one line at two different rates.`
           : ""} <b>What it paid</b> is the minutes you charged times
         the price you set on that account's package on your Plans tab, which each row prints under the minutes. One pool of minutes funds all three
         kinds of call, so that selling price is the same figure on all three lists. Where a call ran on an Unlimited package the row names which pack under the minutes: an Unlimited minute is a minute <b>spent</b>, not time on the line, so a voice-pack call held the line longer than the figure you charged. These prices are read fresh
@@ -4799,7 +4836,7 @@
               ? `<td class="mono" style="text-align:right">${usd(0)}<div class="muted" style="font-size:11px">not charged</div></td>`
               : x.unpriced
                 ? `<td class="mono" style="text-align:right"><span class="pill warn">no rate</span><div class="muted" style="font-size:11px">set it on Prices</div></td>`
-                : `<td class="mono" style="text-align:right">${usd(x.cost)}${x.onNew ? `<div class="muted" style="font-size:11px">${secUsd(CALL_REACTOR_RATE)} a sec · new line</div>` : ""}</td>`}
+                : `<td class="mono" style="text-align:right">${usd(x.cost)}${x.onNew ? `<div class="muted" style="font-size:11px">${secUsd(picRateOf(x.r))} a sec · ${x.onPhoto ? "new line, photo model" : "new line"}</div>` : ""}</td>`}
             <td class="mono" style="text-align:right">${mins2(x.billed)} min<div class="muted" style="font-size:11px">${usd(x.sell)} a minute · ${esc(x.plan)}${x.noOrder ? " · never paid you" : ""}${packOf(x)}</div></td>
             ${money(x.paid)}
             ${x.unpriced && !x.refused
@@ -6521,23 +6558,36 @@
   // figure. So the seconds are costed per line: Lucy's at the constant above, the new line at the
   // price saved on the Prices tab. `null` in the second field means that price is not on this
   // database yet — the seconds are still counted, never quietly valued at the dearer rate.
+  //
+  // The new line carries models four times apart in price, so a refusal held on the photo model is
+  // costed at the photo model's saved figure, not at the prompt models'. Both figures come from the
+  // same Prices tab the per-call rows use, and each side reports its own missing price rather than
+  // borrowing the other's.
   function refusalCost(rows) {
     let sec = 0;
     let usd = 0;
     let newSec = 0;
     let newUnpriced = false;
+    let photoSec = 0;
+    let photoUnpriced = false;
     for (const e of rows) {
       sec += e.secs;
       if (!e.secs) continue;
-      if (e.line === "new") {
+      if (e.line !== "new") {
+        usd += e.secs * REFUSAL_SEC_USD;
+        continue;
+      }
+      if (e.photo) {
+        photoSec += e.secs;
+        if (CALL_VIDU_RATE == null) { photoUnpriced = true; continue; }
+        usd += e.secs * CALL_VIDU_RATE;
+      } else {
         newSec += e.secs;
         if (CALL_REACTOR_RATE == null) { newUnpriced = true; continue; }
         usd += e.secs * CALL_REACTOR_RATE;
-      } else {
-        usd += e.secs * REFUSAL_SEC_USD;
       }
     }
-    return { sec, usd, newSec, newUnpriced };
+    return { sec, usd, newSec, newUnpriced, photoSec, photoUnpriced };
   }
 
   function endsSec(r) {
@@ -6561,6 +6611,9 @@
         // Which line the refused call was dialled on, from the row the gateway wrote. The refusal
         // money below is priced per line, and a new-line refusal is not Lucy's money.
         line: x.r.engine === "reactor" ? "new" : "lucy",
+        // Which model on that line: the photo model costs four times the prompt models' figure, so
+        // a refusal held open on it is not costed at theirs. Read off the same row as `line`.
+        photo: isViduRow(x.r),
         who: x.r.user_id,
         where: x.r.device_id || "—",
         tab: ENDS_TAB[x.r.tab] || x.r.tab || "—",
@@ -6616,10 +6669,21 @@
     for (const e of gates) gateSplit[e.busy === "self" ? "self" : e.busy === "wait" ? "wait" : "named"]++;
 
     const money = refusalCost(entries);
-    const moneyLabel = money.newSec
-      ? (money.newUnpriced
-        ? `ours, at 2 cents a second — plus ${money.newSec} s on the new line, not costed because no price is saved for it yet`
-        : `ours — Lucy's seconds at 2 cents a second, and the new line's ${money.newSec} s at its own saved price`)
+    // Each side of the new line names its own seconds and its own missing price, so a photo-model
+    // refusal never reads as if it were costed at the prompt models' figure.
+    const refuseBits = [];
+    if (money.newSec) {
+      refuseBits.push(money.newUnpriced
+        ? `${money.newSec} s on the new line, not costed because no price is saved for it yet`
+        : `the new line's ${money.newSec} s at its own saved price`);
+    }
+    if (money.photoSec) {
+      refuseBits.push(money.photoUnpriced
+        ? `${money.photoSec} s on the new line's photo model, not costed because no price is saved for it yet`
+        : `its photo model's ${money.photoSec} s at its own saved price`);
+    }
+    const moneyLabel = refuseBits.length
+      ? `ours — Lucy's seconds at 2 cents a second, and ${refuseBits.join(", and ")}`
       : "ours, at 2 cents a second";
 
     $("endsRefusedStats").innerHTML = [
@@ -7306,6 +7370,10 @@
   let hasReactorSwitch = false;      // app_config.reactor_enabled exists on it
   let hasReactorX2Switch = false;    // app_config.reactor_x2_enabled exists on it
   let hasReactorX21Switch = false;   // app_config.reactor_x21_enabled exists on it
+  let hasReactorViduSwitch = false;  // app_config.reactor_vidu_enabled exists on it
+  // The two-door press is not a column: it writes the two doors above it. It is only usable when
+  // both of them exist, and it only writes when he actually moved it.
+  let PROMPT_OFF_LANDED = null;
   let hasReactorCeiling = false;     // app_config.max_concurrent_reactor_sessions exists on it
 
   // Whether this tab has actually read its own row. Every switch box on it is written only when
@@ -7333,6 +7401,7 @@
     reactor_enabled: "the new picture line switch",
     reactor_x2_enabled: "the new line's first model door (x2)",
     reactor_x21_enabled: "the new line's second model door (x2.1)",
+    reactor_vidu_enabled: "the new line's photo model door (Vidu S2)",
     max_concurrent_reactor_sessions: "New-line calls allowed at once",
   };
 
@@ -7472,6 +7541,31 @@
       ? "The database has no door for the new line's second model yet — run its migration, then reload this page. Nothing here has been changed."
       : probeReactorX21.data?.reactor_x21_enabled === false
         ? "x2.1 is closed right now: a new-line call runs x2, and a machine that can open only x2.1 stays on Lucy. A call already on air keeps x2.1 until it ends."
+        : "";
+
+    const probeReactorVidu = await sb.from("app_config").select("reactor_vidu_enabled").eq("id", 1).maybeSingle();
+    hasReactorViduSwitch = !probeReactorVidu.error;
+    REACTOR_VIDU_CLOSED = hasReactorViduSwitch ? probeReactorVidu.data?.reactor_vidu_enabled === false : null;
+    $("cfgReactorViduOff").checked = hasReactorViduSwitch && probeReactorVidu.data?.reactor_vidu_enabled === false;
+    $("cfgReactorViduOff").disabled = !hasReactorViduSwitch;
+    $("cfgReactorViduNow").innerHTML = !hasReactorViduSwitch
+      ? "The database has no door for the new line's photo model yet — run its migration, then reload this page. Nothing here has been changed."
+      : probeReactorVidu.data?.reactor_vidu_enabled === false
+        ? "The photo model is closed right now: no new paid picture call runs it, and a machine that can open only it stays on Lucy. A call already on air keeps it until it ends."
+        : "";
+
+    // The two-door press, read from the two doors it stands for rather than from a column of its
+    // own: it shows "on" only when BOTH are closed, and it is unusable on a database that has only
+    // one of them, because half a pair is not a single press.
+    PROMPT_OFF_LANDED = hasReactorX2Switch && hasReactorX21Switch
+      ? (REACTOR_X2_CLOSED === true && REACTOR_X21_CLOSED === true)
+      : null;
+    $("cfgReactorPromptOff").checked = PROMPT_OFF_LANDED === true;
+    $("cfgReactorPromptOff").disabled = PROMPT_OFF_LANDED === null;
+    $("cfgReactorPromptNow").innerHTML = PROMPT_OFF_LANDED === null
+      ? "This database does not have both prompt model doors yet — run the new line's migration, then reload this page. Nothing here has been changed."
+      : PROMPT_OFF_LANDED
+        ? "Both prompt models are closed right now: this line answers only with the photo model, and only for a press carrying a reference photo. Every other paid picture call stays on Lucy."
         : "";
 
     const probeRoom = await sb.from("app_config").select("max_concurrent_reactor_sessions").eq("id", 1).maybeSingle();
@@ -7633,6 +7727,19 @@
     if (hasReactorX2Switch) row.reactor_x2_enabled = !reactorX2OffWanted;
     let reactorX21OffWanted = $("cfgReactorX21Off").checked;
     if (hasReactorX21Switch) row.reactor_x21_enabled = !reactorX21OffWanted;
+    let reactorViduOffWanted = $("cfgReactorViduOff").checked;
+    if (hasReactorViduSwitch) row.reactor_vidu_enabled = !reactorViduOffWanted;
+    // The pair press writes the two prompt doors above it rather than a column of its own, which is
+    // the only way one tick can be honest about both. Two rules keep it from contradicting itself:
+    // it writes nothing unless he actually moved it — so a card where x2 is closed and x2.1 open,
+    // left untouched, is saved with both exactly as they were — and because it is asked last, moving
+    // it in the same press as one of the individual boxes lands as the pair said rather than as a
+    // half-applied pair of clicks.
+    let promptOffWanted = $("cfgReactorPromptOff").checked;
+    if (PROMPT_OFF_LANDED !== null && promptOffWanted !== PROMPT_OFF_LANDED) {
+      if (hasReactorX2Switch) row.reactor_x2_enabled = !promptOffWanted;
+      if (hasReactorX21Switch) row.reactor_x21_enabled = !promptOffWanted;
+    }
     let reactorCeilingWanted = N($("cfgReactorCeiling").value, 0);
     if (hasReactorCeiling) row.max_concurrent_reactor_sessions = reactorCeilingWanted > 0 ? Math.floor(reactorCeilingWanted) : null;
     const { error } = await sb.from("app_config").update(row).eq("id", 1);
@@ -7671,6 +7778,11 @@
     reactorOffWanted = saved.reactor_enabled === false;
     reactorX2OffWanted = saved.reactor_x2_enabled === false;
     reactorX21OffWanted = saved.reactor_x21_enabled === false;
+    reactorViduOffWanted = saved.reactor_vidu_enabled === false;
+    promptOffWanted = hasReactorX2Switch && hasReactorX21Switch
+      ? (saved.reactor_x2_enabled === false && saved.reactor_x21_enabled === false)
+      : null;
+    PROMPT_OFF_LANDED = promptOffWanted;
     reactorCeilingWanted = N(saved.max_concurrent_reactor_sessions, 0);
     $("cfgFirstCallLine").checked = hasFirstCallLineCfg && firstCallWanted;
     $("cfgLucyOff").checked = hasLucySwitch && lucyOffWanted;
@@ -7678,6 +7790,8 @@
     $("cfgReactorOff").checked = hasReactorSwitch && reactorOffWanted;
     $("cfgReactorX2Off").checked = hasReactorX2Switch && reactorX2OffWanted;
     $("cfgReactorX21Off").checked = hasReactorX21Switch && reactorX21OffWanted;
+    $("cfgReactorViduOff").checked = hasReactorViduSwitch && reactorViduOffWanted;
+    $("cfgReactorPromptOff").checked = promptOffWanted === true;
     if (hasReactorCeiling) $("cfgReactorCeiling").value = reactorCeilingWanted;
     if (notSaved.length) {
       return msg("cfgMsg", "NOT SAVED — " + notSaved.map((k) => CFG_LABEL[k] || k).join(", ")
@@ -7701,6 +7815,17 @@
     if (hasReactorSwitch) REACTOR_CLOSED = reactorOffWanted;
     if (hasReactorX2Switch) REACTOR_X2_CLOSED = reactorX2OffWanted;
     if (hasReactorX21Switch) REACTOR_X21_CLOSED = reactorX21OffWanted;
+    if (hasReactorViduSwitch) REACTOR_VIDU_CLOSED = reactorViduOffWanted;
+    $("cfgReactorViduNow").innerHTML = !hasReactorViduSwitch
+      ? "The photo model door was not changed: this database has no column for it yet."
+      : reactorViduOffWanted
+        ? "The photo model is closed right now: a new-line call runs x2, and a machine that can open only the photo model stays on Lucy. A call already on air keeps it until it ends."
+        : "";
+    $("cfgReactorPromptNow").innerHTML = promptOffWanted === null
+      ? "The pair of prompt doors was not confirmed: this database does not have both columns."
+      : promptOffWanted
+        ? "Both prompt models are closed right now: this line answers only with the photo model, and only for a press that carries a reference photo. Every other paid picture call stays on Lucy."
+        : "";
     $("cfgLucy25Now").innerHTML = !hasLucy25Switch
       ? "The single-model door was not changed: this database has no column for it yet."
       : lucy25OffWanted
@@ -8630,6 +8755,10 @@
   // fails the whole update — which would take the two rates the price steps run on with it. So the
   // box is probed and, on a database without the column, greyed out and said so.
   let hasReactorRate = false;
+  // The photo model of the same line is newer still, and the same rule applies to it: the column is
+  // probed on its own, so a database that holds the prompt models' rate but not this one still saves
+  // every other figure on this page, and the box says what it is missing rather than writing zeroes.
+  let hasViduRate = false;
 
   async function loadPricing() {
     const { data, error } = await sb.from("billing_config")
@@ -8653,6 +8782,16 @@
     $("pgReactorNote").innerHTML = !hasReactorRate
       ? "This database has no column for the new line's price yet — run the third-picture-line price migration, then reload this page. Nothing here has been changed, and no call can be priced off this line until it is: the same migration is what lets a call run on it at all."
       : "This is what the third picture line charges you for a minute of it. The Calls tab prices a call on that line with this figure; a call on Lucy keeps the Lucy figure above. It is <b>not</b> used by the price steps below — your packages are still priced off the Lucy cost, which is the dearer of the two, so a call that lands on the cheaper line is extra margin rather than a cheaper sale.";
+    const probeViduRate = await sb.from("billing_config")
+      .select("vidu_video_per_sec_cost").eq("id", 1).maybeSingle();
+    hasViduRate = !probeViduRate.error;
+    $("pgViduMin").disabled = !hasViduRate;
+    $("pgViduMin").value = hasViduRate
+      ? +(N(probeViduRate.data?.vidu_video_per_sec_cost, 0.007) * 60).toFixed(4)
+      : "";
+    $("pgViduNote").innerHTML = !hasViduRate
+      ? "This database has no column for the photo model's price yet — run the migration that puts that model on the new line, then reload this page. Nothing here has been changed, and the prompt models' rate above is saved and read exactly as before."
+      : "The same line also carries a model that works from a photo instead of a typed description, and it bills at a different rate — four times the two above. The Calls tab prices a call on it with <b>this</b> figure, never the prompt models'. Leave a box empty to keep the rate already saved for it.";
     if (!$("pgElCpm").value) $("pgElCpm").value = 1000;
     pgRenderAll();
   }
@@ -8670,26 +8809,37 @@
     if (hasReactorRate && !(reactorMin > 0) && String($("pgReactorMin").value).trim() !== "") {
       return msg("pgMsg", "The new-line rate has to be more than zero, or the box left empty to keep what is saved.");
     }
+    const viduMin = pgIn("pgViduMin", NaN);
+    if (hasViduRate && !(viduMin > 0) && String($("pgViduMin").value).trim() !== "") {
+      return msg("pgMsg", "The photo model's rate has to be more than zero, or the box left empty to keep what is saved.");
+    }
     const row = {
       lucy_video_per_sec_cost: +(falMin / 60).toFixed(6),
       voice_cloning_per_sec_cost: +(voiceMin / 60).toFixed(6),
       profit_margin_percent: Math.round(target),
       last_verified_at: serverNowIso().slice(0, 10),
       source_notes: `fal.ai Lucy 2.5 realtime ${falMin}/min; ElevenLabs for the cloned voice ${voiceMin}/min. The voice service now charges for reading his words and for speaking them back as two separate lines, so this figure is your own estimate of a minute of calling rather than one price from their list.`
-        + (reactorMin > 0 ? ` Reactor xmax-x2-1 (the third picture line) ${reactorMin}/min.` : "")
+        + (reactorMin > 0 ? ` The third picture line's prompt models (xmax-x2 and xmax-x2-1) ${reactorMin}/min.` : "")
+        + (viduMin > 0 ? ` The same line's photo model (vidu-s2-editing) ${viduMin}/min.` : "")
         + " Saved from the Prices tab.",
     };
     if (hasReactorRate && reactorMin > 0) row.reactor_video_per_sec_cost = +(reactorMin / 60).toFixed(6);
+    if (hasViduRate && viduMin > 0) row.vidu_video_per_sec_cost = +(viduMin / 60).toFixed(6);
     const { data, error } = await sb.from("billing_config").update(row).eq("id", 1).select("id");
     if (error) return msg("pgMsg", error.message);
     if (!data || !data.length) return msg("pgMsg", "There is no billing_config row (id = 1) to write to — apply the wallet and burn-rate migration, then save again.");
     $("pgVerified").textContent = row.last_verified_at;
     msg("pgMsg", "Saved — every price on this page now works off these rates."
       + (hasReactorRate && reactorMin > 0
-        ? ` A call on the new picture line is costed at ${pgUsd(reactorMin)} a minute from now on, against ${pgUsd(falMin)} for Lucy; the price steps below still work off Lucy.`
+        ? ` A call on the new picture line's prompt models is costed at ${pgUsd(reactorMin)} a minute from now on, against ${pgUsd(falMin)} for Lucy; the price steps below still work off Lucy.`
         : hasReactorRate
           ? " The new-line box was left empty, so the rate already saved there still prices calls on that line."
-          : " The new line's rate was not saved: this database has no column for it yet."), "ok");
+          : " The new line's rate was not saved: this database has no column for it yet.")
+      + (hasViduRate && viduMin > 0
+        ? ` A call on that line's photo model is costed at ${pgUsd(viduMin)} a minute — its own figure, never the prompt models'.`
+        : hasViduRate
+          ? " The photo model's box was left empty, so the rate already saved there still prices calls on it."
+          : " The photo model's rate was not saved: this database has no column for it yet."), "ok");
   };
 
   $("pgDerive").onclick = () => {
