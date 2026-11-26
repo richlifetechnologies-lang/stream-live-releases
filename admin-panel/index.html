@@ -500,50 +500,6 @@
     </section>
     <!-- ══ TAB: KEY POOL ═══════════════════════════════════════════════════ -->
     <section id="tab-keys" class="hidden">
-      <!-- The money, above the keys, because it is the number he looks at before he
-           decides whether to add one. Every figure here is fal.ai's own, and every
-           stored account is read on its own terms: the totals above are the sum of the
-           accounts that answered, never one account's bill standing in for all of them. -->
-      <div class="card" id="balCard">
-        <div class="row" style="justify-content:space-between;align-items:center">
-          <h2 style="font-size:14px;margin:0">fal.ai balances <span class="pill n" id="fbCount" style="display:none"></span></h2>
-          <div class="row" style="align-items:center;gap:10px;flex:0 1 auto;min-width:0">
-            <span class="muted" id="fbWhen"></span>
-            <button id="refreshBalance">Check all now</button>
-            <button id="addAccount" style="border-style:dashed" title="Watch another fal.ai account beside these">+ add account</button>
-            <button id="foldBal" class="foldbtn" title="Show or hide the list of accounts" style="display:none">+</button>
-          </div>
-        </div>
-        <div id="fbBody"></div>
-        <div id="fbMsg"></div>
-        <div id="fbResult" class="presult"></div>
-
-        <!-- One form for both jobs, and it always names the row it writes: a blank
-             fbId plus add means a new account, an fbId means that account alone. -->
-        <div id="fbForm" class="hidden">
-          <input type="hidden" id="fbId" />
-          <div class="grid2" style="margin-top:16px">
-            <div>
-              <label>The key that reads this balance</label>
-              <div class="secret">
-                <input id="fbKey" type="password" autocomplete="off" spellcheck="false" placeholder="blank = keep the key this account already holds" />
-                <button type="button" data-show="fbKey">show</button>
-                <button type="button" id="testBalance" class="primary">Verify</button>
-              </div>
-            </div>
-            <div><label>Name it</label><input id="fbLabel" placeholder="e.g. Main fal account" /></div>
-          </div>
-          <div class="grid2" style="margin-top:4px">
-            <div><label>Turn amber under</label><input id="fbWarn" type="number" min="0" step="1" placeholder="$ — blank = no colour" /></div>
-            <div><label>Turn red under</label><input id="fbAlert" type="number" min="0" step="1" placeholder="$ — blank = no colour" /></div>
-          </div>
-          <p class="phint" style="margin-top:10px">Where the key comes from: <b>fal.ai → dashboard → API Keys → New key → preset BILLING</b>. That kind of key can read a balance and <b>cannot start a call</b>, so it costs nothing to keep it here. The keys that spend your money stay in the pool below, and this one is never added to it. Every account you store is read on its own and added to the figure above; the same key twice is refused, because it would count the same money twice.</p>
-          <div class="btns" style="margin-top:12px">
-            <button id="saveBalance" class="primary">Save this account</button>
-            <button id="cancelBalance">Cancel</button>
-          </div>
-        </div>
-      </div>
 
       <!-- The other company's money. The same three presses the card above answers with, in a
            different colour, and with one rule that card does not have: a key that can start a call
@@ -703,7 +659,7 @@
         <p class="muted" style="margin:6px 0 12px">Only the last four characters ever reach this page. <b>Verify</b> re-checks the stored copy against the provider; <span class="pill ok">live</span> means no failure was recorded against it in the last 24 hours.</p>
         <div style="overflow:auto">
           <table id="keysTable">
-            <thead><tr><th>Label</th><th>Video · fal.ai</th><th title="Which of your own keys did the burning. fal.ai is asked for this at most every ten minutes, because asking on every glance is what made it refuse to answer; the running-call line under the figure counts forward from that reading.">Spent on fal.ai today</th><th id="thReactorKey" title="The third picture line. It opens when Lucy turns a press away, or first if the Gateway tab says Lucy is off. Several rows can each hold one of these keys — the pool tries them in priority order, exactly like the fal.ai column beside it.">New line · Reactor</th><th id="thTrialKey">Trial · DeCart</th><th id="thTrialLeft">Trial left</th><th>Voice · ElevenLabs</th><th>Enabled</th><th id="thForUnl" title="Ticked: this key is one of the keys Unlimited accounts are allowed to dial, on whichever picture line it carries. Unticked: ordinary minute-buyers use it, and an Unlimited account dials it only when you attach it to that account on its own page. Picture keys only — voice keys are never fenced.">For unlimited</th><th>Priority</th><th>Today / cap</th><th>Failures 24h</th><th>Last error</th><th></th></tr></thead>
+            <thead><tr><th>Label</th><th>Video · fal.ai</th><th id="thReactorKey" title="The third picture line. It opens when Lucy turns a press away, or first if the Gateway tab says Lucy is off. Several rows can each hold one of these keys — the pool tries them in priority order, exactly like the fal.ai column beside it.">New line · Reactor</th><th id="thTrialKey">Trial · DeCart</th><th id="thTrialLeft">Trial left</th><th>Voice · ElevenLabs</th><th>Enabled</th><th id="thForUnl" title="Ticked: this key is one of the keys Unlimited accounts are allowed to dial, on whichever picture line it carries. Unticked: ordinary minute-buyers use it, and an Unlimited account dials it only when you attach it to that account on its own page. Picture keys only — voice keys are never fenced.">For unlimited</th><th>Priority</th><th>Today / cap</th><th>Failures 24h</th><th>Last error</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -1600,11 +1556,11 @@
           <h2 style="font-size:14px;margin:0">Step 1 · What the AI services charge you</h2>
           <div class="btns"><button id="pgReload">Reload saved</button><button id="pgSaveRates" class="primary">Save</button></div>
         </div>
-        <p class="muted" style="margin:6px 0 12px">Two companies bill you: fal.ai for the live video, ElevenLabs for the cloned voice. Write down what each one costs for <b>one minute</b> of use, in dollars.</p>
+        <p class="muted" style="margin:6px 0 12px">A live picture is billed by whichever picture line is in service, and the voice by ElevenLabs. Write down what each one costs for <b>one minute</b> of use, in dollars. The box marked <b>the figure your packages are priced from</b> is the one every price below runs on; the others are kept because calls already made are still costed with them.</p>
         <div class="grid2">
           <div>
-            <label>Live video · fal.ai · $ per minute</label>
-            <input id="pgFalMin" type="number" min="0" step="0.01" />
+            <label>Live picture in service · the photo model · $ per minute — <b>the figure your packages are priced from</b></label>
+            <input id="pgViduMin" type="number" min="0" step="0.001" />
           </div>
           <div>
             <label>Voice · ElevenLabs · $ per minute</label>
@@ -1614,16 +1570,17 @@
         <div style="margin-top:12px">
           <div class="grid2">
             <div>
-              <label style="margin-top:0">New picture line · its prompt models (x2 and x2.1) · $ per minute</label>
-              <input id="pgReactorMin" type="number" min="0" step="0.001" />
+              <label style="margin-top:0">Live picture · fal.ai · $ per minute — the line that is closing</label>
+              <input id="pgFalMin" type="number" min="0" step="0.01" />
             </div>
             <div>
-              <label style="margin-top:0">New picture line · its photo model · $ per minute</label>
-              <input id="pgViduMin" type="number" min="0" step="0.001" />
+              <label style="margin-top:0">Same line as the photo model · its prompt models (x2 and x2.1) · $ per minute</label>
+              <input id="pgReactorMin" type="number" min="0" step="0.001" />
             </div>
           </div>
-          <div class="muted" style="margin-top:6px" id="pgReactorNote">This is what the third picture line charges you for a minute of it. The Calls tab prices a call on that line with this figure; a call on Lucy keeps the Lucy figure above. It is <b>not</b> used by the price steps below — your packages are still priced off the Lucy cost, which is the dearer of the two, so a call that lands on the cheaper line is extra margin rather than a cheaper sale.</div>
-          <div class="muted" style="margin-top:6px" id="pgViduNote">The same line also carries a model that works from a photo instead of a typed description, and it bills at a different rate — four times the two above. The Calls tab prices a call on it with <b>this</b> figure, never the prompt models'. Leave a box empty to keep the rate already saved for it.</div>
+          <div class="muted" style="margin-top:6px" id="pgBasisNote"></div>
+          <div class="muted" style="margin-top:6px" id="pgReactorNote">This is what the two prompt models on the photo line's service charge you for a minute of them. The Calls tab prices a call on them with this figure; a call on the photo model uses the photo figure above, and a call that ran on fal keeps the fal figure. It is <b>not</b> used by the price steps below, because no call goes to those two models unless you open their doors.</div>
+          <div class="muted" style="margin-top:6px" id="pgViduNote">The photo model reads a picture instead of a typed description, and it is the model your paying customers are on today. The price steps below and the Costs-you figure on the Packages tab both run on <b>this</b> number, never the fal one. Leave the box empty to keep the rate already saved for it.</div>
         </div>
         <details style="margin-top:14px">
           <summary class="muted">ElevenLabs shows credits instead of a dollar price? Work it out here</summary>
@@ -2206,7 +2163,7 @@
     machines: [loadMachines],
     topups: [loadRequests],
     payments: [loadPayments, loadPaystackHook],
-    keys: [loadKeys, loadBalance, loadReactorBalance, loadCalls],
+    keys: [loadKeys, loadReactorBalance, loadCalls],
     decart: [loadKeys, loadSupply],
     split: [loadAccounts],
     engines: [loadConfig],
@@ -3885,37 +3842,6 @@
     $("poolAlert").innerHTML = line ? `<div class="alert">${line}</div>` : "";
   }
 
-  // ── The money: what fal.ai still has to spend on calls ──────────────────────
-  // Every number here starts as fal's own, fetched by admin-api with the read-only
-  // billing key of each account he stores, and the big figures are those accounts added
-  // together. This panel adds the sentence around them and the colour, so one glance
-  // says "can I still sell calls". When fal cannot be reached the card says that instead
-  // of showing a figure it can no longer back up — an account that refused is named and
-  // left out of the total, never counted as zero.
-  //
-  // fal answers once a minute and its invoice settles late, so between two readings the
-  // account is not standing still: every call running right now is taking seconds fal
-  // has not billed yet. The card counts those off fal's figure using his own meter — the
-  // same lease rows that book his customers — so the number falls while he watches it.
-  // Estimate and reading are never blended into one unlabeled figure: the line under the
-  // number names both, and the next reading replaces the count with the truth.
-  let FAL_BAL = null;
-  let BAL_AT = 0;
-  let BAL_LIVE = null;
-  let BAL_GOOD = null;
-  let BAL_GOOD_AT = 0;
-  // Which account the strip under the chips describes. The chips are the only way to
-  // choose, so this has to survive the fifteen-second re-paint.
-  let BAL_SEL = "";
-  // Whether the chip row and its strip are folded away. Remembered in this browser for
-  // the same reason the call lists are: the figures above stay put either way, and a
-  // card with ten accounts must not push the key pool off the screen.
-  const BAL_FOLD_KEY = "streamlive.balances.folded";
-  let BAL_FOLD = true;
-  try { if (localStorage.getItem(BAL_FOLD_KEY) === "0") BAL_FOLD = false; } catch { }
-  // The row the open form writes: an id means that account alone, blank means a new one.
-  let FB_EDIT = "";
-
   // How old the reading on screen is. Counted from the moment this page sent the
   // request, not by comparing fal's timestamp to this machine's clock: that clock has
   // been observed jumping hours during a single session, and a wrong "checked 7 hours
@@ -3928,472 +3854,6 @@
     if (s < 5400) return Math.round(s / 60) + " minutes ago";
     return Math.round(s / 3600) + " hours ago";
   }
-
-  /** What the meter has taken since fal answered, and the balance that leaves. */
-  function burn() {
-    if (!BAL_LIVE) return null;
-    const secs = Math.max(0, BAL_LIVE.since + BAL_LIVE.running * ((Date.now() - BAL_LIVE.at) / 1000));
-    const dollars = secs * BAL_LIVE.perSec;
-    return {
-      secs,
-      dollars,
-      balance: Math.max(0, BAL_LIVE.bal - dollars),
-      running: BAL_LIVE.running,
-    };
-  }
-
-  function balColour(v, p) {
-    const warn = p.warn_below == null ? null : N(p.warn_below);
-    const red = p.alert_below == null ? null : N(p.alert_below);
-    return (red != null && v < red) ? "#fb7185" : (warn != null && v < warn) ? "#facc15" : "#35e0e6";
-  }
-
-  // The hero figure is a sum, so a single colour cannot come from the sum's own average:
-  // one empty account inside a healthy total is still the one to run after. The gateway
-  // works out which account is the worst and names it; this only paints that verdict.
-  function heroColour(p, shown) {
-    const level = p && p.alert ? p.alert.level : null;
-    if (level === "red" || level === "amber") return level === "red" ? "#fb7185" : "#facc15";
-    const rows = (p && p.accounts) || [];
-    if (rows.length) {
-      const worst = rows.reduce((a, x) => (a === null || (x.balance != null && x.balance < a.balance) ? x : a), null);
-      return worst && worst.balance != null ? balColour(N(worst.balance), worst) : "#35e0e6";
-    }
-    return balColour(N(shown), p || {});
-  }
-
-  /** Seconds a key has taken since the reading, grown by the calls still on it now. */
-  function liveKeySeconds(lk) {
-    if (!lk) return 0;
-    const extra = BAL_LIVE ? Math.max(0, (Date.now() - BAL_LIVE.at) / 1000) * N(lk.running) : 0;
-    return N(lk.seconds) + extra;
-  }
-
-  // The dollar figure this product's own keys cost fal, one row each. "not on fal"
-  // is not a zero: it means the stored string is no longer a key on that account, so
-  // its share of the spending can't be traced and the account total is the true one.
-  function spendCell(id) {
-    const k = (FAL_BAL?.keys || []).find((x) => x.id === id);
-    if (!k) return '<span class="muted" style="font-size:11px">not read yet</span>';
-    if (!k.known) return '<span class="pill warn">not on fal</span><div class="muted" style="font-size:11px;margin-top:3px">this account has no key like that any more, so its share of the spending cannot be traced.</div>';
-    const secs = k.today && k.today.seconds ? `<div class="muted" style="font-size:11px">${mins(k.today.seconds / 60)} min of video today</div>` : "";
-    const price = FAL_BAL.per_second == null ? null : N(FAL_BAL.per_second);
-    const lk = (FAL_BAL.live?.keys || []).find((x) => x.id === id);
-    const taken = liveKeySeconds(lk);
-    const burning = price && taken > 0.5
-      ? `<div style="font-size:11px;margin-top:3px;color:#facc15">+${usd(taken * price)} since the reading${lk.running ? ` · ${lk.running} call${lk.running > 1 ? "s" : ""} on it now` : ""}</div>`
-      : "";
-    return `<span class="mono">${k.today ? usd(k.today.cost) : "—"}</span>`
-      + `<div class="muted" style="font-size:11px">${k.month ? usd(k.month.cost) : "—"} this month</div>${secs}${burning}`;
-  }
-
-  function paintSpendCells() {
-    document.querySelectorAll("#keysTable [data-spend]").forEach((td) => { td.innerHTML = spendCell(td.dataset.spend); });
-  }
-
-  // One second's work: move the figure, its colour, the minutes it buys and the key
-  // rows. Nothing is accumulated here — every value is recomputed from the reading and
-  // the elapsed time, so a tab left open overnight cannot drift into a number nobody took.
-  function tickBalance() {
-    const big = $("fbBig");
-    // A refused read keeps the countdown running on the last good figure instead of
-    // freezing the card.
-    const src = (FAL_BAL && FAL_BAL.balance != null) ? FAL_BAL : BAL_GOOD;
-    if (!big || !src || src.balance == null) return;
-    const b = burn();
-    const shown = b ? b.balance : N(src.balance);
-    big.textContent = usd(shown);
-    big.style.color = heroColour(src, shown);
-    const per = src.per_second == null ? null : N(src.per_second);
-    const minsBox = $("fbMins");
-    if (minsBox && per) minsBox.textContent = "about " + Math.floor(shown / per / 60).toLocaleString() + " minutes of video calls";
-    const cap = $("fbBurn");
-    if (cap) {
-      cap.innerHTML = b && b.dollars >= 0.005
-        ? (b.running ? `<span class="pill warn">${b.running} call${b.running > 1 ? "s" : ""} running</span> ` : "")
-          + `${usd(b.dollars)} counted off since the reading · fal said ${usd(N(src.balance))}`
-        : ((src.accounts || []).length > 1 ? "left, all accounts together" : "left on the fal.ai account");
-    }
-    paintSpendCells();
-  }
-
-  // One row per stored account. A function that has not been redeployed alongside this
-  // page still answers with single-account fields, and this card reads that one account
-  // rather than showing an empty list over a figure it just printed.
-  function balRows(p) {
-    if (p.accounts && p.accounts.length) return p.accounts;
-    if (p.balance == null && !p.tail) return [];
-    return [{
-      id: "", label: p.label || "the stored account", tail: p.tail || "", keyId: "", preset: "",
-      ok: p.balance != null, balance: p.balance, currency: p.currency, today: p.today, month: p.month,
-      warn_below: p.warn_below, alert_below: p.alert_below, minutes_left: p.minutes_left, detail: p.detail,
-    }];
-  }
-
-  // The payload the chips and the strip were painted from, kept apart from FAL_BAL so a
-  // refused read that is being shown as last-good still has rows to describe.
-  let BAL_PAINTED = null;
-
-  function renderBalance(p, whenAt) {
-    const at = whenAt == null ? BAL_AT : whenAt;
-    const box = $("fbBody");
-    if (!p) { box.innerHTML = '<p class="muted" style="margin:12px 0 0">Asking fal.ai…</p>'; paintFoldBal(); paintSpendCells(); return; }
-
-    const rows = balRows(p);
-    const answered = rows.filter((a) => a.ok).length;
-    $("fbCount").textContent = rows.length + (rows.length === 1 ? " account" : " accounts");
-    $("fbCount").style.display = rows.length ? "" : "none";
-    $("fbWhen").textContent = !p.configured ? ""
-      : p.rate_limited ? "holding fal.ai's last figures"
-      : rows.length > 1 ? `${answered} of ${rows.length} accounts answered`
-      : answered ? "read from fal.ai" : "fal.ai would not answer that key";
-
-    if (!p.configured) {
-      BAL_LIVE = null;
-      BAL_GOOD = null;
-      BAL_PAINTED = null;
-      box.innerHTML = `<div class="alert" style="margin-top:12px">${esc(p.detail || "No billing key is stored yet.")} Press <b>+ add account</b> beside the button above, paste the key there and Save.</div>`;
-      paintFoldBal();
-      paintSpendCells();
-      return;
-    }
-    if (!rows.some((a) => a.balance != null)) {
-      // A refused read must never blank the figure he is watching. Until every key is
-      // forgotten (the branch above) the last balance fal.ai gave stays on screen,
-      // aged honestly, with this read's failure written under it.
-      if (BAL_GOOD) {
-        const why = String(p.detail || "fal.ai gave no answer").replace(/\s+/g, " ").slice(0, 140);
-        renderBalance({ ...BAL_GOOD, rate_limited: !!p.rate_limited, detail: p.rate_limited
-          ? "fal.ai asked us to slow down, so nothing was asked of it for this reading — the figures are the ones it last gave, and the card reads again on its own in a few minutes. No call of yours failed: this page only reads fal's money, it never opens a call."
-          : "this read failed (" + why + "), so the figure is the balance fal.ai last gave" }, BAL_GOOD_AT);
-        return;
-      }
-      BAL_LIVE = null;
-      BAL_PAINTED = null;
-      box.innerHTML = `<div class="alert" style="margin-top:12px"><b>${p.rate_limited ? "Slowing down for fal.ai." : "Nothing read this time."}</b> ${esc(p.detail || "")}</div>`;
-      paintFoldBal();
-      paintSpendCells();
-      return;
-    }
-    if (at === BAL_AT) { BAL_GOOD = p; BAL_GOOD_AT = at; }
-
-    const bal = N(p.balance);
-    const perSec = p.per_second == null ? null : N(p.per_second);
-    BAL_LIVE = perSec && p.live
-      ? { bal, perSec, at, since: N(p.live.seconds), running: N(p.live.running) }
-      : null;
-    const priceNote = p.per_second_source === "fal" ? "what fal.ai charged today" : "the price on your Prices tab";
-    const keyMonth = (p.keys || []).reduce((a, k) => a + (k.month ? N(k.month.cost) : 0), 0);
-    const gap = (p.month ? N(p.month.cost) : 0) - keyMonth;
-    const missing = (p.keys || []).filter((k) => !k.known).length;
-    let notes = "";
-    if (p.month && gap > 0.005) {
-      notes += `<p class="muted" style="margin:14px 0 0;font-size:12px">${usd(gap)} of this month's spending was rung up by keys that are not in the pool below — a retired key, or the env secret. The balance and the two spending figures are fal.ai's own readings, added across the accounts watched here; the <b>Spent on fal.ai today</b> column only ever covers keys still stored in the pool.</p>`;
-    }
-    if (missing) {
-      notes += `<p class="muted" style="margin:6px 0 0;font-size:12px">${missing} key${missing > 1 ? "s" : ""} in the pool below is not on any account watched above, so it shows "not on fal" instead of a figure.</p>`;
-    }
-    // An account that answered nothing is not an account with nothing in it. Each failure
-    // is written with its own reason, because the reasons differ: a retired key, a refused
-    // BILLING preset, and fal being down are three different jobs.
-    const silent = rows.filter((a) => !a.ok);
-    if (silent.length) {
-      notes += `<p class="muted" style="margin:6px 0 0;font-size:12px">${silent.map((a) => `<b>${esc(a.label)}</b> gave no answer: ${esc(String(a.detail || "fal.ai would not read that key").slice(0, 160))}`).join("<br>")}</p>`;
-    }
-    if (p.live && N(p.live.untracked) > 0.5 && perSec) {
-      notes += `<p class="muted" style="margin:6px 0 0;font-size:12px">${usd(N(p.live.untracked) * perSec)} counted off since the reading came from a call whose serving key was not recorded on the session, so no row below can show it.</p>`;
-    }
-
-    // His own meter, not fal's: the windows that opened and never showed a frame.
-    // Counted only once a window has closed, so a call still handshaking is not
-    // accused of a leak it may not become.
-    const secs = (v) => `${N(v).toFixed(1)}s`;
-    const nf = p.no_frame;
-    let frameLine = `<p class="muted" style="margin:14px 0 0;font-size:12px">Opened with no picture: <b>no figure in this read</b> — the count could not be taken this time.</p>`;
-    if (nf) {
-      const price = perSec && N(nf.today.seconds) + N(nf.month.seconds) > 0
-        ? ` · ${usd(N(nf.today.seconds) * perSec)} today, ${usd(N(nf.month.seconds) * perSec)} this month at ${usd(perSec)} a second`
-        : "";
-      const colour = N(nf.month.seconds) > 0 ? "#facc15" : "#35e0e6";
-      const quiet = N(nf.today.seconds) + N(nf.month.seconds) === 0;
-      const why = quiet
-        ? " — every call that opened has sent a frame."
-        : " — fal was running for that long without ever sending a frame, so no customer was charged minutes for it.";
-      frameLine = `<p class="muted" style="margin:14px 0 0;font-size:12px">Opened with no picture: <b style="color:${colour}">${secs(nf.today.seconds)}</b> today`
-        + ` (${N(nf.today.sessions)} call${N(nf.today.sessions) === 1 ? "" : "s"}) · <b style="color:${colour}">${secs(nf.month.seconds)}</b> this month`
-        + ` (${N(nf.month.sessions)} call${N(nf.month.sessions) === 1 ? "" : "s"})${price}${why}</p>`;
-
-      // Where the last day of blanks actually sits, and which side of the cable the app says it
-      // came from. The same number of seconds spread over forty machines is weather; on three
-      // machines it is one camera, one network, and one customer who can be told what to unplug.
-      const bk = nf.blank;
-      if (bk) {
-        const one = (n, word) => `${N(n)} ${word}${N(n) === 1 ? "" : "s"}`;
-        let spread;
-        if (N(bk.calls) === 0) {
-          spread = "Last 24 hours: no blank call has closed.";
-        } else {
-          const worst = (bk.worst || []).map((g) =>
-            `${esc(g.machine)} — ${one(g.calls, "call")}, ${secs(g.seconds)} (${esc(g.who)})`).join(" · ");
-          const side = bk.causes
-            ? ` · what the app itself blamed: ${one(bk.causes.his_side, "call")} from his machine, ${one(bk.causes.our_side, "call")} from ours`
-              + (N(bk.causes.refused) > 0 ? ` (${N(bk.causes.refused)} of them: the video line itself said it was full)` : "")
-            : " · no build that names the cause has reported these yet";
-          spread = `Last 24 hours: <b>${one(bk.calls, "blank call")}</b> on <b>${one(bk.machines, "machine")}</b>`
-            + ` (${one(bk.accounts, "account")})${side}.<br>` + (worst || "no machine named on the rows");
-        }
-        frameLine += `<p class="muted" style="margin:6px 0 0;font-size:12px">${spread}</p>`;
-      } else {
-        // The seconds above came from one table and the spread from another, so a read that
-        // answered the first without the second is said out loud rather than left as silence -
-        // silence here reads as "a quiet day", which is the opposite claim.
-        frameLine += `<p class="muted" style="margin:6px 0 0;font-size:12px">Last 24 hours: which machines they sat on could not be counted this time.</p>`;
-      }
-    }
-
-    // The chip row outlives any one read: the strip always describes some account, so a
-    // account he deleted or forgot between reads moves the selection to the first one left
-    // rather than leaving the strip describing nothing.
-    if (!rows.some((a) => String(a.id) === BAL_SEL)) BAL_SEL = rows.length ? String(rows[0].id) : "";
-    BAL_PAINTED = { ...p, accounts: rows };
-
-    // The hero is a sum, so the warning has to name the account inside the sum that is
-    // actually low. A red total with no name tells him nothing he can act on.
-    const low = p.alert && p.alert.level
-      ? rows.find((a) => a.label === p.alert.account || a.tail === p.alert.account)
-      : null;
-    const lowNote = !low ? "" : `<p style="margin:12px 0 0;font-size:12.5px;color:${p.alert.level === "red" ? "#fb7185" : "#facc15"}">`
-      + `<b>${p.alert.level === "red" ? "Running out" : "Nearly running out"}: ${esc(low.label)}</b> has ${usd(N(low.balance))} left, under the ${p.alert.level === "red" ? "red" : "amber"} amount you set for it (${usd(N(p.alert.level === "red" ? low.alert_below : low.warn_below))}).`
-      + ` Top that one up on fal.ai — the total above is every account together.</p>`;
-
-    const hide = BAL_FOLD ? ' style="display:none"' : "";
-    const chips = `<div class="acctchips" data-fold="bal"${hide}>` + rows.map((a) =>
-      `<button type="button" class="acctchip${String(a.id) === BAL_SEL ? " sel" : ""}" data-acct="${esc(String(a.id))}" title="Put this account on its own line">`
-      + `<span class="acctdot" style="background:${a.balance == null ? "#33475c" : balColour(N(a.balance), a)}"></span>`
-      + `${esc(a.label)} <span class="v">${a.balance == null ? "not read" : usd(N(a.balance))}</span></button>`).join("")
-      + `</div>`
-      + `<div class="acctdetail" data-fold="bal"${hide} id="fbDetail"></div>`
-      + `<p class="muted" data-fold="bal"${hide} style="margin:10px 0 0;font-size:12px">Each chip is one fal.ai account, read with its own key. The figures above are those readings added together. The comparison with your calls lives in the card below, where both sides are read over the same window.</p>`;
-
-    box.innerHTML = `
-      <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-end;margin-top:12px">
-        <div>
-          <div id="fbBig" style="font-family:ui-monospace,monospace;font-size:38px;font-weight:800;line-height:1.05;color:${heroColour(p, bal)}">${usd(bal)}</div>
-          <div class="muted" id="fbBurn" style="font-size:12px">${rows.length > 1 ? "left, all accounts together" : "left on the fal.ai account"}</div>
-        </div>
-        <div>
-          ${p.minutes_left == null
-            ? '<div class="muted" style="font-size:13px">No price per second to work from, so no minute figure.</div>'
-            : `<div id="fbMins" style="font-size:19px;font-weight:700">about ${Math.round(N(p.minutes_left)).toLocaleString()} minutes of video calls</div>
-               <div class="muted" style="font-size:12px">${usd(perSec)} a second · ${usd(perSec * 60)} a minute — ${priceNote}</div>`}
-        </div>
-        <div>
-          <div style="font-family:ui-monospace,monospace;font-size:19px;font-weight:700">${p.today ? usd(p.today.cost) : "—"}</div>
-          <div class="muted" style="font-size:12px">spent today</div>
-        </div>
-        <div>
-          <div style="font-family:ui-monospace,monospace;font-size:19px;font-weight:700">${p.month ? usd(p.month.cost) : "—"}</div>
-          <div class="muted" style="font-size:12px">spent this month</div>
-        </div>
-      </div>
-      ${lowNote}
-      ${chips}
-      ${frameLine}
-      ${notes}
-      <p class="muted" style="margin:12px 0 0;font-size:12px">${p.rate_limited ? "these are fal.ai's last figures" : `checked ${balAgo(Date.now() - at)}`}${p.from_cache && !p.rate_limited ? " — the reading is held for three minutes so this page never hammers fal.ai" : ""} · ${esc(p.detail || "")}${BAL_LIVE ? " · the big figure falls between readings, counted off by your own live calls" : ""}</p>`;
-    paintDetail();
-    paintFoldBal();
-    tickBalance();
-  }
-
-  /** The chip he picked, or null when the card is describing no account at all. */
-  function pickedAccount() {
-    const rows = (BAL_PAINTED && BAL_PAINTED.accounts) || [];
-    return rows.find((a) => String(a.id) === BAL_SEL) || null;
-  }
-
-  // One account, on its own line: fal's reading of it, the amounts it was given, and the
-  // three presses that act on that row alone. Nothing here is a total - the totals live
-  // above it - which is why a second account cannot make this card disagree with itself.
-  function paintDetail() {
-    const host = $("fbDetail");
-    if (!host) return;
-    const a = pickedAccount();
-    if (!a) { host.innerHTML = ""; return; }
-    const spendable = a.preset && !/^(BILLING|READONLY)$/.test(String(a.preset));
-    const idAttr = esc(String(a.id));
-    host.innerHTML = `
-      <div><div class="k">${esc(a.label)} · key ${esc(a.tail)}${a.preset ? " · " + esc(a.preset) : ""}</div>
-        <div class="v" style="color:${a.balance == null ? "#6b8296" : balColour(N(a.balance), a)}">${a.balance == null ? "not read this time" : usd(N(a.balance))}</div></div>
-      <div><div class="k">minutes left</div><div class="v">${a.minutes_left == null ? "—" : Math.round(N(a.minutes_left)).toLocaleString()}</div></div>
-      <div><div class="k">spent today</div><div class="v">${a.today ? usd(a.today.cost) : "—"}</div></div>
-      <div><div class="k">spent this month</div><div class="v">${a.month ? usd(a.month.cost) : "—"}</div></div>
-      <div><div class="k">turns amber under</div><div class="v">${a.warn_below == null ? "no colour" : usd(N(a.warn_below))}${a.alert_below != null ? ` · red under ${usd(N(a.alert_below))}` : ""}</div></div>
-      <div class="btns">
-        <button type="button" data-act="check" data-acct="${idAttr}">Check</button>
-        <button type="button" data-act="edit" data-acct="${idAttr}">Edit</button>
-        <button type="button" data-act="forget" data-acct="${idAttr}" class="danger">Forget</button>
-      </div>
-      <p class="muted" style="grid-column:1/-1;margin:0;font-size:11.5px">${a.ok
-        ? (spendable
-          ? "Careful: this key can also start calls and spend money. A BILLING-preset key reads the same balance without that risk."
-          : `This account is holding ${mins(a.today ? a.today.seconds / 60 : 0)} min of video compute today.`)
-        : esc(String(a.detail || "fal.ai would not read that key"))}</p>`;
-  }
-
-  // Folding costs no read and blanks nothing: the hero, the warning, the no-picture line
-  // and the checked line all stay, because they are the figures he glances at. Only the
-  // chip row, its strip and the sentence under them come and go.
-  function paintFoldBal() {
-    const b = $("foldBal");
-    if (!b) return;
-    const many = ((BAL_PAINTED && BAL_PAINTED.accounts) || []).length > 0;
-    b.style.display = many ? "" : "none";
-    b.textContent = BAL_FOLD ? "+" : "−";
-    b.title = BAL_FOLD ? "Show the list of accounts" : "Hide the list of accounts";
-    document.querySelectorAll("#balCard [data-fold]").forEach((n) => { n.style.display = BAL_FOLD ? "none" : ""; });
-  }
-
-  // force = the button was pressed. Otherwise a reading younger than a minute is only
-  // re-painted, which keeps the "checked 20 seconds ago" line honest without a second
-  // round trip every fifteen seconds. force also carries through to the gateway, where it
-  // is the one thing allowed to ask fal.ai during a wait it asked for.
-  async function loadBalance(force) {
-    if (FAL_BAL && !force && Date.now() - BAL_AT < 50_000) { renderBalance(FAL_BAL); return; }
-    BAL_AT = Date.now();
-    try {
-      FAL_BAL = await api(force ? { action: "fal_balance", force: true } : { action: "fal_balance" });
-      msg("fbMsg", "");
-      renderBalance(FAL_BAL);
-    } catch (err) {
-      msg("fbMsg", "Could not read the balance: " + err.message);
-      paintSpendCells();
-    }
-  }
-
-  $("refreshBalance").onclick = () => loadBalance(true);
-  $("foldBal").onclick = () => {
-    BAL_FOLD = !BAL_FOLD;
-    try { localStorage.setItem(BAL_FOLD_KEY, BAL_FOLD ? "1" : "0"); } catch { }
-    paintFoldBal();
-  };
-  $("fbKey").oninput = () => { $("fbResult").className = "presult"; };
-
-  // The form writes ONE row, and it says which: an id means that account alone, add means
-  // a new one. There is no longer a "the stored key" on this card, because with two
-  // accounts stored that phrase meant whichever row the server happened to read first —
-  // which is exactly how a second key came to overwrite the first.
-  function openForm(a) {
-    FB_EDIT = a && a.id ? String(a.id) : "";
-    $("fbId").value = FB_EDIT;
-    $("fbKey").value = "";
-    $("fbLabel").value = a ? String(a.label || "") : "";
-    $("fbWarn").value = a && a.warn_below != null ? a.warn_below : "";
-    $("fbAlert").value = a && a.alert_below != null ? a.alert_below : "";
-    $("fbForm").classList.remove("hidden");
-    $("fbResult").className = "presult";
-    $("saveBalance").textContent = FB_EDIT ? "Save this account" : "Add this account";
-    (FB_EDIT ? $("fbLabel") : $("fbKey")).focus();
-  }
-  function closeForm() {
-    FB_EDIT = "";
-    $("fbId").value = "";
-    $("fbForm").classList.add("hidden");
-    $("fbResult").className = "presult";
-  }
-  $("addAccount").onclick = () => openForm(null);
-  $("cancelBalance").onclick = closeForm;
-
-  $("testBalance").onclick = () => {
-    const box = $("fbResult");
-    box.className = "presult show";
-    box.textContent = "Asking fal.ai…";
-    api({
-      action: "fal_balance_test",
-      key: $("fbKey").value.trim() || undefined,
-      id: FB_EDIT || undefined,
-    }).then((r) => {
-      box.className = "presult show " + (r.verified ? "ok" : "fail");
-      box.textContent = r.detail || (r.verified ? "Accepted." : "fal.ai refused that key.");
-    }).catch((err) => { box.className = "presult show fail"; box.textContent = err.message; });
-  };
-  $("saveBalance").onclick = () => {
-    const btn = $("saveBalance");
-    btn.disabled = true;
-    const wasEdit = !!FB_EDIT;
-    const blank = (id) => { const v = $(id).value.trim(); return v === "" ? null : v; };
-    api({
-      action: "fal_balance_save",
-      key: $("fbKey").value.trim() || undefined,
-      id: wasEdit ? FB_EDIT : undefined,
-      add: wasEdit ? undefined : true,
-      label: $("fbLabel").value.trim() || undefined,
-      warnBelow: blank("fbWarn"),
-      alertBelow: blank("fbAlert"),
-    }).then((r) => {
-      if (r.saved !== true) return msg("fbMsg", r.detail || "fal.ai would not accept that key, so nothing was saved.");
-      // The row he just wrote is named on its own, because the total above is every
-      // account together and would make the sentence "it reads $210" a lie about a $3 key.
-      const mine = (r.accounts || []).find((a) => r.tail && a.tail === r.tail) || null;
-      const box = $("fbResult");
-      box.className = "presult show ok";
-      box.textContent = (wasEdit ? "Saved" : "Added")
-        + (mine ? `: ${mine.label} reads ${usd(N(mine.balance))}${mine.preset ? ` with a ${mine.preset} key` : ""}.` : ".")
-        + (r.spendable === true ? " Careful: that key can also start calls and spend money; a BILLING-preset key reads the same balance without that risk." : "");
-      msg("fbMsg", "Saved.", "ok");
-      if (mine) BAL_SEL = String(mine.id);
-      FAL_BAL = r;
-      BAL_AT = Date.now();
-      closeForm();
-      renderBalance(r);
-      void loadKeys();
-    }).catch((err) => msg("fbMsg", err.message))
-      .finally(() => { btn.disabled = false; });
-  };
-
-  // One listener for the chips and the strip, because both are re-painted on every read:
-  // a handler bound to the buttons themselves would be gone the next time the card drew.
-  $("fbBody").addEventListener("click", (ev) => {
-    const hit = ev.target.closest("[data-act], .acctchip[data-acct]");
-    if (!hit) return;
-    const id = String(hit.dataset.acct || "");
-    const row = ((BAL_PAINTED && BAL_PAINTED.accounts) || []).find((a) => String(a.id) === id) || null;
-    const act = hit.dataset.act || "";
-    if (!act) {
-      BAL_SEL = id;
-      document.querySelectorAll("#fbBody .acctchip").forEach((c) => c.classList.toggle("sel", String(c.dataset.acct) === id));
-      paintDetail();
-      return;
-    }
-    if (act === "edit") { openForm(row || { id, label: "" }); return; }
-    if (act === "check") {
-      const box = $("fbResult");
-      box.className = "presult show";
-      box.textContent = "Asking fal.ai about that account…";
-      api({ action: "fal_balance_test", id: id || undefined })
-        .then((r) => {
-          box.className = "presult show " + (r.verified ? "ok" : "fail");
-          box.textContent = r.detail || (r.verified ? "Accepted." : "fal.ai would not read that key.");
-          if (r.verified) void loadBalance(true);
-        })
-        .catch((err) => { box.className = "presult show fail"; box.textContent = err.message; });
-      return;
-    }
-    if (act === "forget") {
-      if (!confirm(`Forget ${row && row.label ? `“${row.label}”` : "this account"}? Its chip goes and the total above loses its share. Your other accounts, your call keys, your customers and your prices are untouched.`)) return;
-      api({ action: "fal_balance_save", remove: true, id: id || undefined })
-        .then((r) => {
-          if (String(BAL_SEL) === id) BAL_SEL = "";
-          closeForm();
-          FAL_BAL = r;
-          BAL_AT = Date.now();
-          msg("fbMsg", "That billing key is forgotten.", "ok");
-          renderBalance(r);
-          void loadKeys();
-        })
-        .catch((err) => msg("fbMsg", err.message));
-    }
-  });
 
   // ── the photo model line's money ──────────────────────────────────────────────
   // The same shape as the fal.ai card above it, and it differs in exactly three ways: the company
@@ -5248,7 +4708,6 @@
       return `<tr data-key="${k.id}">
         <td><b>${esc(k.label || "(unlabeled)")}</b>${k.is_default ? ' <span class="pill yes">default</span>' : ""}</td>
         <td>${cell(k, "fal", k.video_key_tail)}</td>
-        <td data-spend="${k.id}">${spendCell(k.id)}</td>
         ${hasReactorCol ? `<td>${cell(k, "reactor", k.reactor_key_tail)}</td>` : ""}
         ${hasTrialCols ? tRow : ""}
         ${hasTrialCols ? `<td>${tLeft}</td>` : ""}
@@ -5265,7 +4724,7 @@
           <button data-act="edit" data-id="${k.id}">Edit</button>
           <button data-act="del" data-id="${k.id}" class="danger">Delete</button>
         </td></tr>`;
-    }).join("") || '<tr><td colspan="14" class="muted">The pool is empty, so every call falls back to the FAL_KEY / REACTOR_KEY / ELEVENLABS_KEY env secrets. Add a pair above and press Verify.</td></tr>';
+    }).join("") || '<tr><td colspan="13" class="muted">The pool is empty, so every call falls back to the FAL_KEY / REACTOR_KEY / ELEVENLABS_KEY env secrets. Add a pair above and press Verify.</td></tr>';
 
     // Opens empty for the same reason as the plan and package boxes: this used to default
     // to whichever key the pool listed first, and Assign writes a live key.
@@ -5601,20 +5060,11 @@
       // appears without a click. The key form above it is never touched.
       void loadKeyUsage();
       void loadCallFailures();
-      // The balance card re-paints on this tick so "checked 20 seconds ago" never goes
-      // stale under his eyes; the fetch inside only goes out once the reading is old.
-      void loadBalance();
       void loadReactorBalance();
       void loadCalls();
     }
   }, 15_000);
 
-  setInterval(() => {
-    if (!BAL_LIVE || document.hidden) return;
-    const on = document.querySelector(".tabs button[data-tab].on");
-    if (!on || on.dataset.tab !== "keys") return;
-    tickBalance();
-  }, 1000);
 
   setInterval(() => {
     const on = document.querySelector(".tabs button[data-tab].on");
@@ -8256,12 +7706,23 @@
   // rates rather than from that tab's input boxes so the two can never disagree:
   // $ per real airtime minute divided by the live burn multiplier is $ per SOLD minute,
   // which is the unit a package actually sells.
+  //
+  // The picture figure is the line in service, which is the photo model — a sold minute buys that
+  // picture today, so costing a package at the fal figure would print a bill he no longer pays and
+  // hide how much he keeps. The fal rate is still read: a database older than the photo model's own
+  // column has no other number to cost a pack with, and the probe is kept separate on purpose
+  // because naming a column that is not there fails the whole read.
   async function planRates() {
     if (!RATE_ROWS.length) { try { await loadRates(); } catch { /* the cost columns simply stay blank */ } }
     const { data } = await sb.from("billing_config")
       .select("lucy_video_per_sec_cost, voice_cloning_per_sec_cost, profit_margin_percent")
       .eq("id", 1).maybeSingle();
-    const video = N(data?.lucy_video_per_sec_cost, PG_DEFAULT.falMin / 60) * 60;
+    let video = N(data?.lucy_video_per_sec_cost, PG_DEFAULT.falMin / 60) * 60;
+    try {
+      const photo = await sb.from("billing_config")
+        .select("vidu_video_per_sec_cost").eq("id", 1).maybeSingle();
+      if (!photo.error && N(photo.data?.vidu_video_per_sec_cost, 0) > 0) video = N(photo.data.vidu_video_per_sec_cost) * 60;
+    } catch { /* no column for it, so the fal figure costs the pack */ }
     const voice = N(data?.voice_cloning_per_sec_cost, PG_DEFAULT.voiceMin / 60) * 60;
     const perReal = { video, audio: voice, video_audio: video + voice };
     // What one minute of real airtime costs, kept beside the per-sold-minute figure. An Unlimited
@@ -8889,9 +8350,10 @@
   // a share of the price the buyer pays (price = cost / (1 - M)) or a mark-up on the
   // AI bill (price = cost * (1 + M)).
   // fal prices decart/lucy-2-5/realtime at 0.02 USD per second, which is $1.20 for a
-  // real minute. These are only the fallbacks for a blank field or a failed read; the
-  // saved billing_config row normally supplies the number.
-  const PG_DEFAULT = { falMin: 1.2, voiceMin: 0.18, margin: 40 };
+  // real minute, and the photo model in service prices at 0.007, which is $0.42. These are
+  // only the fallbacks for a blank field or a failed read; the saved billing_config row
+  // normally supplies the number.
+  const PG_DEFAULT = { falMin: 1.2, viduMin: 0.42, voiceMin: 0.18, margin: 40 };
   // Which column each ladder package's minutes are written into. A "Video + voice" package
   // gets pool minutes, not a second bucket: the tab spends the same figure at its own rate, and
   // the database now refuses to leave a figure on the retired line at all.
@@ -8905,8 +8367,18 @@
   const pgMod = () => { const el = document.querySelector('input[name="pgMod"]:checked'); return el ? el.value : "video"; };
 
   // $ per REAL minute of airtime, per bucket.
+  //
+  // Which picture figure a price is built on, said out loud rather than assumed: the photo model's
+  // box, because that is the picture a sold minute buys today. The fal box only answers when the
+  // photo one holds no number — an empty box, or a database this page has no column for — and then
+  // the basis line under the boxes says so instead of quietly pricing a package $0.78 a minute dearer.
+  function pgVideoBasis() {
+    const photo = pgIn("pgViduMin", NaN);
+    if (photo > 0) return { rate: photo, name: "the photo model", fromPhoto: true };
+    return { rate: pgIn("pgFalMin", PG_DEFAULT.falMin), name: "the fal.ai line", fromPhoto: false };
+  }
   function pgProviders() {
-    const video = pgIn("pgFalMin", PG_DEFAULT.falMin);
+    const video = pgVideoBasis().rate;
     const audio = pgIn("pgVoiceMin", PG_DEFAULT.voiceMin);
     return { video, audio, video_audio: video + audio };
   }
@@ -9027,9 +8499,22 @@
       || '<tr><td colspan="6" class="muted">Type one or more minute amounts above, separated by commas.</td></tr>';
   }
 
+  // Which picture figure every price on this page is being built from, printed where he cannot miss
+  // it. A price silently derived from a line that no longer serves anyone is the one way this tab can
+  // cost him money, so the tab names its source instead of leaving it to the box order.
+  function pgRenderBasisNote() {
+    const el = $("pgBasisNote");
+    if (!el) return;
+    const b = pgVideoBasis();
+    el.innerHTML = b.fromPhoto
+      ? `Every price on this page runs on the photo model at <b>${pgUsd(b.rate)}</b> a real minute. The fal.ai box above is kept because calls already made are costed with it, and nothing else.`
+      : `<span class="dirty">There is no photo-model rate to price from, so every price on this page is falling back to the fal.ai figure of <b>${pgUsd(b.rate)}</b> a real minute — which is the dearer line and no longer the one your customers dial. Fill in the photo-model box, or run the migration that stores its rate.</span>`;
+  }
+
   function pgRenderAll() {
     pgRenderUnits();
     pgRenderBasis();
+    pgRenderBasisNote();
     pgRenderQuick();
     pgRenderResult();
     pgRenderLadder();
@@ -9064,18 +8549,18 @@
       ? +(N(probeReactorRate.data?.reactor_video_per_sec_cost, 0.0017) * 60).toFixed(4)
       : "";
     $("pgReactorNote").innerHTML = !hasReactorRate
-      ? "This database has no column for the new line's price yet — run the third-picture-line price migration, then reload this page. Nothing here has been changed, and no call can be priced off this line until it is: the same migration is what lets a call run on it at all."
-      : "This is what the third picture line charges you for a minute of it. The Calls tab prices a call on that line with this figure; a call on Lucy keeps the Lucy figure above. It is <b>not</b> used by the price steps below — your packages are still priced off the Lucy cost, which is the dearer of the two, so a call that lands on the cheaper line is extra margin rather than a cheaper sale.";
+      ? "This database has no column for the prompt models' price yet — run the third-picture-line price migration, then reload this page. Nothing here has been changed, and the prices below do not need it: they run on the photo model's rate."
+      : "This is what the two prompt models on the same service charge you for a minute of them. The Calls tab prices a call on them with this figure; a call on the photo model uses the photo figure above, and a call that already ran on fal keeps the fal figure. It is <b>not</b> used by the price steps below, because no paid call reaches those two models unless their doors are the only ones open.";
     const probeViduRate = await sb.from("billing_config")
       .select("vidu_video_per_sec_cost").eq("id", 1).maybeSingle();
     hasViduRate = !probeViduRate.error;
     $("pgViduMin").disabled = !hasViduRate;
     $("pgViduMin").value = hasViduRate
-      ? +(N(probeViduRate.data?.vidu_video_per_sec_cost, 0.007) * 60).toFixed(4)
+      ? +(N(probeViduRate.data?.vidu_video_per_sec_cost, PG_DEFAULT.viduMin / 60) * 60).toFixed(4)
       : "";
     $("pgViduNote").innerHTML = !hasViduRate
-      ? "This database has no column for the photo model's price yet — run the migration that puts that model on the new line, then reload this page. Nothing here has been changed, and the prompt models' rate above is saved and read exactly as before."
-      : "The same line also carries a model that works from a photo instead of a typed description, and it bills at a different rate — four times the two above. The Calls tab prices a call on it with <b>this</b> figure, never the prompt models'. Leave a box empty to keep the rate already saved for it.";
+      ? "This database has no column for the photo model's price yet — run the migration that puts that model on the new line, then reload this page. Until it is there, every price below falls back to the fal.ai figure and says so out loud, and the prompt models' rate is saved and read exactly as before."
+      : "This is the model your paying customers are on today: it reads a picture instead of a typed description. Every price on this page, and the Costs-you column on the Packages tab, now runs on <b>this</b> figure — never the fal.ai one. Leave the box empty to keep the rate already saved for it.";
     if (!$("pgElCpm").value) $("pgElCpm").value = 1000;
     pgRenderAll();
   }
@@ -9102,9 +8587,8 @@
       voice_cloning_per_sec_cost: +(voiceMin / 60).toFixed(6),
       profit_margin_percent: Math.round(target),
       last_verified_at: serverNowIso().slice(0, 10),
-      source_notes: `fal.ai Lucy 2.5 realtime ${falMin}/min; ElevenLabs for the cloned voice ${voiceMin}/min. The voice service now charges for reading his words and for speaking them back as two separate lines, so this figure is your own estimate of a minute of calling rather than one price from their list.`
-        + (reactorMin > 0 ? ` The third picture line's prompt models (xmax-x2 and xmax-x2-1) ${reactorMin}/min.` : "")
-        + (viduMin > 0 ? ` The same line's photo model (vidu-s2-editing) ${viduMin}/min.` : "")
+      source_notes: `Packages are priced from the photo model at ${viduMin > 0 ? viduMin : pgVideoBasis().rate}/min, which is the picture line in service. fal.ai Lucy realtime ${falMin}/min is kept as the rate for calls that already ran there; ElevenLabs for the cloned voice ${voiceMin}/min. The voice service now charges for reading his words and for speaking them back as two separate lines, so this figure is your own estimate of a minute of calling rather than one price from their list.`
+        + (reactorMin > 0 ? ` The same service's prompt models (xmax-x2 and xmax-x2-1) ${reactorMin}/min.` : "")
         + " Saved from the Prices tab.",
     };
     if (hasReactorRate && reactorMin > 0) row.reactor_video_per_sec_cost = +(reactorMin / 60).toFixed(6);
@@ -9113,17 +8597,19 @@
     if (error) return msg("pgMsg", error.message);
     if (!data || !data.length) return msg("pgMsg", "There is no billing_config row (id = 1) to write to — apply the wallet and burn-rate migration, then save again.");
     $("pgVerified").textContent = row.last_verified_at;
-    msg("pgMsg", "Saved — every price on this page now works off these rates."
+    await loadPricing();
+    msg("pgMsg", "Saved — the prices on this page work off "
+      + (pgVideoBasis().fromPhoto
+        ? `the photo model at ${pgUsd(pgVideoBasis().rate)} a real minute, which is the picture line in service.`
+        : `the fal.ai figure at ${pgUsd(pgVideoBasis().rate)} a real minute, because no photo-model rate is stored yet.`)
       + (hasReactorRate && reactorMin > 0
-        ? ` A call on the new picture line's prompt models is costed at ${pgUsd(reactorMin)} a minute from now on, against ${pgUsd(falMin)} for Lucy; the price steps below still work off Lucy.`
+        ? ` A call on the prompt models is costed at ${pgUsd(reactorMin)} a minute, and a call that ran on fal at ${pgUsd(falMin)} — both for your records, neither for the prices above.`
         : hasReactorRate
-          ? " The new-line box was left empty, so the rate already saved there still prices calls on that line."
-          : " The new line's rate was not saved: this database has no column for it yet.")
-      + (hasViduRate && viduMin > 0
-        ? ` A call on that line's photo model is costed at ${pgUsd(viduMin)} a minute — its own figure, never the prompt models'.`
-        : hasViduRate
-          ? " The photo model's box was left empty, so the rate already saved there still prices calls on it."
-          : " The photo model's rate was not saved: this database has no column for it yet."), "ok");
+          ? " The prompt-models box was left empty, so the rate already saved there still prices calls on them."
+          : " The prompt models' rate was not saved: this database has no column for it yet.")
+      + (hasViduRate && !(viduMin > 0)
+        ? " The photo model's box was left empty, so the rate already saved there still prices calls on it."
+        : ""), "ok");
   };
 
   $("pgDerive").onclick = () => {
@@ -9192,7 +8678,7 @@
     msg("pgLadderMsg", r.error || r.note, r.error ? "err" : "ok");
   });
 
-  ["pgFalMin", "pgVoiceMin", "pgMargin", "pgMinutes", "pgCustom", "pgBasis"]
+  ["pgFalMin", "pgViduMin", "pgVoiceMin", "pgMargin", "pgMinutes", "pgCustom", "pgBasis"]
     .forEach((id) => { const el = $(id); if (el) el.addEventListener("input", pgRenderAll); });
   document.querySelectorAll('input[name="pgMod"]').forEach((el) => el.addEventListener("change", () => { pgRenderResult(); pgRenderLadder(); }));
   ["pgLadderMod", "pgBundles"].forEach((id) => { const el = $(id); if (el) el.addEventListener("input", pgRenderLadder); });
