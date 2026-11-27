@@ -47,6 +47,9 @@
     border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px }
   .way:hover { border-color: var(--cyan) }
   .way.on { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan) inset }
+  /* A package is chosen but no way yet: both offers are outlined, because the greyed button
+     below them is a sentence about a step the buyer has not taken, not a broken control. */
+  .ways.need .way { border-color: var(--cyan) }
   .way b { display: block; font-size: 15px }
   .way small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.45; margin-top: 3px }
   label { display: block; color: var(--muted); font-size: 13.5px; margin: 0 0 6px }
@@ -965,8 +968,10 @@ function cardBodyHtml(p) {
 /** Once a package and a way are both switched on, the button says exactly what it will do. */
 function refreshGo() {
   const go = $("go");
-  if (!chosen) { go.disabled = true; go.textContent = tr("Choose a package above"); return; }
-  if (!method) { go.disabled = true; go.textContent = tr("Choose how you want to pay"); return; }
+  const row = $("ways");
+  if (!chosen) { go.disabled = true; go.textContent = tr("Choose a package above"); row.classList.remove("need"); return; }
+  if (!method) { go.disabled = true; go.textContent = tr("Choose how you want to pay"); row.classList.add("need"); return; }
+  row.classList.remove("need");
   go.disabled = false;
   // The button repeats the figure on the card he chose, in the same currency, so the page
   // never says one thing on the card and another on the button.
@@ -1055,6 +1060,10 @@ function paintShop(data) {
       nodes.forEach((n) => n.classList.toggle("on", n === node));
       setErr("");
       refreshGo();
+      // Eight packages make a long page and the next step sits below all of them. A buyer who
+      // taps a card and sees nothing move concludes the page is broken, so the page moves.
+      const step = $("ways").closest(".card");
+      if (step) step.scrollIntoView({ behavior: "smooth", block: "start" });
     };
   });
 
